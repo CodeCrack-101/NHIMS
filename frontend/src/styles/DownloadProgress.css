@@ -1,0 +1,36 @@
+/* Inline Button Progress Styling */
+.btn-progress-container {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate;
+}
+
+.btn-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.12) 0%,
+    rgba(15, 23, 42, 0.22) 100%
+  );
+  border-radius: inherit;
+  transition: width 0.12s ease-out;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.btn-progress-fill.complete {
+  background: rgba(16, 185, 129, 0.22);
+}
+
+.btn-progress-label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}

@@ -1,0 +1,176 @@
+.crm-toast-viewport {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 12px;
+  max-width: 380px;
+  width: calc(100vw - 32px);
+  pointer-events: none;
+}
+
+.crm-toast-card {
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px 15px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(248, 250, 252, 0.86) 52%,
+    rgba(241, 245, 249, 0.92) 100%
+  );
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.98),
+    inset 0 -2px 4px rgba(148, 163, 184, 0.25),
+    0 12px 28px rgba(15, 23, 42, 0.14),
+    0 4px 10px rgba(15, 23, 42, 0.08);
+  animation: crmToastSlideIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.crm-toast-success {
+  border-color: rgba(34, 197, 94, 0.45);
+}
+
+.crm-toast-error {
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.crm-toast-warning {
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.crm-toast-info {
+  border-color: rgba(59, 130, 246, 0.45);
+}
+
+.crm-toast-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.85);
+}
+
+.crm-toast-icon-success {
+  background: linear-gradient(180deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.crm-toast-icon-error {
+  background: linear-gradient(180deg, #fee2e2 0%, #fecaca 100%);
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.crm-toast-icon-warning {
+  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+  color: #b45309;
+  border: 1px solid #fcd34d;
+}
+
+.crm-toast-icon-info {
+  background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.crm-toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.crm-toast-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.crm-toast-msg {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.crm-toast-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 999px;
+  line-height: 1;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.crm-toast-close:hover {
+  color: #0f172a;
+  background-color: rgba(148, 163, 184, 0.18);
+}
+
+.crm-toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  transform-origin: left center;
+  animation: crmToastProgress linear forwards;
+}
+
+.crm-toast-progress-success {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.crm-toast-progress-error {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.crm-toast-progress-warning {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.crm-toast-progress-info {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+@keyframes crmToastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(32px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes crmToastProgress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}

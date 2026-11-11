@@ -1,0 +1,13 @@
+.brand-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+
+.logo
+{
+  height:55px;
+  width:70px;
+}

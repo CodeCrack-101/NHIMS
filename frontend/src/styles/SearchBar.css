@@ -1,0 +1,51 @@
+.inventory-search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  width: 100%;
+  background-color: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.inventory-search-bar:focus-within {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
+}
+
+.inventory-search-icon {
+  margin-left: 12px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.inventory-search-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 34px 0 10px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.inventory-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.inventory-search-clear {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.inventory-search-clear:hover {
+  color: #0f172a;
+}

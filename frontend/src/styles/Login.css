@@ -1,0 +1,11 @@
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-aux-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+}

@@ -1,0 +1,31 @@
+.otp-input-group {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.otp-digit-input {
+  width: 100%;
+  height: 50px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-input);
+  background-color: #ffffff;
+  outline: none;
+}
+
+.otp-digit-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 480px) {
+  .otp-digit-input {
+    height: 44px;
+    font-size: 18px;
+  }
+}

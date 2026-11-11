@@ -1,0 +1,33 @@
+.verify-otp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.otp-status-bar {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.otp-timer-badge strong {
+  color: var(--text-primary);
+}
+
+.otp-expired-badge {
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
+.otp-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+}
+
+.otp-resending-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
