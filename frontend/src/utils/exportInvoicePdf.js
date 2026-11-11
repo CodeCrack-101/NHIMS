@@ -32,56 +32,57 @@ const loadLogoAsDataUrl = (src = '/Logo.png') =>
 export const downloadInvoicePdf = async (invoice) => {
   if (!invoice) return
 
+  // 10.5 cm x 18.5 cm = 105 mm x 185 mm
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: 'a4',
+    format: [105, 185],
   })
 
   const logoDataUrl = await loadLogoAsDataUrl('/Logo.png')
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
-  const marginX = 14
+  const pageWidth = doc.internal.pageSize.getWidth() // 105
+  const pageHeight = doc.internal.pageSize.getHeight() // 185
+  const marginX = 6
 
-  // Header Banner
+  // Header Banner (Height: 25mm)
   doc.setFillColor(15, 23, 42)
-  doc.rect(0, 0, pageWidth, 38, 'F')
+  doc.rect(0, 0, pageWidth, 25, 'F')
 
   if (logoDataUrl) {
-    doc.addImage(logoDataUrl, 'PNG', marginX, 6, 22, 22)
+    doc.addImage(logoDataUrl, 'PNG', marginX, 3.5, 14, 14)
   }
 
-  const titleX = logoDataUrl ? marginX + 26 : marginX
+  const titleX = logoDataUrl ? marginX + 16 : marginX
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(16)
-  doc.text('NH Wallpaper', titleX, 11)
+  doc.setFontSize(11)
+  doc.text('NH Wallpaper', titleX, 7.5)
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8.5)
-  doc.text('Wallpaper Wholesaler', titleX, 16)
+  doc.setFontSize(6.5)
+  doc.text('Wallpaper Wholesaler', titleX, 11)
 
-  doc.setFontSize(7.5)
+  doc.setFontSize(5.5)
   doc.setTextColor(226, 232, 240)
-  doc.text('Mob: +91 8828251111, +91 9930317192', titleX, 21)
+  doc.text('Mob: +91 8828251111, +91 9930317192', titleX, 14.5)
   doc.text(
-    'Rani Residency, Shop No 02, Opp Apha Park Building Near Taj Darbar Hotel, Chirag Nagar, Ghatkopar (W), Mumbai 400086',
+    'Rani Residency, Shop 02, Opp Apha Park Near Taj Darbar, Chirag Nagar, Ghatkopar (W), Mumbai 400086',
     titleX,
-    26,
-    { maxWidth: 100 }
+    18,
+    { maxWidth: 44 }
   )
 
-  // GST Number right above the Invoice Number
+  // GST & Metadata right side
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
-  doc.text('GSTIN: 27DXLPR9950M1ZB', pageWidth - marginX, 9, {
+  doc.setFontSize(6)
+  doc.text('GSTIN: 27DXLPR9950M1ZB', pageWidth - marginX, 7, {
     align: 'right',
   })
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.5)
-  doc.text(`Invoice: ${invoice.invoiceNumber}`, pageWidth - marginX, 14.5, {
+  doc.setFontSize(6.5)
+  doc.text(`Invoice: ${invoice.invoiceNumber}`, pageWidth - marginX, 11, {
     align: 'right',
   })
 
@@ -99,74 +100,74 @@ export const downloadInvoicePdf = async (invoice) => {
   })
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
+  doc.setFontSize(5.8)
   doc.setTextColor(203, 213, 225)
-  doc.text(`Date: ${dateFormatted}`, pageWidth - marginX, 20, {
+  doc.text(`Date: ${dateFormatted}`, pageWidth - marginX, 15, {
     align: 'right',
   })
-  doc.text(`Time: ${timeFormatted}`, pageWidth - marginX, 25, {
+  doc.text(`Time: ${timeFormatted}`, pageWidth - marginX, 18.5, {
     align: 'right',
   })
 
-  // Customer Details Box
-  let currentY = 42
+  // Customer Details Box (Height: 15.5mm)
+  let currentY = 27.5
   doc.setFillColor(248, 250, 252)
   doc.setDrawColor(203, 213, 225)
-  doc.rect(marginX, currentY, pageWidth - marginX * 2, 22, 'FD')
+  doc.rect(marginX, currentY, pageWidth - marginX * 2, 15.5, 'FD')
 
   doc.setTextColor(100, 116, 139)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.5)
-  doc.text('Bill To Customer', marginX + 5, currentY + 6)
-  doc.text('Invoice Summary', pageWidth - marginX - 65, currentY + 6)
+  doc.setFontSize(6)
+  doc.text('Bill To Customer', marginX + 3, currentY + 4)
+  doc.text('Invoice Summary', pageWidth - marginX - 42, currentY + 4)
 
   doc.setTextColor(15, 23, 42)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(11)
-  doc.text(`Name: ${invoice.customerName}`, marginX + 5, currentY + 13)
+  doc.setFontSize(7.5)
+  doc.text(`Name: ${invoice.customerName}`, marginX + 3, currentY + 8.5)
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(10)
-  doc.text(`Mobile: +91 ${invoice.mobileNumber}`, marginX + 5, currentY + 19)
+  doc.setFontSize(6.5)
+  doc.text(`Mobile: +91 ${invoice.mobileNumber}`, marginX + 3, currentY + 12.5)
 
   doc.text(
-    `Total Items: ${invoice.totalItems}  |  Total Qty: ${invoice.totalQuantity} Rolls`,
-    pageWidth - marginX - 65,
-    currentY + 13
+    `Items: ${invoice.totalItems} | Qty: ${invoice.totalQuantity} Rolls`,
+    pageWidth - marginX - 42,
+    currentY + 8.5
   )
   doc.text(
     `Billed By: ${invoice.createdBy?.fullName || invoice.createdBy?.email || 'Admin'}`,
-    pageWidth - marginX - 65,
-    currentY + 19
+    pageWidth - marginX - 42,
+    currentY + 12.5
   )
 
   // Table Header
-  currentY = 69
+  currentY = 45
   const drawTableHeader = (yPos) => {
     doc.setFillColor(241, 245, 249)
     doc.setDrawColor(203, 213, 225)
-    doc.rect(marginX, yPos, pageWidth - marginX * 2, 9, 'FD')
+    doc.rect(marginX, yPos, pageWidth - marginX * 2, 6.5, 'FD')
 
     doc.setTextColor(15, 23, 42)
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(9.5)
-    doc.text('Sr No', marginX + 4, yPos + 6)
-    doc.text('Catalogue', marginX + 24, yPos + 6)
-    doc.text('Pattern No.', marginX + 72, yPos + 6)
-    doc.text('Qty', marginX + 110, yPos + 6)
-    doc.text('Rate', marginX + 134, yPos + 6)
-    doc.text('Amount', pageWidth - marginX - 4, yPos + 6, { align: 'right' })
+    doc.setFontSize(6.5)
+    doc.text('Sr', marginX + 2, yPos + 4.5)
+    doc.text('Catalogue', marginX + 9, yPos + 4.5)
+    doc.text('Pattern No.', marginX + 41, yPos + 4.5)
+    doc.text('Qty', marginX + 59, yPos + 4.5)
+    doc.text('Rate', marginX + 71, yPos + 4.5)
+    doc.text('Amount', pageWidth - marginX - 2, yPos + 4.5, { align: 'right' })
 
-    return yPos + 9
+    return yPos + 6.5
   }
 
   currentY = drawTableHeader(currentY)
-  const rowHeight = 10
+  const rowHeight = 7
 
   ;(invoice.items || []).forEach((item, idx) => {
-    if (currentY + rowHeight > pageHeight - 55) {
+    if (currentY + rowHeight > pageHeight - 44) {
       doc.addPage()
-      currentY = drawTableHeader(20)
+      currentY = drawTableHeader(14)
     }
 
     doc.setDrawColor(226, 232, 240)
@@ -179,62 +180,61 @@ export const downloadInvoicePdf = async (invoice) => {
 
     doc.setTextColor(71, 85, 105)
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(9.5)
-    doc.text(String(idx + 1), marginX + 4, currentY + 6.8)
+    doc.setFontSize(6.5)
+    doc.text(String(idx + 1), marginX + 2, currentY + 4.8)
 
     doc.setTextColor(15, 23, 42)
     doc.setFont('helvetica', 'bold')
+    const catLabel = formatCatalogueLabel(item.catalogueName || item.catalogueSlug)
     doc.text(
-      formatCatalogueLabel(item.catalogueName || item.catalogueSlug),
-      marginX + 24,
-      currentY + 6.8
+      catLabel.length > 18 ? catLabel.substring(0, 17) + '…' : catLabel,
+      marginX + 9,
+      currentY + 4.8
     )
 
-    doc.text(String(item.patternNumber), marginX + 72, currentY + 6.8)
+    doc.text(String(item.patternNumber), marginX + 41, currentY + 4.8)
 
     doc.setFont('helvetica', 'normal')
-    doc.text(`${item.quantity} Rolls`, marginX + 110, currentY + 6.8)
-    doc.text(formatCurrencyPdf(item.rate), marginX + 134, currentY + 6.8)
+    doc.text(`${item.quantity} Rolls`, marginX + 59, currentY + 4.8)
+    doc.text(formatCurrencyPdf(item.rate), marginX + 71, currentY + 4.8)
 
     doc.setFont('helvetica', 'bold')
     doc.text(
       formatCurrencyPdf(item.subtotal),
-      pageWidth - marginX - 4,
-      currentY + 6.8,
+      pageWidth - marginX - 2,
+      currentY + 4.8,
       { align: 'right' }
     )
 
     currentY += rowHeight
   })
 
-  // Terms & Conditions and Signature Section (Matching user reference photo)
-  currentY += 8
-  if (currentY + 65 > pageHeight - 15) {
+  // Totals Summary & Signatory
+  currentY += 4
+  if (currentY + 45 > pageHeight - 12) {
     doc.addPage()
-    currentY = 24
+    currentY = 16
   }
 
-  const termsBoxWidth = 110
-  const summaryBoxWidth = 66
+  const summaryBoxWidth = 46
   const summaryBoxX = pageWidth - marginX - summaryBoxWidth
 
-  // Right Box: Totals Summary
   const hasGst = Boolean(invoice.taxRate && invoice.taxRate > 0)
-  const summaryBoxHeight = hasGst ? 38 : 34
+  const summaryBoxHeight = hasGst ? 27 : 23
   doc.setFillColor(248, 250, 252)
   doc.setDrawColor(203, 213, 225)
   doc.rect(summaryBoxX, currentY, summaryBoxWidth, summaryBoxHeight, 'FD')
 
   doc.setTextColor(71, 85, 105)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8.5)
-  doc.text('Subtotal:', summaryBoxX + 4, currentY + 7)
+  doc.setFontSize(6.5)
+  doc.text('Subtotal:', summaryBoxX + 2.5, currentY + 5)
   doc.setTextColor(15, 23, 42)
   doc.setFont('helvetica', 'bold')
   doc.text(
     formatCurrencyPdf(invoice.subtotal),
-    pageWidth - marginX - 3,
-    currentY + 7,
+    pageWidth - marginX - 2.5,
+    currentY + 5,
     { align: 'right' }
   )
 
@@ -244,81 +244,81 @@ export const downloadInvoicePdf = async (invoice) => {
       : 'Discount:'
   doc.setTextColor(71, 85, 105)
   doc.setFont('helvetica', 'normal')
-  doc.text(discountLabel, summaryBoxX + 4, currentY + 14)
+  doc.text(discountLabel, summaryBoxX + 2.5, currentY + 9.5)
   doc.setTextColor(185, 28, 28)
   doc.setFont('helvetica', 'bold')
   doc.text(
     `- ${formatCurrencyPdf(invoice.discountAmount || 0)}`,
-    pageWidth - marginX - 3,
-    currentY + 14,
+    pageWidth - marginX - 2.5,
+    currentY + 9.5,
     { align: 'right' }
   )
 
-  let finalYOffset = currentY + 22
+  let finalYOffset = currentY + 15
   if (hasGst) {
     doc.setTextColor(71, 85, 105)
     doc.setFont('helvetica', 'normal')
-    doc.text(`GST (${invoice.taxRate}%):`, summaryBoxX + 4, currentY + 21)
+    doc.text(`GST (${invoice.taxRate}%):`, summaryBoxX + 2.5, currentY + 14)
     doc.setTextColor(15, 23, 42)
     doc.setFont('helvetica', 'bold')
     doc.text(
       `+ ${formatCurrencyPdf(invoice.taxAmount || 0)}`,
-      pageWidth - marginX - 3,
-      currentY + 21,
+      pageWidth - marginX - 2.5,
+      currentY + 14,
       { align: 'right' }
     )
-    finalYOffset = currentY + 28
+    finalYOffset = currentY + 19.5
   }
 
   doc.setDrawColor(203, 213, 225)
-  doc.line(summaryBoxX + 3, finalYOffset - 3, pageWidth - marginX - 3, finalYOffset - 3)
+  doc.line(summaryBoxX + 2, finalYOffset - 2, pageWidth - marginX - 2, finalYOffset - 2)
 
   doc.setTextColor(15, 23, 42)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  doc.text('Final Total:', summaryBoxX + 4, finalYOffset + 4)
+  doc.setFontSize(7.5)
+  doc.text('Final Total:', summaryBoxX + 2.5, finalYOffset + 3)
   doc.text(
     formatCurrencyPdf(invoice.finalTotal),
-    pageWidth - marginX - 3,
-    finalYOffset + 4,
+    pageWidth - marginX - 2.5,
+    finalYOffset + 3,
     { align: 'right' }
   )
 
-  // Authorised Signatory box on the right below summary
-  const sigY = currentY + 42
+  // Signatory
+  const sigY = currentY + summaryBoxHeight + 2
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
+  doc.setFontSize(7)
   doc.setTextColor(15, 23, 42)
-  doc.text('For NH Wallpaper', pageWidth - marginX - 5, sigY + 5, { align: 'right' })
+  doc.text('For NH Wallpaper', pageWidth - marginX - 3, sigY + 3.5, { align: 'right' })
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
+  doc.setFontSize(5.5)
   doc.setTextColor(100, 116, 139)
-  doc.text('Authorised Signatory', pageWidth - marginX - 5, sigY + 18, { align: 'right' })
+  doc.text('Authorised Signatory', pageWidth - marginX - 3, sigY + 11, { align: 'right' })
 
-  // EKE DAM NEECHE (Bottom of Page Footer): Terms & Conditions
-  const bottomTermsY = pageHeight - 34
+  // Terms & Conditions (at bottom of 185mm page)
+  const bottomTermsY = pageHeight - 23
 
   doc.setDrawColor(226, 232, 240)
-  doc.setLineWidth(0.4)
-  doc.line(marginX, bottomTermsY - 3, pageWidth - marginX, bottomTermsY - 3)
+  doc.setLineWidth(0.3)
+  doc.line(marginX, bottomTermsY - 2, pageWidth - marginX, bottomTermsY - 2)
 
   doc.setTextColor(15, 23, 42)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
-  doc.text('Terms & Conditions :', marginX, bottomTermsY + 2)
+  doc.setFontSize(6)
+  doc.text('Terms & Conditions :', marginX, bottomTermsY + 1.5)
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7)
+  doc.setFontSize(5)
   doc.setTextColor(71, 85, 105)
-  doc.text('•  Subject to Mumbai Jurisdiction.', marginX, bottomTermsY + 7)
-  doc.text('•  No complaint will be entertained after acceptance of the delivery.', marginX, bottomTermsY + 12)
-  doc.text('•  Goods once sold will not be taken back or exchanged.', marginX, bottomTermsY + 17)
-  doc.text('•  Our responsibility ceses after delivery of goods to the carriers.', marginX, bottomTermsY + 22)
+  doc.text('•  Subject to Mumbai Jurisdiction.', marginX, bottomTermsY + 5)
+  doc.text('•  No complaint will be entertained after acceptance of the delivery.', marginX, bottomTermsY + 8.5)
+  doc.text('•  Goods once sold will not be taken back or exchanged.', marginX, bottomTermsY + 12)
+  doc.text('•  Our responsibility ceses after delivery of goods to the carriers.', marginX, bottomTermsY + 15.5)
 
-  doc.setFontSize(7.5)
+  doc.setFontSize(5.5)
   doc.setTextColor(148, 163, 184)
-  doc.text('Thank you for your business! — NH Wallpaper', pageWidth - marginX, bottomTermsY + 22, { align: 'right' })
+  doc.text('Thank you for your business! — NH Wallpaper', pageWidth - marginX, bottomTermsY + 15.5, { align: 'right' })
 
   doc.save(`${invoice.invoiceNumber}.pdf`)
 }
@@ -343,12 +343,12 @@ export const printInvoiceDocument = (invoice) => {
     .map(
       (item, idx) => `
       <tr>
-        <td style="color:#475569;">${idx + 1}</td>
-        <td style="padding-left:14px;"><strong>${formatCatalogueLabel(item.catalogueName || item.catalogueSlug)}</strong></td>
-        <td><strong>${item.patternNumber}</strong></td>
-        <td>${item.quantity} Rolls</td>
-        <td>${formatCurrencyPdf(item.rate)}</td>
-        <td style="text-align:right;"><strong>${formatCurrencyPdf(item.subtotal)}</strong></td>
+        <td style="color:#475569; width:22px; padding:4px 3px;">${idx + 1}</td>
+        <td style="padding:4px 3px;"><strong>${formatCatalogueLabel(item.catalogueName || item.catalogueSlug)}</strong></td>
+        <td style="padding:4px 3px;"><strong>${item.patternNumber}</strong></td>
+        <td style="padding:4px 3px;">${item.quantity} Rolls</td>
+        <td style="padding:4px 3px;">${formatCurrencyPdf(item.rate)}</td>
+        <td style="text-align:right; padding:4px 3px;"><strong>${formatCurrencyPdf(item.subtotal)}</strong></td>
       </tr>`
     )
     .join('')
@@ -365,8 +365,8 @@ export const printInvoiceDocument = (invoice) => {
   <title></title>
   <style>
     @page {
-      size: A4 portrait;
-      margin: 0; /* Removes browser default headers (time, date, title) & footers (url, page) */
+      size: 105mm 185mm;
+      margin: 0; /* Removes browser default headers & footers */
     }
     * {
       box-sizing: border-box;
@@ -376,27 +376,30 @@ export const printInvoiceDocument = (invoice) => {
     html, body {
       margin: 0;
       padding: 0;
+      width: 105mm;
+      height: 185mm;
       background: #ffffff;
       color: #0f172a;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
     .invoice-container {
-      width: 100%;
-      max-width: 210mm;
-      min-height: 297mm;
+      width: 105mm;
+      min-height: 185mm;
+      max-width: 105mm;
       margin: 0 auto;
       background: #ffffff;
       display: flex;
       flex-direction: column;
       position: relative;
+      overflow: hidden;
     }
 
     /* Dark Navy Header Banner matching PDF */
     .header-banner {
       background: #0f172a !important;
       color: #ffffff;
-      padding: 16px 14mm 16px 14mm;
+      padding: 10px 6mm 10px 6mm;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -404,11 +407,11 @@ export const printInvoiceDocument = (invoice) => {
     .header-left {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 8px;
     }
     .header-logo {
-      width: 54px;
-      height: 54px;
+      width: 38px;
+      height: 38px;
       object-fit: contain;
       border-radius: 50%;
       background: #ffffff;
@@ -416,28 +419,28 @@ export const printInvoiceDocument = (invoice) => {
     }
     .header-brand h1 {
       margin: 0;
-      font-size: 21px;
+      font-size: 14.5px;
       font-weight: 800;
       color: #ffffff;
       letter-spacing: -0.01em;
     }
     .header-brand .sub {
-      margin: 2px 0 0;
-      font-size: 11px;
+      margin: 1px 0 0;
+      font-size: 8.5px;
       color: #ffffff;
       font-weight: 500;
     }
     .header-brand .phone {
-      margin: 3px 0 0;
-      font-size: 10px;
+      margin: 2px 0 0;
+      font-size: 7.5px;
       color: #e2e8f0;
     }
     .header-brand .addr {
-      margin: 2px 0 0;
-      font-size: 9.5px;
+      margin: 1px 0 0;
+      font-size: 6.8px;
       color: #cbd5e1;
-      max-width: 440px;
-      line-height: 1.35;
+      max-width: 210px;
+      line-height: 1.25;
     }
 
     .header-right {
@@ -445,26 +448,26 @@ export const printInvoiceDocument = (invoice) => {
     }
     .header-right .gst {
       margin: 0;
-      font-size: 10.5px;
+      font-size: 8px;
       font-weight: 700;
       color: #ffffff;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
     }
     .header-right .inv-no {
-      margin: 4px 0 0;
-      font-size: 11.5px;
+      margin: 2px 0 0;
+      font-size: 8.5px;
       font-weight: 800;
       color: #ffffff;
     }
     .header-right .date-time {
-      margin: 3px 0 0;
-      font-size: 10.5px;
+      margin: 2px 0 0;
+      font-size: 7.5px;
       color: #cbd5e1;
     }
 
     /* Content Area below Banner */
     .content-area {
-      padding: 12px 14mm 16px 14mm;
+      padding: 8px 6mm 8px 6mm;
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -474,9 +477,9 @@ export const printInvoiceDocument = (invoice) => {
     .summary-card {
       background: #f8fafc !important;
       border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 10px 16px;
-      margin-bottom: 16px;
+      border-radius: 5px;
+      padding: 6px 9px;
+      margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
     }
@@ -485,20 +488,20 @@ export const printInvoiceDocument = (invoice) => {
       flex-direction: column;
     }
     .card-header-lbl {
-      margin: 0 0 4px;
-      font-size: 11px;
+      margin: 0 0 2px;
+      font-size: 8px;
       font-weight: 700;
       color: #64748b;
     }
     .card-name {
-      margin: 0 0 3px;
-      font-size: 14px;
+      margin: 0 0 1px;
+      font-size: 10px;
       font-weight: 700;
       color: #0f172a;
     }
     .card-detail {
       margin: 0;
-      font-size: 12.5px;
+      font-size: 8.5px;
       color: #0f172a;
     }
 
@@ -506,34 +509,33 @@ export const printInvoiceDocument = (invoice) => {
     table.inv-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
     }
     table.inv-table th {
       background: #f1f5f9 !important;
       border-top: 1px solid #cbd5e1;
       border-bottom: 1px solid #cbd5e1;
       color: #0f172a;
-      font-size: 12px;
+      font-size: 8.5px;
       font-weight: 700;
-      padding: 8px 10px;
+      padding: 4px 3px;
       text-align: left;
     }
     table.inv-table th:first-child {
       border-left: 1px solid #cbd5e1;
-      border-top-left-radius: 4px;
-      border-bottom-left-radius: 4px;
-      width: 48px;
+      border-top-left-radius: 3px;
+      border-bottom-left-radius: 3px;
     }
     table.inv-table th:last-child {
       border-right: 1px solid #cbd5e1;
-      border-top-right-radius: 4px;
-      border-bottom-right-radius: 4px;
+      border-top-right-radius: 3px;
+      border-bottom-right-radius: 3px;
       text-align: right;
     }
     table.inv-table td {
-      padding: 9px 10px;
+      padding: 4px 3px;
       border-bottom: 1px solid #e2e8f0;
-      font-size: 12.5px;
+      font-size: 8.5px;
       color: #0f172a;
     }
 
@@ -541,21 +543,21 @@ export const printInvoiceDocument = (invoice) => {
     .calc-row {
       display: flex;
       justify-content: flex-end;
-      margin-top: 6px;
+      margin-top: 4px;
     }
     .totals-box {
-      width: 255px;
+      width: 185px;
       background: #f8fafc !important;
       border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 10px 14px;
+      border-radius: 5px;
+      padding: 6px 8px;
     }
     .tot-line {
       display: flex;
       justify-content: space-between;
-      font-size: 11.5px;
+      font-size: 8px;
       color: #475569;
-      padding: 3px 0;
+      padding: 2px 0;
     }
     .tot-line.bold-val {
       font-weight: 700;
@@ -567,55 +569,55 @@ export const printInvoiceDocument = (invoice) => {
     }
     .tot-divider {
       border-top: 1px solid #cbd5e1;
-      margin: 6px 0;
+      margin: 4px 0;
     }
     .tot-final {
       display: flex;
       justify-content: space-between;
-      font-size: 13.5px;
+      font-size: 9.5px;
       font-weight: 800;
       color: #0f172a;
       padding-top: 2px;
     }
 
     .signatory-wrap {
-      margin-top: 18px;
+      margin-top: 10px;
       text-align: right;
     }
     .signatory-comp {
       margin: 0;
-      font-size: 12.5px;
+      font-size: 9px;
       font-weight: 700;
       color: #0f172a;
     }
     .signatory-title {
-      margin: 22px 0 0;
-      font-size: 10px;
+      margin: 14px 0 0;
+      font-size: 7.5px;
       color: #64748b;
     }
 
     /* Terms & Conditions Footer */
     .terms-footer {
       margin-top: auto;
-      padding-top: 14px;
+      padding-top: 6px;
       border-top: 1px solid #e2e8f0;
     }
     .terms-title {
-      margin: 0 0 5px;
-      font-size: 10.5px;
+      margin: 0 0 3px;
+      font-size: 8px;
       font-weight: 700;
       color: #0f172a;
     }
     .terms-list {
       margin: 0;
-      padding-left: 14px;
-      font-size: 9.5px;
+      padding-left: 10px;
+      font-size: 6.8px;
       color: #475569;
-      line-height: 1.55;
+      line-height: 1.35;
     }
     .terms-thanks {
-      margin: 6px 0 0;
-      font-size: 9.5px;
+      margin: 3px 0 0;
+      font-size: 7px;
       color: #94a3b8;
       text-align: right;
     }
@@ -626,8 +628,9 @@ export const printInvoiceDocument = (invoice) => {
         padding: 0 !important;
       }
       .invoice-container {
-        width: 100% !important;
-        min-height: 100vh !important;
+        width: 105mm !important;
+        height: 185mm !important;
+        max-height: 185mm !important;
       }
     }
   </style>
@@ -642,7 +645,7 @@ export const printInvoiceDocument = (invoice) => {
           <h1>NH Wallpaper</h1>
           <p class="sub">Wallpaper Wholesaler</p>
           <p class="phone">Mob: +91 8828251111, +91 9930317192</p>
-          <p class="addr">Rani Residency, Shop No 02, Opp Apha Park Building Near Taj Darbar Hotel, Chirag Nagar, Ghatkopar (W), Mumbai 400086</p>
+          <p class="addr">Rani Residency, Shop 02, Opp Apha Park Near Taj Darbar, Chirag Nagar, Ghatkopar (W), Mumbai 400086</p>
         </div>
       </div>
       <div class="header-right">
@@ -663,7 +666,7 @@ export const printInvoiceDocument = (invoice) => {
         </div>
         <div class="card-col" style="text-align: left;">
           <p class="card-header-lbl">Invoice Summary</p>
-          <p class="card-detail">Total Items: ${invoice.totalItems} &nbsp;|&nbsp; Total Qty: ${invoice.totalQuantity} Rolls</p>
+          <p class="card-detail">Items: ${invoice.totalItems} &nbsp;|&nbsp; Qty: ${invoice.totalQuantity} Rolls</p>
           <p class="card-detail">Billed By: ${invoice.createdBy?.fullName || invoice.createdBy?.email || 'NH Stock Administrator'}</p>
         </div>
       </div>
@@ -672,8 +675,8 @@ export const printInvoiceDocument = (invoice) => {
       <table class="inv-table">
         <thead>
           <tr>
-            <th>Sr No</th>
-            <th style="padding-left:14px;">Catalogue</th>
+            <th style="width:22px;">Sr</th>
+            <th>Catalogue</th>
             <th>Pattern No.</th>
             <th>Qty</th>
             <th>Rate</th>
