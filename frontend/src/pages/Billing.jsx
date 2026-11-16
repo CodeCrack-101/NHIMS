@@ -1770,13 +1770,7 @@ export function Billing() {
 
                 <div style={{ marginTop: '18px', textAlign: 'right' }}>
                   <p style={{ margin: 0, fontSize: '12.5px', fontWeight: '800', color: '#0f172a' }}>For NH Wallpaper</p>
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', fontWeight: '700', color: '#1e293b' }}>
-                    {selectedInvoiceModal.billerName ||
-                      selectedInvoiceModal.createdBy?.fullName ||
-                      selectedInvoiceModal.createdBy?.email ||
-                      'Admin'}
-                  </p>
-                  <p style={{ margin: '6px 0 0', fontSize: '11px', color: '#64748b' }}>Authorised Signatory</p>
+                  <p style={{ margin: '18px 0 0', fontSize: '11px', color: '#64748b' }}>Authorised Signatory</p>
                 </div>
               </div>
             </div>

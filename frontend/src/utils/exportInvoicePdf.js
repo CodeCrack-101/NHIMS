@@ -357,17 +357,10 @@ export const downloadInvoicePdf = async (invoice) => {
   doc.setTextColor(15, 23, 42)
   doc.text('For NH Wallpaper', pageWidth - marginX - 3.5, sigY + 2.5 * scale, { align: 'right' })
 
-  if (billerDisplayName) {
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7.2 * scale)
-    doc.setTextColor(30, 41, 59)
-    doc.text(billerDisplayName, pageWidth - marginX - 3.5, sigY + 6.2 * scale, { align: 'right' })
-  }
-
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(6.5 * scale)
   doc.setTextColor(100, 116, 139)
-  doc.text('Authorised Signatory', pageWidth - marginX - 3.5, sigY + 9.8 * scale, { align: 'right' })
+  doc.text('Authorised Signatory', pageWidth - marginX - 3.5, sigY + 8.5 * scale, { align: 'right' })
 
   // 5. Terms & Conditions (at bottom of single page)
   const bottomTermsY = pageHeight - (scale < 0.75 ? 15 : 20)
@@ -804,8 +797,7 @@ export const printInvoiceDocument = (invoice) => {
 
           <div class="signatory-wrap">
             <p class="signatory-comp">For NH Wallpaper</p>
-            <p style="margin: 4px 0 0; font-size: 9.5px; font-weight: 700; color: #0f172a;">${billerDisplayName}</p>
-            <p class="signatory-title" style="margin-top: 4px;">Authorised Signatory</p>
+            <p class="signatory-title" style="margin-top: 18px;">Authorised Signatory</p>
           </div>
         </div>
       </div>
