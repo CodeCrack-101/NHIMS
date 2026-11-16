@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { reportsService } from '../services/reportsService.js'
 import { formatCatalogueLabel } from '../services/catalogueService.js'
+import { getStreamUrl } from '../utils/getStreamUrl.js'
 import '../styles/SalesAnalyticsChart.css'
 
 // Helper to format Date to 'YYYY-MM-DD' in local IST/browser time (prevents UTC date rollback)
@@ -493,7 +494,7 @@ export function SalesAnalyticsChart({
 
   // Real-time SSE refresh on new invoices
   useEffect(() => {
-    const eventSource = new EventSource('/api/inventory/stream', {
+    const eventSource = new EventSource(getStreamUrl('/inventory/stream'), {
       withCredentials: true,
     })
 

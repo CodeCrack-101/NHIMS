@@ -40,10 +40,10 @@ app.use(
 // Strict CORS configuration restricted to the frontend origin
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: [env.CLIENT_URL, 'https://nhims-seven.vercel.app', 'http://localhost:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'X-Idempotency-Key'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Session-Token', 'X-Idempotency-Key'],
   })
 )
 

@@ -13,6 +13,7 @@ import {
   formatCatalogueLabel,
 } from '../services/catalogueService.js'
 import { CatalogueGridSkeleton } from '../components/Skeleton.jsx'
+import { getStreamUrl } from '../utils/getStreamUrl.js'
 import '../styles/AddProducts.css'
 
 export function AddProducts() {
@@ -49,7 +50,7 @@ export function AddProducts() {
     if (selectedSlug) return
     loadCatalogues(true)
 
-    const eventSource = new EventSource('/api/inventory/stream', {
+    const eventSource = new EventSource(getStreamUrl('/inventory/stream'), {
       withCredentials: true,
     })
 

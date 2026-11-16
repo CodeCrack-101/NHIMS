@@ -19,7 +19,12 @@ export const getSessionCookieOptions = () => ({
 export const requireAuth = async (req, res, next) => {
   try {
     const isSilentCheck = req.query?.silent === '1'
-    const rawSessionToken = req.cookies?.[SESSION_COOKIE_NAME]
+    const authHeader = req.headers['authorization']
+    const headerToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7).trim()
+      : req.headers['x-session-token']
+
+    const rawSessionToken = req.cookies?.[SESSION_COOKIE_NAME] || headerToken
     if (!rawSessionToken) {
       if (isSilentCheck) {
         req.user = null

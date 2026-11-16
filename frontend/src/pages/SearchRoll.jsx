@@ -4,6 +4,7 @@ import { inventoryService } from '../services/inventoryService.js'
 import { formatCatalogueLabel } from '../services/catalogueService.js'
 import { PLACEHOLDER_IMAGE } from '../assets/imageManifest.js'
 import { Skeleton } from '../components/Skeleton.jsx'
+import { getStreamUrl } from '../utils/getStreamUrl.js'
 import '../styles/SearchRoll.css'
 
 export function SearchRoll() {
@@ -43,7 +44,7 @@ export function SearchRoll() {
 
   // Real-time Server-Sent Events (SSE) subscription: keep search results synced instantly on any billing deduction
   useEffect(() => {
-    const eventSource = new EventSource('/api/inventory/stream', {
+    const eventSource = new EventSource(getStreamUrl('/inventory/stream'), {
       withCredentials: true,
     })
 

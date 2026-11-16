@@ -11,6 +11,7 @@ import {
 } from '../utils/exportInvoicePdf.js'
 import { sendInvoiceImageToWhatsApp } from '../utils/whatsappHelper.js'
 import { TableSkeleton, FormSkeleton } from '../components/Skeleton.jsx'
+import { getStreamUrl } from '../utils/getStreamUrl.js'
 import '../styles/Billing.css'
 
 let rowIdSeq = 1
@@ -432,7 +433,7 @@ export function Billing() {
 
   // Real-Time Server-Sent Events (SSE) subscription to keep stock quantities synchronized
   useEffect(() => {
-    const eventSource = new EventSource('/api/inventory/stream', {
+    const eventSource = new EventSource(getStreamUrl('/inventory/stream'), {
       withCredentials: true,
     })
 

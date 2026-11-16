@@ -14,6 +14,7 @@ import {
   formatCatalogueLabel,
 } from '../services/catalogueService.js'
 import { CatalogueGridSkeleton, MetricsSkeleton } from '../components/Skeleton.jsx'
+import { getStreamUrl } from '../utils/getStreamUrl.js'
 import '../styles/RollDetails.css'
 
 export function RollDetails() {
@@ -46,7 +47,7 @@ export function RollDetails() {
     if (selectedSlug) return
     loadCatalogues(true)
 
-    const eventSource = new EventSource('/api/inventory/stream', {
+    const eventSource = new EventSource(getStreamUrl('/inventory/stream'), {
       withCredentials: true,
     })
 

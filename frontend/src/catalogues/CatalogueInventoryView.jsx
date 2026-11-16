@@ -11,6 +11,7 @@ import { useDownloadProgress, ProgressButton } from '../context/DownloadProgress
 import { IMAGE_MANIFEST } from '../assets/imageManifest.js'
 import { downloadStockOrderPdf } from '../utils/exportStockPdf.js'
 import { MetricsSkeleton, TableSkeleton } from '../components/Skeleton.jsx'
+import { getStreamUrl } from '../utils/getStreamUrl.js'
 import '../styles/CatalogueView.css'
 
 export function CatalogueInventoryView({
@@ -196,7 +197,7 @@ export function CatalogueInventoryView({
   useEffect(() => {
     if (!catalogueId) return
 
-    const eventSource = new EventSource('/api/inventory/stream', {
+    const eventSource = new EventSource(getStreamUrl('/inventory/stream'), {
       withCredentials: true,
     })
 

@@ -15,6 +15,7 @@ import {
 } from '../services/catalogueService.js'
 import { MetricsSkeleton, TableSkeleton } from '../components/Skeleton.jsx'
 import { SalesAnalyticsChart } from '../components/SalesAnalyticsChart.jsx'
+import { getStreamUrl } from '../utils/getStreamUrl.js'
 import '../styles/Dashboard.css'
 
 export function Dashboard() {
@@ -84,7 +85,7 @@ export function Dashboard() {
     )
       return
 
-    const eventSource = new EventSource('/api/inventory/stream', {
+    const eventSource = new EventSource(getStreamUrl('/inventory/stream'), {
       withCredentials: true,
     })
 

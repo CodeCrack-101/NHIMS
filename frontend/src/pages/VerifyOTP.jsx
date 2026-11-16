@@ -75,6 +75,13 @@ export function VerifyOTP() {
 
       sessionStorage.removeItem('crm_otp_challenge')
       const authenticatedUser = response.data?.data?.user
+      const sessionToken = response.data?.data?.sessionToken
+      if (sessionToken) {
+        localStorage.setItem('__crm_sid_token', sessionToken)
+      }
+      if (authenticatedUser) {
+        localStorage.setItem('__crm_user', JSON.stringify(authenticatedUser))
+      }
       setUser(authenticatedUser)
       showToast({
         type: 'success',

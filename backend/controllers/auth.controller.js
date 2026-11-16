@@ -44,7 +44,7 @@ export const verifyOtpController = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: 'Authentication successful.',
-      data: { user },
+      data: { user, sessionToken },
     })
   } catch (error) {
     next(error)

@@ -19,6 +19,14 @@ export const fetchCsrfToken = async () => {
 
 api.interceptors.request.use(
   async (config) => {
+    // 1. Cross-domain session token persistence (header fallback for modern cross-site cookie restrictions)
+    const storedSessionToken = localStorage.getItem('__crm_sid_token')
+    if (storedSessionToken) {
+      config.headers['Authorization'] = `Bearer ${storedSessionToken}`
+      config.headers['X-Session-Token'] = storedSessionToken
+    }
+
+    // 2. CSRF Token for mutating requests
     const method = (config.method || 'get').toLowerCase()
     if (['post', 'put', 'patch', 'delete'].includes(method)) {
       if (!csrfTokenCache) {
