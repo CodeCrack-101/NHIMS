@@ -435,7 +435,7 @@ export const printInvoiceDocument = (invoice) => {
   <title></title>
   <style>
     @page {
-      size: 4in 6in;
+      size: 4in 10in;
       margin: 4mm 3mm 4mm 3mm; /* Printer physical margin support so header & footer never cut */
     }
     * {
