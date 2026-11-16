@@ -37,7 +37,7 @@ export const issueCsrfToken = (_req, res) => {
   res.cookie(CSRF_COOKIE_NAME, signedToken, {
     httpOnly: true,
     secure: env.IS_PROD,
-    sameSite: env.IS_PROD ? 'strict' : 'lax',
+    sameSite: env.IS_PROD ? 'none' : 'lax',
     path: '/',
     maxAge: 2 * 60 * 60 * 1000, // 2 hours
   })

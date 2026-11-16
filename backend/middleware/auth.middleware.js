@@ -11,7 +11,7 @@ export const SESSION_DURATION_MS = 8 * 60 * 60 * 1000 // 8 hours enterprise shif
 export const getSessionCookieOptions = () => ({
   httpOnly: true,
   secure: env.IS_PROD,
-  sameSite: env.IS_PROD ? 'strict' : 'lax',
+  sameSite: env.IS_PROD ? 'none' : 'lax',
   path: '/',
   maxAge: SESSION_DURATION_MS,
 })
