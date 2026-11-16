@@ -13,16 +13,32 @@ const FRONTEND_MANIFEST_FILE = path.resolve(
   __dirname,
   '../../frontend/src/assets/imageManifest.js'
 )
+const BACKEND_MANIFEST_FILE = path.resolve(
+  __dirname,
+  '../imageManifest.json'
+)
 
 const readFrontendManifestFromDisk = () => {
   try {
-    if (!fs.existsSync(FRONTEND_MANIFEST_FILE)) return {}
-    const content = fs.readFileSync(FRONTEND_MANIFEST_FILE, 'utf8')
-    const match = content.match(
-      /export\s+const\s+IMAGE_MANIFEST\s*=\s*(\{[\s\S]*?\n\})/
-    )
-    if (!match) return {}
-    return JSON.parse(match[1])
+    // 1. Check direct backend bundled JSON first (crucial for cloud environments like Render)
+    if (fs.existsSync(BACKEND_MANIFEST_FILE)) {
+      const jsonStr = fs.readFileSync(BACKEND_MANIFEST_FILE, 'utf8')
+      const parsed = JSON.parse(jsonStr)
+      if (parsed && Object.keys(parsed).length > 0) {
+        return parsed
+      }
+    }
+    // 2. Fallback to frontend manifest file
+    if (fs.existsSync(FRONTEND_MANIFEST_FILE)) {
+      const content = fs.readFileSync(FRONTEND_MANIFEST_FILE, 'utf8')
+      const match = content.match(
+        /export\s+const\s+IMAGE_MANIFEST\s*=\s*(\{[\s\S]*?\n\})/
+      )
+      if (match) {
+        return JSON.parse(match[1])
+      }
+    }
+    return {}
   } catch {
     return {}
   }
