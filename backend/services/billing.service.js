@@ -19,10 +19,9 @@ export const roundCurrency = (value) => {
 
 export const generateNextInvoiceNumber = async (session = null) => {
   const now = new Date()
-  const yyyy = now.getFullYear()
+  const yy = String(now.getFullYear()).slice(-2)
   const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const dd = String(now.getDate()).padStart(2, '0')
-  const datePrefix = `NH-INV-${yyyy}${mm}${dd}-`
+  const datePrefix = `${yy}${mm}-`
 
   const latestQuery = Invoice.findOne({
     invoiceNumber: { $regex: `^${datePrefix}` },

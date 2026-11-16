@@ -43,18 +43,19 @@ export const downloadInvoicePdf = async (invoice) => {
   const items = invoice.items || []
   const n = items.length
 
-  // Dynamic Scale Factor based on item count so everything fits on a single page
-  // 1-7 items: full normal scale (1.0)
-  // 8-12 items: compact scale (0.85)
-  // 13-18 items: dense scale (0.72)
-  // 19+ items: ultra dense scale (0.62)
+  // Ultra-precise dynamic scaling so all content (Header, Details, Items, Totals, Signatory, Terms)
+  // always strictly fits on exactly 1 single A4 page (297mm height)
   let scale = 1.0
-  if (n > 18) {
-    scale = 0.60
+  if (n > 24) {
+    scale = 0.50
+  } else if (n > 18) {
+    scale = 0.56
   } else if (n > 12) {
-    scale = 0.72
-  } else if (n > 7) {
-    scale = 0.85
+    scale = 0.65
+  } else if (n > 8) {
+    scale = 0.76
+  } else if (n > 5) {
+    scale = 0.88
   }
 
   // Standard A4 format with millimetre units
@@ -70,12 +71,12 @@ export const downloadInvoicePdf = async (invoice) => {
   const marginX = 12
 
   // 1. Header Banner
-  const headerHeight = Math.round(30 * (scale < 0.7 ? 0.75 : scale < 0.9 ? 0.88 : 1.0))
-  const topY = scale < 0.75 ? 6 : 10
+  const headerHeight = Math.round(28 * (scale < 0.7 ? 0.78 : scale < 0.85 ? 0.9 : 1.0))
+  const topY = scale < 0.75 ? 5 : 8
   doc.setFillColor(15, 23, 42)
   doc.roundedRect(marginX, topY, pageWidth - marginX * 2, headerHeight, 3, 3, 'F')
 
-  const logoSize = Math.round(22 * (scale < 0.75 ? 0.8 : 1.0))
+  const logoSize = Math.round(20 * (scale < 0.75 ? 0.8 : 1.0))
   if (logoDataUrl) {
     doc.addImage(logoDataUrl, 'PNG', marginX + 3.5, topY + 2.5, logoSize, logoSize)
   }
@@ -83,25 +84,25 @@ export const downloadInvoicePdf = async (invoice) => {
   const titleX = logoDataUrl ? marginX + logoSize + 8 : marginX + 6
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(14 * scale + 1)
-  doc.text('NH Wallpaper', titleX, topY + 7 * (scale < 0.8 ? 0.9 : 1.1))
+  doc.setFontSize(13 * scale + 1)
+  doc.text('NH Wallpaper', titleX, topY + 6.5 * (scale < 0.8 ? 0.9 : 1.1))
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8 * scale)
+  doc.setFontSize(7.5 * scale)
   doc.setTextColor(255, 255, 255)
-  doc.text('Wallpaper Wholesaler', titleX, topY + 12 * (scale < 0.8 ? 0.9 : 1.05))
+  doc.text('Wallpaper Wholesaler', titleX, topY + 11 * (scale < 0.8 ? 0.9 : 1.05))
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7 * scale)
+  doc.setFontSize(6.8 * scale)
   doc.setTextColor(226, 232, 240)
-  doc.text('Mob: +91 8828251111, +91 9930317192', titleX, topY + 16.5 * (scale < 0.8 ? 0.9 : 1.05))
+  doc.text('Mob: +91 8828251111, +91 9930317192', titleX, topY + 15 * (scale < 0.8 ? 0.9 : 1.05))
 
-  doc.setFontSize(6.2 * scale)
+  doc.setFontSize(6 * scale)
   doc.setTextColor(203, 213, 225)
   doc.text(
     'Rani Residency, Shop 02, Opp Apha Park Near Taj Darbar, Chirag Nagar, Ghatkopar (W), Mumbai 400086',
     titleX,
-    topY + 20.5 * (scale < 0.8 ? 0.9 : 1.05),
+    topY + 19 * (scale < 0.8 ? 0.9 : 1.05),
     { maxWidth: 75 }
   )
 
@@ -109,13 +110,13 @@ export const downloadInvoicePdf = async (invoice) => {
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(7.5 * scale)
-  doc.text('GSTIN: 27DXLPR9950M1ZB', pageWidth - marginX - 4, topY + 7 * (scale < 0.8 ? 0.9 : 1.1), {
+  doc.text('GSTIN: 27DXLPR9950M1ZB', pageWidth - marginX - 4, topY + 6.5 * (scale < 0.8 ? 0.9 : 1.1), {
     align: 'right',
   })
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9 * scale)
-  doc.text(`Invoice: ${invoice.invoiceNumber}`, pageWidth - marginX - 4, topY + 13 * (scale < 0.8 ? 0.9 : 1.05), {
+  doc.text(`Invoice: ${invoice.invoiceNumber}`, pageWidth - marginX - 4, topY + 12 * (scale < 0.8 ? 0.9 : 1.05), {
     align: 'right',
   })
 
@@ -133,36 +134,41 @@ export const downloadInvoicePdf = async (invoice) => {
   })
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7 * scale)
+  doc.setFontSize(6.8 * scale)
   doc.setTextColor(203, 213, 225)
-  doc.text(`Date: ${dateFormatted}`, pageWidth - marginX - 4, topY + 18 * (scale < 0.8 ? 0.9 : 1.05), {
+  doc.text(`Date: ${dateFormatted}`, pageWidth - marginX - 4, topY + 16.5 * (scale < 0.8 ? 0.9 : 1.05), {
     align: 'right',
   })
-  doc.text(`Time: ${timeFormatted}`, pageWidth - marginX - 4, topY + 22.5 * (scale < 0.8 ? 0.9 : 1.05), {
+  doc.text(`Time: ${timeFormatted}`, pageWidth - marginX - 4, topY + 20.5 * (scale < 0.8 ? 0.9 : 1.05), {
     align: 'right',
   })
 
   // 2. Customer Details Box
-  let currentY = topY + headerHeight + (scale < 0.75 ? 2.5 : 4)
-  const customerBoxHeight = Math.round(18 * (scale < 0.75 ? 0.75 : scale < 0.9 ? 0.88 : 1.0))
+  let currentY = topY + headerHeight + (scale < 0.75 ? 2 : 3.5)
+  const customerBoxHeight = Math.round(16 * (scale < 0.75 ? 0.78 : scale < 0.9 ? 0.88 : 1.0))
   doc.setFillColor(248, 250, 252)
   doc.setDrawColor(203, 213, 225)
   doc.roundedRect(marginX, currentY, pageWidth - marginX * 2, customerBoxHeight, 2, 2, 'FD')
 
+  // Vertical divider inside Customer Box
+  const custSplitX = marginX + (pageWidth - marginX * 2) * 0.58
+  doc.setDrawColor(226, 232, 240)
+  doc.line(custSplitX, currentY + 1.5, custSplitX, currentY + customerBoxHeight - 1.5)
+
   doc.setTextColor(100, 116, 139)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7 * scale)
-  doc.text('BILL TO CUSTOMER', marginX + 3.5, currentY + 4 * (scale < 0.8 ? 0.85 : 1))
-  doc.text('INVOICE SUMMARY', pageWidth - marginX - 70, currentY + 4 * (scale < 0.8 ? 0.85 : 1))
+  doc.setFontSize(6.8 * scale)
+  doc.text('BILL TO CUSTOMER', marginX + 3.5, currentY + 3.8 * (scale < 0.8 ? 0.85 : 1))
+  doc.text('INVOICE SUMMARY', custSplitX + 4, currentY + 3.8 * (scale < 0.8 ? 0.85 : 1))
 
   doc.setTextColor(15, 23, 42)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.5 * scale)
-  doc.text(`Name: ${invoice.customerName}`, marginX + 3.5, currentY + 9 * (scale < 0.8 ? 0.85 : 1))
+  doc.setFontSize(8 * scale)
+  doc.text(`Name: ${invoice.customerName}`, marginX + 3.5, currentY + 8.2 * (scale < 0.8 ? 0.85 : 1))
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5 * scale)
-  doc.text(`Mobile: +91 ${invoice.mobileNumber}`, marginX + 3.5, currentY + 13.5 * (scale < 0.8 ? 0.85 : 1))
+  doc.setFontSize(7.2 * scale)
+  doc.text(`Mobile: +91 ${invoice.mobileNumber}`, marginX + 3.5, currentY + 12.5 * (scale < 0.8 ? 0.85 : 1))
 
   const billerDisplayName = invoice.billerName || invoice.createdBy?.fullName || invoice.createdBy?.email || 'Admin'
 
@@ -170,70 +176,89 @@ export const downloadInvoicePdf = async (invoice) => {
   const qtyCount = invoice.totalQuantity || items.reduce((acc, i) => acc + (Number(i.quantity) || 0), 0)
   doc.text(
     `Items: ${itemsCount} | Qty: ${qtyCount} Rolls`,
-    pageWidth - marginX - 70,
-    currentY + 9 * (scale < 0.8 ? 0.85 : 1)
+    custSplitX + 4,
+    currentY + 8.2 * (scale < 0.8 ? 0.85 : 1)
   )
   doc.text(
     `Billed By: ${billerDisplayName}`,
-    pageWidth - marginX - 70,
-    currentY + 13.5 * (scale < 0.8 ? 0.85 : 1)
+    custSplitX + 4,
+    currentY + 12.5 * (scale < 0.8 ? 0.85 : 1)
   )
 
-  // 3. Table Header & Items
-  currentY += customerBoxHeight + (scale < 0.75 ? 2.5 : 4)
-  const headerRowHeight = Math.max(5.5, 8.5 * scale)
+  // 3. Table Header & Items with Vertical Column Border Lines
+  currentY += customerBoxHeight + (scale < 0.75 ? 2 : 3)
+  const headerRowHeight = Math.max(5, 7.5 * scale)
+  const tableStartY = currentY
+  const tableWidth = pageWidth - marginX * 2
+
+  // Column Positions (X coordinates)
+  // Col 0: Sr (marginX to col1X)
+  // Col 1: Catalogue (col1X to col2X)
+  // Col 2: Pattern No (col2X to col3X)
+  // Col 3: Qty (col3X to col4X)
+  // Col 4: Rate (col4X to col5X)
+  // Col 5: Amount (col5X to pageWidth - marginX)
+  const col1X = marginX + 13 // Sr ends
+  const col2X = marginX + 76 // Catalogue ends
+  const col3X = marginX + 116 // Pattern No ends
+  const col4X = marginX + 136 // Qty ends
+  const col5X = marginX + 162 // Rate ends
+  const colRightX = pageWidth - marginX
+
+  // Header background
   doc.setFillColor(241, 245, 249)
   doc.setDrawColor(203, 213, 225)
-  doc.roundedRect(marginX, currentY, pageWidth - marginX * 2, headerRowHeight, 1.2, 1.2, 'FD')
+  doc.roundedRect(marginX, currentY, tableWidth, headerRowHeight, 1, 1, 'FD')
 
   doc.setTextColor(15, 23, 42)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.8 * scale)
+  doc.setFontSize(7.5 * scale)
   const textYOffset = headerRowHeight * 0.7
-  doc.text('Sr', marginX + 3, currentY + textYOffset)
-  doc.text('Catalogue', marginX + 16, currentY + textYOffset)
-  doc.text('Pattern No.', marginX + 80, currentY + textYOffset)
-  doc.text('Qty', marginX + 120, currentY + textYOffset)
-  doc.text('Rate', marginX + 145, currentY + textYOffset)
-  doc.text('Amount', pageWidth - marginX - 4, currentY + textYOffset, { align: 'right' })
+  doc.text('Sr', marginX + 2.5, currentY + textYOffset)
+  doc.text('Catalogue', col1X + 2.5, currentY + textYOffset)
+  doc.text('Pattern No.', col2X + 2.5, currentY + textYOffset)
+  doc.text('Qty', col3X + 2.5, currentY + textYOffset)
+  doc.text('Rate', col4X + 2.5, currentY + textYOffset)
+  doc.text('Amount', colRightX - 3, currentY + textYOffset, { align: 'right' })
 
   currentY += headerRowHeight
-  const rowHeight = Math.max(4.6, 8.2 * scale)
+  const rowHeight = Math.max(4.2, 7.2 * scale)
 
   items.forEach((item, idx) => {
+    // Horizontal row line
     doc.setDrawColor(226, 232, 240)
     doc.line(
       marginX,
       currentY + rowHeight,
-      pageWidth - marginX,
+      colRightX,
       currentY + rowHeight
     )
 
     doc.setTextColor(71, 85, 105)
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7.5 * scale)
+    doc.setFontSize(7.2 * scale)
     const rowTextY = currentY + rowHeight * 0.72
-    doc.text(String(idx + 1), marginX + 3, rowTextY)
+    doc.text(String(idx + 1), marginX + 2.5, rowTextY)
 
     doc.setTextColor(15, 23, 42)
     doc.setFont('helvetica', 'bold')
     const catLabel = formatCatalogueLabel(item.catalogueName || item.catalogueSlug)
     doc.text(
-      catLabel.length > 34 ? catLabel.substring(0, 33) + '…' : catLabel,
-      marginX + 16,
+      catLabel.length > 30 ? catLabel.substring(0, 29) + '…' : catLabel,
+      col1X + 2.5,
       rowTextY
     )
 
-    doc.text(String(item.patternNumber), marginX + 80, rowTextY)
+    doc.text(String(item.patternNumber), col2X + 2.5, rowTextY)
 
     doc.setFont('helvetica', 'normal')
-    doc.text(String(item.quantity), marginX + 120, rowTextY)
-    doc.text(formatNumberPdf(item.rate), marginX + 145, rowTextY)
+    doc.text(String(item.quantity), col3X + 2.5, rowTextY)
+    doc.text(formatNumberPdf(item.rate), col4X + 2.5, rowTextY)
 
     doc.setFont('helvetica', 'bold')
     doc.text(
       formatNumberPdf(item.subtotal),
-      pageWidth - marginX - 4,
+      colRightX - 3,
       rowTextY,
       { align: 'right' }
     )
@@ -241,13 +266,26 @@ export const downloadInvoicePdf = async (invoice) => {
     currentY += rowHeight
   })
 
+  const tableEndY = currentY
+
+  // Draw Vertical Column Divider Lines across Header and all rows
+  doc.setDrawColor(203, 213, 225)
+  doc.line(col1X, tableStartY, col1X, tableEndY)
+  doc.line(col2X, tableStartY, col2X, tableEndY)
+  doc.line(col3X, tableStartY, col3X, tableEndY)
+  doc.line(col4X, tableStartY, col4X, tableEndY)
+  doc.line(col5X, tableStartY, col5X, tableEndY)
+  // Outer table boundary lines
+  doc.line(marginX, tableStartY, marginX, tableEndY)
+  doc.line(colRightX, tableStartY, colRightX, tableEndY)
+
   // 4. Totals Summary & Signatory
-  currentY += scale < 0.75 ? 2.5 : 4
-  const summaryBoxWidth = Math.round(72 * (scale < 0.75 ? 0.9 : 1.0))
+  currentY += scale < 0.75 ? 2 : 3
+  const summaryBoxWidth = Math.round(70 * (scale < 0.75 ? 0.9 : 1.0))
   const summaryBoxX = pageWidth - marginX - summaryBoxWidth
 
   const hasGst = Boolean(invoice.taxRate && invoice.taxRate > 0)
-  const summaryBoxHeight = hasGst ? Math.max(20, 32 * scale) : Math.max(16, 25 * scale)
+  const summaryBoxHeight = hasGst ? Math.max(18, 28 * scale) : Math.max(15, 23 * scale)
   doc.setFillColor(248, 250, 252)
   doc.setDrawColor(203, 213, 225)
   doc.roundedRect(summaryBoxX, currentY, summaryBoxWidth, summaryBoxHeight, 1.5, 1.5, 'FD')
@@ -257,7 +295,7 @@ export const downloadInvoicePdf = async (invoice) => {
 
   doc.setTextColor(71, 85, 105)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5 * scale)
+  doc.setFontSize(7.2 * scale)
   doc.text('Subtotal:', summaryBoxX + 3.5, sY)
   doc.setTextColor(15, 23, 42)
   doc.setFont('helvetica', 'bold')
@@ -275,7 +313,7 @@ export const downloadInvoicePdf = async (invoice) => {
   sY += lineSpacing
   doc.setTextColor(185, 28, 28)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.5 * scale)
+  doc.setFontSize(7.2 * scale)
   doc.text(discountLabel, summaryBoxX + 3.5, sY)
   doc.text(
     `- ${formatCurrencyPdf(invoice.discountAmount || 0)}`,
@@ -303,7 +341,7 @@ export const downloadInvoicePdf = async (invoice) => {
 
   doc.setTextColor(15, 23, 42)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9 * scale)
+  doc.setFontSize(8.5 * scale)
   doc.text('Final Total:', summaryBoxX + 3.5, sY)
   doc.text(
     formatCurrencyPdf(invoice.finalTotal),
@@ -315,24 +353,24 @@ export const downloadInvoicePdf = async (invoice) => {
   // Signatory
   const sigY = currentY + summaryBoxHeight + 1.5
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.5 * scale)
+  doc.setFontSize(8 * scale)
   doc.setTextColor(15, 23, 42)
-  doc.text('For NH Wallpaper', pageWidth - marginX - 3.5, sigY + 3 * scale, { align: 'right' })
+  doc.text('For NH Wallpaper', pageWidth - marginX - 3.5, sigY + 2.5 * scale, { align: 'right' })
 
   if (billerDisplayName) {
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7.5 * scale)
+    doc.setFontSize(7.2 * scale)
     doc.setTextColor(30, 41, 59)
-    doc.text(billerDisplayName, pageWidth - marginX - 3.5, sigY + 7 * scale, { align: 'right' })
+    doc.text(billerDisplayName, pageWidth - marginX - 3.5, sigY + 6.2 * scale, { align: 'right' })
   }
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(6.8 * scale)
+  doc.setFontSize(6.5 * scale)
   doc.setTextColor(100, 116, 139)
-  doc.text('Authorised Signatory', pageWidth - marginX - 3.5, sigY + 11 * scale, { align: 'right' })
+  doc.text('Authorised Signatory', pageWidth - marginX - 3.5, sigY + 9.8 * scale, { align: 'right' })
 
   // 5. Terms & Conditions (at bottom of single page)
-  const bottomTermsY = pageHeight - (scale < 0.75 ? 16 : 22)
+  const bottomTermsY = pageHeight - (scale < 0.75 ? 15 : 20)
 
   doc.setDrawColor(203, 213, 225)
   doc.setLineWidth(0.3)
@@ -340,22 +378,22 @@ export const downloadInvoicePdf = async (invoice) => {
 
   doc.setTextColor(15, 23, 42)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.5 * scale)
-  doc.text('Terms & Conditions :', marginX, bottomTermsY + 2 * scale)
+  doc.setFontSize(7 * scale)
+  doc.text('Terms & Conditions :', marginX, bottomTermsY + 1.8 * scale)
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(6.5 * scale)
+  doc.setFontSize(6.2 * scale)
   doc.setTextColor(71, 85, 105)
-  const termGap = scale < 0.75 ? 3.2 : 3.8
-  doc.text('•  Subject to Mumbai Jurisdiction.', marginX, bottomTermsY + termGap + 1)
-  doc.text('•  No complaint will be entertained after acceptance of the delivery.', marginX, bottomTermsY + termGap * 2 + 1)
-  doc.text('•  Goods once sold will not be taken back or exchanged.', marginX, bottomTermsY + termGap * 3 + 1)
-  doc.text('•  Our responsibility ceses after delivery of goods to the carriers.', marginX, bottomTermsY + termGap * 4 + 1)
+  const termGap = scale < 0.75 ? 3.0 : 3.5
+  doc.text('•  Subject to Mumbai Jurisdiction.', marginX, bottomTermsY + termGap + 0.8)
+  doc.text('•  No complaint will be entertained after acceptance of the delivery.', marginX, bottomTermsY + termGap * 2 + 0.8)
+  doc.text('•  Goods once sold will not be taken back or exchanged.', marginX, bottomTermsY + termGap * 3 + 0.8)
+  doc.text('•  Our responsibility ceses after delivery of goods to the carriers.', marginX, bottomTermsY + termGap * 4 + 0.8)
 
-  doc.setFontSize(7 * scale)
+  doc.setFontSize(6.8 * scale)
   doc.setTextColor(100, 116, 139)
   doc.setFont('helvetica', 'bold')
-  doc.text('Thank you for your business! — NH Wallpaper', pageWidth - marginX, bottomTermsY + termGap * 4 + 1, { align: 'right' })
+  doc.text('Thank you for your business! — NH Wallpaper', pageWidth - marginX, bottomTermsY + termGap * 4 + 0.8, { align: 'right' })
 
   doc.save(`${invoice.invoiceNumber}.pdf`)
 }
@@ -553,33 +591,31 @@ export const printInvoiceDocument = (invoice) => {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 8px;
+      border: 1px solid #cbd5e1;
     }
     table.inv-table th {
       background: #f1f5f9 !important;
-      border-top: 1px solid #cbd5e1;
-      border-bottom: 1px solid #cbd5e1;
+      border: 1px solid #cbd5e1;
       color: #0f172a;
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 700;
-      padding: 5px 4px;
+      padding: 5px 6px;
       text-align: left;
     }
-    table.inv-table th:first-child {
-      border-left: 1px solid #cbd5e1;
-      border-top-left-radius: 4px;
-      border-bottom-left-radius: 4px;
-    }
     table.inv-table th:last-child {
-      border-right: 1px solid #cbd5e1;
-      border-top-right-radius: 4px;
-      border-bottom-right-radius: 4px;
       text-align: right;
     }
     table.inv-table td {
-      padding: 5px 4px;
-      border-bottom: 1px solid #e2e8f0;
-      font-size: 10.5px;
+      padding: 5px 6px;
+      border: 1px solid #e2e8f0;
+      font-size: 10px;
       color: #0f172a;
+    }
+    table.inv-table td:first-child {
+      border-left: 1px solid #cbd5e1;
+    }
+    table.inv-table td:last-child {
+      border-right: 1px solid #cbd5e1;
     }
 
     /* Calculations & Totals */

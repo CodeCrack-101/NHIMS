@@ -5,6 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
+    "build": "echo 'No build needed for backend'",
     "start": "node server.js",
     "dev": "node --watch server.js",
     "seed": "node utils/seedAdmin.js",
