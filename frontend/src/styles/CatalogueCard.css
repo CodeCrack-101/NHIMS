@@ -213,3 +213,72 @@
 .catalogue-card-btn:active {
   transform: translateY(0.5px);
 }
+
+/* ========================================================
+   Responsive Styling for Catalogue Cards
+   ======================================================== */
+@media (max-width: 600px) {
+  .catalogue-card {
+    padding: 16px 14px;
+    gap: 12px;
+  }
+
+  .catalogue-badge {
+    padding: 4px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+    max-width: 80%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .catalogue-card-title {
+    font-size: 16px;
+  }
+
+  .catalogue-card-metrics {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .catalogue-metric-label {
+    font-size: 11px;
+  }
+
+  .catalogue-metric-value {
+    font-size: 16px;
+  }
+
+  .catalogue-card-alert-row {
+    gap: 6px;
+  }
+
+  .card-alert-btn {
+    padding: 6px 8px;
+    font-size: 10.5px;
+    min-width: 0;
+  }
+
+  .card-alert-btn span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-alert-btn strong {
+    flex-shrink: 0;
+    margin-left: 4px;
+  }
+
+  .catalogue-card-btn {
+    height: 38px;
+    font-size: 12px;
+    padding: 0 12px;
+  }
+
+  .catalogue-card-btn span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

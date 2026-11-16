@@ -128,3 +128,52 @@
   align-items: center;
   justify-content: center;
 }
+
+/* ==========================================
+   Responsive Overhaul for Roll Details
+   ========================================== */
+@media (max-width: 900px) {
+  .roll-details-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .catalogue-pill-tabs {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .catalogue-pill-tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 7px 14px;
+    font-size: 12.5px;
+  }
+
+  .roll-details-search-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .roll-catalogue-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .roll-details-heading {
+    font-size: 20px;
+  }
+
+  .roll-catalogue-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}

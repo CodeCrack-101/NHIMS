@@ -466,3 +466,70 @@
   background-color: #dcfce7;
   color: #15803d;
 }
+
+/* ==========================================================================
+   Responsive Overrides for Mobile & Tablet Devices
+   ========================================================================== */
+@media (max-width: 900px) {
+  .reports-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .reports-export-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .reports-export-actions button {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .reports-nav-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .reports-tab-pill {
+    white-space: nowrap;
+    padding: 6px 14px;
+    font-size: 12.5px;
+  }
+
+  .reports-filter-bar {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .reports-kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .reports-kpi-card {
+    padding: 12px 14px !important;
+  }
+
+  .reports-kpi-value {
+    font-size: 20px !important;
+  }
+
+  .reports-overview-split {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .reports-section-card {
+    padding: 14px !important;
+    overflow-x: auto;
+  }
+
+  .reports-table {
+    min-width: 650px;
+  }
+}

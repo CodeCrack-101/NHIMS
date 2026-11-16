@@ -27,6 +27,8 @@ export function Reports() {
   const [customEnd, setCustomEnd] = useState('')
   const [selectedCatalogue, setSelectedCatalogue] = useState('ALL')
   const [selectedPattern, setSelectedPattern] = useState('ALL')
+  const [selectedBiller, setSelectedBiller] = useState('ALL')
+  const [billersList] = useState(['Pooja', 'Sabira', 'Shifa', 'Sapna'])
 
   // Dynamic dropdowns
   const [catalogues, setCatalogues] = useState([])
@@ -79,7 +81,6 @@ export function Reports() {
     patternNumber: 'ALL',
   })
   const [historicalInvoices, setHistoricalInvoices] = useState([])
-  const [selectedArchivedInvoice, setSelectedArchivedInvoice] = useState(null)
 
   // Load catalogues for dropdown
   useEffect(() => {
@@ -121,6 +122,7 @@ export function Reports() {
         customEnd: filterType === 'custom' ? customEnd : undefined,
         catalogue: selectedCatalogue,
         patternNumber: selectedPattern,
+        billerName: selectedBiller !== 'ALL' ? selectedBiller : undefined,
       })
       if (res.data?.success) {
         setReportData(res.data.data)
@@ -140,6 +142,7 @@ export function Reports() {
     customEnd,
     selectedCatalogue,
     selectedPattern,
+    selectedBiller,
     showToast,
   ])
 
@@ -153,6 +156,7 @@ export function Reports() {
           customEnd: filterType === 'custom' ? customEnd : undefined,
           catalogue: selectedCatalogue,
           patternNumber: selectedPattern,
+          billerName: selectedBiller !== 'ALL' ? selectedBiller : undefined,
           page,
           limit: 15,
         })
@@ -168,7 +172,7 @@ export function Reports() {
         // Silently handle
       }
     },
-    [filterType, customStart, customEnd, selectedCatalogue, selectedPattern]
+    [filterType, customStart, customEnd, selectedCatalogue, selectedPattern, selectedBiller]
   )
 
   // Fetch Archive History
@@ -202,6 +206,7 @@ export function Reports() {
             inv.items.map((it) => ({
               invoiceNumber: inv.invoiceNumber,
               customerName: inv.customerName,
+              billerName: inv.billerName || 'Admin',
               ...it,
             }))
           ),
@@ -219,7 +224,7 @@ export function Reports() {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `NH_Report_${filterType}_${Date.now()}.xls`
+        a.download = `NH_Report_${filterType}_${selectedBiller}_${Date.now()}.xls`
         a.click()
         URL.revokeObjectURL(url)
       })
@@ -227,7 +232,7 @@ export function Reports() {
       showToast({
         type: 'success',
         title: 'Excel Downloaded',
-        message: 'Report exported with 8 comprehensive worksheets.',
+        message: 'Report exported with current filters applied.',
       })
     } catch (err) {
       showToast({
@@ -248,11 +253,12 @@ export function Reports() {
             filterType,
             catalogue: selectedCatalogue,
             patternNumber: selectedPattern,
+            billerName: selectedBiller,
           },
           summary: reportData.summary,
           invoices,
         })
-        doc.save(`NH_Report_${filterType}_${Date.now()}.pdf`)
+        doc.save(`NH_Report_${filterType}_${selectedBiller}_${Date.now()}.pdf`)
       })
       showToast({
         type: 'success',
@@ -285,7 +291,6 @@ export function Reports() {
       const pkg = res.data.data
       setCurrentArchivePackage(pkg)
 
-      // Build complete ZIP
       const zippedU8 = buildQuarterlyZipPackage({
         archiveId: pkg.archiveId,
         manifest: pkg.manifest,
@@ -301,7 +306,6 @@ export function Reports() {
         },
       })
 
-      // Trigger direct Windows download of ZIP
       const blob = new Blob([zippedU8], { type: 'application/zip' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -415,28 +419,6 @@ export function Reports() {
     }
   }
 
-  // Historical Archive Search
-  const handleHistoricalSearch = async () => {
-    try {
-      const res = await reportsService.searchArchivedInvoices({
-        ...historicalSearch,
-        catalogue:
-          historicalSearch.catalogue === 'ALL'
-            ? undefined
-            : historicalSearch.catalogue,
-        patternNumber:
-          historicalSearch.patternNumber === 'ALL'
-            ? undefined
-            : historicalSearch.patternNumber,
-      })
-      if (res.data?.success) {
-        setHistoricalInvoices(res.data.data.records || [])
-      }
-    } catch {
-      // Ignore
-    }
-  }
-
   // Restore Archive
   const handleRestoreArchive = async (archiveId) => {
     if (
@@ -471,9 +453,9 @@ export function Reports() {
       {/* Module Header */}
       <div className="reports-header">
         <div>
-          <h1 className="reports-title">Reports & Quarterly Archiving</h1>
+          <h1 className="reports-title">Reports &amp; Sales Insights</h1>
           <p className="reports-subtitle">
-            Real-time sales intelligence, pattern performance & business audit records
+            Employee performance, bill statement &amp; stock revenue analytics
           </p>
         </div>
 
@@ -524,7 +506,7 @@ export function Reports() {
         ))}
       </div>
 
-      {/* FILTER BAR - Always active for reporting sections */}
+      {/* FILTER BAR - Clean, balanced single row */}
       {activeTab !== 'quarterly_archive' && activeTab !== 'archive_history' && (
         <div className="reports-filter-bar">
           <div className="reports-filter-group">
@@ -583,7 +565,7 @@ export function Reports() {
                   badgeTone: (c.totalStock ?? 0) > 0 ? 'success' : 'danger',
                 })),
               ]}
-              placeholder="Type or select catalogue..."
+              placeholder="All Catalogues"
             />
           </div>
 
@@ -608,6 +590,22 @@ export function Reports() {
                   ? 'Select catalogue first'
                   : 'Type or select pattern...'
               }
+            />
+          </div>
+
+          <div className="reports-filter-group">
+            <label className="reports-filter-label">BILLED BY (EMPLOYEE)</label>
+            <CustomSelect
+              value={selectedBiller}
+              onChange={(val) => setSelectedBiller(val)}
+              options={[
+                { value: 'ALL', label: 'All Employees' },
+                ...billersList.map((bName) => ({
+                  value: bName,
+                  label: `👤 ${bName}`,
+                })),
+              ]}
+              placeholder="All Employees"
             />
           </div>
         </div>
@@ -732,12 +730,20 @@ export function Reports() {
       {/* TAB CONTENT 2: INVOICE REPORTS */}
       {activeTab === 'invoices' && (
         <div className="reports-section-card">
-          <h2 className="reports-section-heading">Detailed Invoices Statement</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <h2 className="reports-section-heading" style={{ margin: 0 }}>Detailed Invoices Statement</h2>
+            {selectedBiller !== 'ALL' && (
+              <span style={{ fontSize: '13px', fontWeight: '700', color: '#2563eb', background: '#eff6ff', padding: '4px 10px', borderRadius: '6px' }}>
+                Showing invoices by 👤 {selectedBiller}
+              </span>
+            )}
+          </div>
           <table className="reports-table">
             <thead>
               <tr>
                 <th>Invoice Number</th>
                 <th>Date</th>
+                <th>Billed By</th>
                 <th>Customer</th>
                 <th>Mobile</th>
                 <th>Rolls</th>
@@ -750,10 +756,15 @@ export function Reports() {
               {invoices.map((inv) => (
                 <tr key={inv._id}>
                   <td><strong>{inv.invoiceNumber}</strong></td>
-                  <td>{new Date(inv.invoiceDate).toLocaleDateString()}</td>
+                  <td>{new Date(inv.invoiceDate || inv.createdAt).toLocaleDateString('en-IN')}</td>
+                  <td>
+                    <span style={{ fontWeight: '700', color: '#1e293b', background: '#f1f5f9', padding: '2px 8px', borderRadius: '4px' }}>
+                      👤 {inv.billerName || inv.createdBy?.fullName || 'Admin'}
+                    </span>
+                  </td>
                   <td>{inv.customerName}</td>
-                  <td>{inv.mobileNumber}</td>
-                  <td>{inv.totalQuantity}</td>
+                  <td>+91 {inv.mobileNumber}</td>
+                  <td>{inv.totalQuantity} Rolls</td>
                   <td>₹{inv.subtotal}</td>
                   <td>₹{inv.discountAmount}</td>
                   <td><strong>₹{inv.finalTotal}</strong></td>
@@ -761,7 +772,7 @@ export function Reports() {
               ))}
               {invoices.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center">No invoices match selected filters.</td>
+                  <td colSpan={9} className="text-center">No invoices match selected filters.</td>
                 </tr>
               )}
             </tbody>
@@ -822,7 +833,7 @@ export function Reports() {
       {/* TAB CONTENT 4: PATTERN-WISE REPORTS */}
       {activeTab === 'patterns' && (
         <div className="reports-section-card">
-          <h2 className="reports-section-heading">Pattern-wise Volume & Revenue</h2>
+          <h2 className="reports-section-heading">Pattern-wise Volume &amp; Revenue</h2>
           <table className="reports-table">
             <thead>
               <tr>
@@ -880,7 +891,7 @@ export function Reports() {
       {activeTab === 'quarterly_archive' && (
         <div className="reports-section-card archive-flow-card">
           <div className="archive-flow-header">
-            <h2 className="reports-section-heading">Manual Quarterly Archive & Active Database Cleanup</h2>
+            <h2 className="reports-section-heading">Manual Quarterly Archive &amp; Active Database Cleanup</h2>
             <p className="archive-notice">
               This process is strictly manual and administrator-controlled. No scheduled or automated deletions ever take place.
             </p>
@@ -890,7 +901,7 @@ export function Reports() {
           <div className="archive-step-box">
             <div className="step-badge">STEP 1</div>
             <div className="step-content">
-              <h3>Export & Download 3-Month Data</h3>
+              <h3>Export &amp; Download 3-Month Data</h3>
               <p>Select the quarter date range to compile complete Excel, PDF, JSON, and ZIP packages.</p>
               <div className="archive-date-inputs">
                 <div>
@@ -996,7 +1007,7 @@ export function Reports() {
       {/* TAB CONTENT 7: ARCHIVE HISTORY & RESTORE */}
       {activeTab === 'archive_history' && (
         <div className="reports-section-card">
-          <h2 className="reports-section-heading">Historical Archive Registry & Search</h2>
+          <h2 className="reports-section-heading">Historical Archive Registry &amp; Search</h2>
           <table className="reports-table">
             <thead>
               <tr>

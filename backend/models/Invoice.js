@@ -137,6 +137,12 @@ const invoiceSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    billerName: {
+      type: String,
+      trim: true,
+      default: '',
+      index: true,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

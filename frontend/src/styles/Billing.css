@@ -886,3 +886,77 @@
   padding: 12px 16px;
   font-size: 13px;
 }
+
+/* ==========================================================================
+   Responsive Overrides for Mobile & Tablet Devices
+   ========================================================================== */
+@media (max-width: 900px) {
+  .billing-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .billing-meta-pills {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .billing-customer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .billing-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .billing-products-table {
+    min-width: 680px;
+  }
+
+  .billing-bottom-summary {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .billing-calculations-card {
+    width: 100% !important;
+  }
+
+  .billing-form-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .billing-form-actions button {
+    width: 100%;
+  }
+
+  .billing-modal-card {
+    width: 95vw !important;
+    max-height: 92vh !important;
+    padding: 16px !important;
+  }
+
+  .invoice-preview-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .invoice-preview-meta {
+    text-align: left !important;
+  }
+
+  .billing-modal-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .billing-modal-actions button {
+    flex: 1 1 calc(50% - 8px);
+    font-size: 12px !important;
+  }
+}

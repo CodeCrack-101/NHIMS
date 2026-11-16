@@ -23,6 +23,7 @@ export function Dashboard() {
   const [pageLoading, setPageLoading] = useState(true)
   const [catalogues, setCatalogues] = useState([])
   const [stockAlertModal, setStockAlertModal] = useState(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const isRollDetailsRoute = location.pathname.startsWith('/roll-details')
   const isAddProductsRoute = location.pathname.startsWith('/add-products')
@@ -658,7 +659,26 @@ export function Dashboard() {
 
   return (
     <div className="dashboard-layout">
-      <Sidebar />
+      <header className="mobile-topbar">
+        <button
+          type="button"
+          className="mobile-hamburger-btn"
+          onClick={() => setMobileMenuOpen(true)}
+          aria-label="Open Navigation"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <div className="mobile-brand-title">
+          <img src="/Logo.png" alt="NH Wallpaper" className="mobile-brand-logo" />
+          <span>NH Wallpaper</span>
+        </div>
+      </header>
+
+      <Sidebar mobileOpen={mobileMenuOpen} onCloseMobile={() => setMobileMenuOpen(false)} />
       <main className="dashboard-content">{renderMainContent()}</main>
     </div>
   )

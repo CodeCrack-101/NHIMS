@@ -160,3 +160,53 @@
   gap: 10px;
   margin-top: 6px;
 }
+
+/* ==========================================
+   Responsive Overhaul for Add Products
+   ========================================== */
+@media (max-width: 900px) {
+  .add-products-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .add-products-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .add-products-actions .btn-primary-dark,
+  .add-products-actions .btn-secondary-outline {
+    width: 100%;
+    text-align: center;
+  }
+
+  .add-products-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .add-products-heading {
+    font-size: 20px;
+  }
+
+  .add-products-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .modal-card {
+    padding: 18px 16px;
+  }
+
+  .modal-btn-row {
+    flex-direction: column;
+  }
+
+  .modal-btn-row button {
+    width: 100%;
+  }
+}

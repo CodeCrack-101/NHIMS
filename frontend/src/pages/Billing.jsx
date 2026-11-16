@@ -309,9 +309,18 @@ export function Billing() {
     })
   )
 
-  // Customer info
+  // Customer info & Biller info
   const [customerName, setCustomerName] = useState('')
   const [mobileNumber, setMobileNumber] = useState('')
+  const [billerName, setBillerName] = useState(() => {
+    return localStorage.getItem('nh_last_biller') || 'Pooja'
+  })
+  const [billerOptions, setBillerOptions] = useState(() => {
+    const saved = localStorage.getItem('nh_shop_billers')
+    return saved ? JSON.parse(saved) : ['Pooja', 'Sabira', 'Shifa', 'Sapna']
+  })
+  const [newBillerInput, setNewBillerInput] = useState('')
+  const [showAddBiller, setShowAddBiller] = useState(false)
   const [customerErrors, setCustomerErrors] = useState({})
 
   // Billing rows
@@ -785,6 +794,24 @@ export function Billing() {
     return true
   }
 
+  const handleSelectBiller = (val) => {
+    setBillerName(val)
+    localStorage.setItem('nh_last_biller', val)
+  }
+
+  const handleAddCustomBiller = () => {
+    const trimmed = newBillerInput.trim()
+    if (!trimmed) return
+    if (!billerOptions.includes(trimmed)) {
+      const updated = [...billerOptions, trimmed]
+      setBillerOptions(updated)
+      localStorage.setItem('nh_shop_billers', JSON.stringify(updated))
+    }
+    handleSelectBiller(trimmed)
+    setNewBillerInput('')
+    setShowAddBiller(false)
+  }
+
   const handleInitiateGenerateBill = (e) => {
     e.preventDefault()
     if (validateBillingForm()) {
@@ -800,6 +827,7 @@ export function Billing() {
       const payload = {
         customerName: customerName.trim(),
         mobileNumber: mobileNumber.trim(),
+        billerName: billerName.trim(),
         items: rows.map((r) => ({
           catalogueId: r.catalogueId,
           patternNumber: r.patternNumber,
@@ -934,8 +962,8 @@ export function Billing() {
         onSubmit={handleInitiateGenerateBill}
         noValidate
       >
-        {/* TOP: Customer Name | Mobile Number */}
-        <div className="billing-customer-grid">
+        {/* TOP: Customer Name | Mobile Number | Billed By (Employee) */}
+        <div className="billing-customer-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
           <div className="billing-field">
             <label htmlFor="billing-customer-name">
               Customer Name <span className="req-star">*</span>
@@ -983,6 +1011,77 @@ export function Billing() {
               <span className="field-err-msg">
                 {customerErrors.mobileNumber}
               </span>
+            )}
+          </div>
+
+          <div className="billing-field">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label htmlFor="billing-employee-select">
+                Billed By (Employee) <span className="req-star">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowAddBiller((prev) => !prev)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#2563eb',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                {showAddBiller ? 'Cancel' : '+ Add Name'}
+              </button>
+            </div>
+
+            {showAddBiller ? (
+              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                <input
+                  type="text"
+                  placeholder="Enter employee name"
+                  value={newBillerInput}
+                  onChange={(e) => setNewBillerInput(e.target.value)}
+                  style={{ flex: 1, padding: '7px 10px', fontSize: '13px' }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddCustomBiller()
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="billing-glass-btn"
+                  onClick={handleAddCustomBiller}
+                  style={{ padding: '7px 12px', fontSize: '12px' }}
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <select
+                id="billing-employee-select"
+                value={billerName}
+                onChange={(e) => handleSelectBiller(e.target.value)}
+                style={{
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  fontSize: '13.5px',
+                  fontWeight: '600',
+                  color: '#0f172a',
+                  width: '100%',
+                }}
+              >
+                {billerOptions.map((name) => (
+                  <option key={name} value={name}>
+                    👤 {name}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
         </div>
@@ -1462,7 +1561,8 @@ export function Billing() {
             <h3 className="billing-modal-title">Confirm Bill Generation</h3>
             <p className="billing-modal-desc">
               This will generate an official invoice for{' '}
-              <strong>{customerName.trim()}</strong> (+91 {mobileNumber}) and
+              <strong>{customerName.trim()}</strong> (+91 {mobileNumber}) by{' '}
+              <strong style={{ color: '#2563eb' }}>{billerName}</strong> and
               automatically deduct{' '}
               <strong>{calculations.totalQuantity} rolls</strong> from MongoDB
               inventory.
@@ -1592,7 +1692,8 @@ export function Billing() {
               <div>
                 <span>Billed By:</span>{' '}
                 <strong>
-                  {selectedInvoiceModal.createdBy?.fullName ||
+                  {selectedInvoiceModal.billerName ||
+                    selectedInvoiceModal.createdBy?.fullName ||
                     selectedInvoiceModal.createdBy?.email ||
                     'Admin'}
                 </strong>
@@ -1625,7 +1726,7 @@ export function Billing() {
                       <td>
                         <strong>{it.patternNumber}</strong>
                       </td>
-                      <td>{it.quantity} Rolls</td>
+                      <td>{it.quantity}</td>
                       <td>{formatINR(it.rate)}</td>
                       <td style={{ textAlign: 'right' }}>
                         <strong>{formatINR(it.subtotal)}</strong>
@@ -1668,7 +1769,13 @@ export function Billing() {
 
                 <div style={{ marginTop: '18px', textAlign: 'right' }}>
                   <p style={{ margin: 0, fontSize: '12.5px', fontWeight: '800', color: '#0f172a' }}>For NH Wallpaper</p>
-                  <p style={{ margin: '24px 0 0', fontSize: '11px', color: '#64748b' }}>Authorised Signatory</p>
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', fontWeight: '700', color: '#1e293b' }}>
+                    {selectedInvoiceModal.billerName ||
+                      selectedInvoiceModal.createdBy?.fullName ||
+                      selectedInvoiceModal.createdBy?.email ||
+                      'Admin'}
+                  </p>
+                  <p style={{ margin: '6px 0 0', fontSize: '11px', color: '#64748b' }}>Authorised Signatory</p>
                 </div>
               </div>
             </div>

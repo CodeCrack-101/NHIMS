@@ -6,6 +6,7 @@ import {
   searchAndListInvoices,
   getInvoiceById,
   generateNextInvoiceNumber,
+  getDistinctBillers,
 } from '../services/billing.service.js'
 
 export const listBillingCataloguesController = async (_req, res, next) => {
@@ -62,6 +63,7 @@ export const createBillController = async (req, res, next) => {
       discountValue,
       taxRate,
       idempotencyKey,
+      billerName,
     } = req.body
 
     const headerIdempotencyKey = req.headers['x-idempotency-key']
@@ -74,6 +76,7 @@ export const createBillController = async (req, res, next) => {
       discountValue,
       taxRate: Number(taxRate) || 0,
       idempotencyKey: idempotencyKey || headerIdempotencyKey || null,
+      billerName: billerName || (req.user?.fullName ? req.user.fullName : ''),
       userId: req.user.id,
       req,
     })
@@ -97,21 +100,28 @@ export const createBillController = async (req, res, next) => {
 
 export const listInvoicesController = async (req, res, next) => {
   try {
-    const { search, date, startDate, endDate, catalogue, minPrice, maxPrice, page, limit } = req.query
-    const data = await searchAndListInvoices({
-      search,
-      date,
-      startDate,
-      endDate,
-      catalogue,
-      minPrice,
-      maxPrice,
-      page,
-      limit,
-    })
+    const { search, date, startDate, endDate, catalogue, minPrice, maxPrice, billerName, page, limit } = req.query
+    const [data, billers] = await Promise.all([
+      searchAndListInvoices({
+        search,
+        date,
+        startDate,
+        endDate,
+        catalogue,
+        minPrice,
+        maxPrice,
+        billerName,
+        page,
+        limit,
+      }),
+      getDistinctBillers(),
+    ])
     res.status(200).json({
       success: true,
-      data,
+      data: {
+        ...data,
+        billers,
+      },
     })
   } catch (err) {
     next(err)
@@ -120,17 +130,28 @@ export const listInvoicesController = async (req, res, next) => {
 
 export const searchInvoicesController = async (req, res, next) => {
   try {
-    const { q, search, date, startDate, endDate, catalogue, minPrice, maxPrice, page, limit } = req.query
-    const data = await searchAndListInvoices({
-      search: q || search || '',
-      date,
-      startDate,
-      endDate,
-      catalogue,
-      minPrice,
-      maxPrice,
-      page,
-      limit,
+    const { q, search, date, startDate, endDate, catalogue, minPrice, maxPrice, billerName, page, limit } = req.query
+    const [data, billers] = await Promise.all([
+      searchAndListInvoices({
+        search: q || search || '',
+        date,
+        startDate,
+        endDate,
+        catalogue,
+        minPrice,
+        maxPrice,
+        billerName,
+        page,
+        limit,
+      }),
+      getDistinctBillers(),
+    ])
+    res.status(200).json({
+      success: true,
+      data: {
+        ...data,
+        billers,
+      },
     })
     res.status(200).json({
       success: true,

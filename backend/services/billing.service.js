@@ -172,6 +172,7 @@ export const createBillTransaction = async ({
   discountValue = 0,
   taxRate = 0,
   idempotencyKey = null,
+  billerName = '',
   userId,
   req,
 }) => {
@@ -458,6 +459,7 @@ export const createBillTransaction = async ({
         taxRate: cleanTaxRate,
         taxAmount: computedTaxAmount,
         finalTotal,
+        billerName: String(billerName || '').trim(),
         createdBy: userId,
       }
 
@@ -545,6 +547,7 @@ export const searchAndListInvoices = async ({
   catalogue = '',
   minPrice = '',
   maxPrice = '',
+  billerName = '',
   page = 1,
   limit = 50,
 }) => {
@@ -558,7 +561,12 @@ export const searchAndListInvoices = async ({
       { invoiceNumber: regex },
       { customerName: regex },
       { mobileNumber: regex },
+      { billerName: regex },
     ]
+  }
+
+  if (billerName && billerName !== 'ALL') {
+    filter.billerName = new RegExp(`^${billerName.trim()}$`, 'i')
   }
 
   if (date) {
@@ -627,6 +635,13 @@ export const searchAndListInvoices = async ({
     limit: safeLimit,
     nextInvoicePreview,
   }
+}
+
+export const getDistinctBillers = async () => {
+  const billers = await Invoice.distinct('billerName', {
+    billerName: { $exists: true, $ne: '' },
+  })
+  return billers.filter(Boolean).sort()
 }
 
 export const getInvoiceById = async (invoiceIdOrNumber) => {

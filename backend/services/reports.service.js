@@ -76,12 +76,17 @@ export const getAggregatedReports = async ({
   customEnd,
   catalogue,
   patternNumber,
+  billerName,
   includeArchived = true,
 }) => {
   const { start, end } = buildDateFilter(filterType, customStart, customEnd)
 
   const matchStage = {
     invoiceDate: { $gte: start, $lte: end },
+  }
+
+  if (billerName && billerName !== 'ALL') {
+    matchStage.billerName = new RegExp(`^${billerName.trim()}$`, 'i')
   }
 
   // 1. Query Active Invoices Aggregation
@@ -189,6 +194,16 @@ export const getAggregatedReports = async ({
           },
           { $sort: { _id: 1 } },
         ],
+        billerBreakdown: [
+          {
+            $group: {
+              _id: { $ifNull: ['$billerName', 'Admin'] },
+              rollsCount: { $sum: '$items.quantity' },
+              revenue: { $sum: '$items.subtotal' },
+            },
+          },
+          { $sort: { revenue: -1 } },
+        ],
       },
     },
   ]
@@ -217,6 +232,11 @@ export const getAggregatedReports = async ({
       avgBillValue,
     },
     catalogueBreakdown: activeResult?.catalogueBreakdown || [],
+    billerBreakdown: (activeResult?.billerBreakdown || []).map((b) => ({
+      billerName: b._id || 'Admin',
+      rollsCount: b.rollsCount,
+      revenue: b.revenue,
+    })),
     patternBreakdown: (activeResult?.patternBreakdown || []).map((p) => ({
       catalogue: p._id.catalogue,
       patternNumber: p._id.pattern,
@@ -246,6 +266,7 @@ export const getFilteredInvoicesList = async ({
   customEnd,
   catalogue,
   patternNumber,
+  billerName,
   page = 1,
   limit = 20,
 }) => {
@@ -253,6 +274,10 @@ export const getFilteredInvoicesList = async ({
 
   const query = {
     invoiceDate: { $gte: start, $lte: end },
+  }
+
+  if (billerName && billerName !== 'ALL') {
+    query.billerName = new RegExp(`^${billerName.trim()}$`, 'i')
   }
 
   if (catalogue && catalogue !== 'ALL') {

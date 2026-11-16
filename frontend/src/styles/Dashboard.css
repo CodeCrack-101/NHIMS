@@ -2,6 +2,129 @@
   min-height: 100vh;
   display: flex;
   background-color: var(--bg-page);
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.mobile-topbar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  width: 100%;
+}
+
+.mobile-hamburger-btn {
+  background: none;
+  border: none;
+  color: #0f172a;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-hamburger-btn:hover {
+  background: #f1f5f9;
+}
+
+.mobile-brand-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.mobile-brand-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+@media (max-width: 900px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .mobile-topbar {
+    display: flex;
+  }
+
+  .dashboard-content {
+    padding: 16px 14px !important;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  .dashboard-overview-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .dashboard-header-badge {
+    align-self: flex-start;
+  }
+
+  .dashboard-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .dashboard-kpi-card {
+    padding: 14px !important;
+    gap: 10px !important;
+  }
+
+  .dashboard-kpi-value {
+    font-size: 22px !important;
+  }
+
+  .dashboard-table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 16px !important;
+    gap: 12px !important;
+  }
+
+  .dashboard-table-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dashboard-table-actions button {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-overview-title {
+    font-size: 20px !important;
+  }
+
+  .dashboard-content {
+    padding: 12px 10px !important;
+  }
 }
 
 .dashboard-content {
@@ -10,6 +133,18 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  margin-left: 250px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .dashboard-content {
+    margin-left: 0 !important;
+    padding: 16px 14px !important;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
 }
 
 .dashboard-lottie-loader {

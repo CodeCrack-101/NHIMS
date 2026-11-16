@@ -13,13 +13,14 @@ import {
 
 export const getReportsOverviewController = async (req, res, next) => {
   try {
-    const { filterType, customStart, customEnd, catalogue, patternNumber } = req.query
+    const { filterType, customStart, customEnd, catalogue, patternNumber, billerName } = req.query
     const data = await getAggregatedReports({
       filterType,
       customStart,
       customEnd,
       catalogue,
       patternNumber,
+      billerName,
     })
     res.status(200).json({ success: true, data })
   } catch (err) {
@@ -35,6 +36,7 @@ export const getFilteredInvoicesController = async (req, res, next) => {
       customEnd,
       catalogue,
       patternNumber,
+      billerName,
       page,
       limit,
     } = req.query
@@ -45,6 +47,7 @@ export const getFilteredInvoicesController = async (req, res, next) => {
       customEnd,
       catalogue,
       patternNumber,
+      billerName,
       page,
       limit,
     })

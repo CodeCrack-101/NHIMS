@@ -34,6 +34,8 @@ export function InvoiceHistory() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [selectedCatalogue, setSelectedCatalogue] = useState('ALL')
+  const [selectedBiller, setSelectedBiller] = useState('ALL')
+  const [billersList, setBillersList] = useState([])
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
 
@@ -60,19 +62,23 @@ export function InvoiceHistory() {
           startDate,
           endDate,
           catalogue: selectedCatalogue,
+          billerName: selectedBiller !== 'ALL' ? selectedBiller : undefined,
           minPrice: minPrice !== '' ? minPrice : undefined,
           maxPrice: maxPrice !== '' ? maxPrice : undefined,
           limit: 200,
         }
         const res = await billingService.searchInvoices(params)
         setInvoices(res.data?.data?.invoices || [])
+        if (res.data?.data?.billers) {
+          setBillersList(res.data.data.billers)
+        }
       } catch (err) {
         showToast('error', err.response?.data?.message || 'Failed to fetch invoices.')
       } finally {
         if (!silent) setLoading(false)
       }
     },
-    [search, startDate, endDate, selectedCatalogue, minPrice, maxPrice, showToast]
+    [search, startDate, endDate, selectedCatalogue, selectedBiller, minPrice, maxPrice, showToast]
   )
 
   useEffect(() => {
@@ -87,6 +93,7 @@ export function InvoiceHistory() {
     setStartDate('')
     setEndDate('')
     setSelectedCatalogue('ALL')
+    setSelectedBiller('ALL')
     setMinPrice('')
     setMaxPrice('')
   }
@@ -127,7 +134,7 @@ export function InvoiceHistory() {
         'Discount (Rs)': Number(inv.discountAmount || 0).toFixed(2),
         'GST (Rs)': Number(inv.taxAmount || 0).toFixed(2),
         'Final Total (Rs)': Number(inv.finalTotal || 0).toFixed(2),
-        'Billed By': inv.createdBy?.fullName || inv.createdBy?.email || 'Admin',
+        'Billed By': inv.billerName || inv.createdBy?.fullName || inv.createdBy?.email || 'Admin',
       }))
 
       const csv = generateCsvContent(rows)
@@ -259,6 +266,23 @@ export function InvoiceHistory() {
             </select>
           </div>
 
+          {/* Biller / Employee Filter */}
+          <div className="ih-filter-group">
+            <label className="ih-filter-label">Billed By (Employee)</label>
+            <select
+              className="ih-select"
+              value={selectedBiller}
+              onChange={(e) => setSelectedBiller(e.target.value)}
+            >
+              <option value="ALL">All Employees</option>
+              {billersList.map((bName) => (
+                <option key={bName} value={bName}>
+                  👤 {bName}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Date Filter: From */}
           <div className="ih-filter-group">
             <label className="ih-filter-label">From Date</label>
@@ -361,6 +385,7 @@ export function InvoiceHistory() {
                   <th>Date</th>
                   <th>Customer</th>
                   <th>Mobile</th>
+                  <th>Billed By</th>
                   <th>Catalogues &amp; Patterns</th>
                   <th>Qty</th>
                   <th>Final Amount</th>
@@ -384,6 +409,23 @@ export function InvoiceHistory() {
                       <strong>{inv.customerName}</strong>
                     </td>
                     <td>+91 {inv.mobileNumber}</td>
+                    <td>
+                      <span
+                        style={{
+                          background: '#f1f5f9',
+                          color: '#1e293b',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          fontSize: '11.5px',
+                          fontWeight: '700',
+                          border: '1px solid #cbd5e1',
+                          display: 'inline-block',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        👤 {inv.billerName || inv.createdBy?.fullName || inv.createdBy?.email || 'Admin'}
+                      </span>
+                    </td>
                     <td>
                       <div className="ih-items-preview">
                         {(inv.items || []).slice(0, 3).map((it, idx) => (
@@ -519,7 +561,8 @@ export function InvoiceHistory() {
               <div>
                 <span>Billed By:</span>{' '}
                 <strong>
-                  {selectedInvoice.createdBy?.fullName ||
+                  {selectedInvoice.billerName ||
+                    selectedInvoice.createdBy?.fullName ||
                     selectedInvoice.createdBy?.email ||
                     'Admin'}
                 </strong>
@@ -550,7 +593,7 @@ export function InvoiceHistory() {
                       <td>
                         <strong>{it.patternNumber}</strong>
                       </td>
-                      <td>{it.quantity} Rolls</td>
+                      <td>{it.quantity}</td>
                       <td>{formatINR(it.rate)}</td>
                       <td style={{ textAlign: 'right' }}>
                         <strong>{formatINR(it.subtotal)}</strong>
@@ -590,7 +633,13 @@ export function InvoiceHistory() {
 
                 <div style={{ marginTop: '18px', textAlign: 'right' }}>
                   <p style={{ margin: 0, fontSize: '12.5px', fontWeight: '800', color: '#0f172a' }}>For NH Wallpaper</p>
-                  <p style={{ margin: '24px 0 0', fontSize: '11px', color: '#64748b' }}>Authorised Signatory</p>
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', fontWeight: '700', color: '#1e293b' }}>
+                    {selectedInvoice.billerName ||
+                      selectedInvoice.createdBy?.fullName ||
+                      selectedInvoice.createdBy?.email ||
+                      'Admin'}
+                  </p>
+                  <p style={{ margin: '6px 0 0', fontSize: '11px', color: '#64748b' }}>Authorised Signatory</p>
                 </div>
               </div>
             </div>

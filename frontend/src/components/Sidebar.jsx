@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import '../styles/Sidebar.css'
 
-export function Sidebar(){
+export function Sidebar({ mobileOpen = false, onCloseMobile = () => {} }) {
   const { user, logout } = useAuth()
   const { showToast } = useToast()
   const navigate = useNavigate()
@@ -22,22 +22,45 @@ export function Sidebar(){
     navigate('/login', { replace: true })
   }
 
-  return (
-    <aside className="crm-sidebar">
-      <div className="sidebar-brand">
-        <div className="sidebar-logo-icon">
-          <img src="/Logo.png" className='dimage' alt="" />
-        </div>
-        <span className="sidebar-brand-title">NH Wallpaper</span>
-      </div>
+  const handleNavClick = () => {
+    if (window.innerWidth <= 900) {
+      onCloseMobile()
+    }
+  }
 
-      <nav className="sidebar-nav">
-        <NavLink
-          to="/dashboard"
-          className={({ isActive }) =>
-            `sidebar-nav-item ${isActive ? 'active' : ''}`
-          }
-        >
+  return (
+    <>
+      {mobileOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={onCloseMobile}
+          aria-hidden="true"
+        />
+      )}
+      <aside className={`crm-sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-brand">
+          <div className="sidebar-logo-icon">
+            <img src="/Logo.png" className="dimage" alt="" />
+          </div>
+          <span className="sidebar-brand-title">NH Wallpaper</span>
+          <button
+            type="button"
+            className="sidebar-mobile-close"
+            onClick={onCloseMobile}
+            aria-label="Close Navigation"
+          >
+            ✕
+          </button>
+        </div>
+
+        <nav className="sidebar-nav">
+          <NavLink
+            to="/dashboard"
+            onClick={handleNavClick}
+            className={({ isActive }) =>
+              `sidebar-nav-item ${isActive ? 'active' : ''}`
+            }
+          >
           <svg
             width="18"
             height="18"
@@ -58,6 +81,7 @@ export function Sidebar(){
 
         <NavLink
           to="/roll-details"
+          onClick={handleNavClick}
           className={({ isActive }) =>
             `sidebar-nav-item ${isActive ? 'active' : ''}`
           }
@@ -80,6 +104,7 @@ export function Sidebar(){
 
         <NavLink
           to="/add-products"
+          onClick={handleNavClick}
           className={({ isActive }) =>
             `sidebar-nav-item ${isActive ? 'active' : ''}`
           }
@@ -103,6 +128,7 @@ export function Sidebar(){
 
         <NavLink
           to="/billing"
+          onClick={handleNavClick}
           className={({ isActive }) =>
             `sidebar-nav-item ${isActive ? 'active' : ''}`
           }
@@ -127,6 +153,7 @@ export function Sidebar(){
 
         <NavLink
           to="/invoice-history"
+          onClick={handleNavClick}
           className={({ isActive }) =>
             `sidebar-nav-item ${isActive ? 'active' : ''}`
           }
@@ -149,6 +176,7 @@ export function Sidebar(){
 
         <NavLink
           to="/reports"
+          onClick={handleNavClick}
           className={({ isActive }) =>
             `sidebar-nav-item ${isActive ? 'active' : ''}`
           }
@@ -172,6 +200,7 @@ export function Sidebar(){
 
         <NavLink
           to="/customers"
+          onClick={handleNavClick}
           className={({ isActive }) =>
             `sidebar-nav-item ${isActive ? 'active' : ''}`
           }
@@ -196,6 +225,7 @@ export function Sidebar(){
 
         <NavLink
           to="/search-roll"
+          onClick={handleNavClick}
           className={({ isActive }) =>
             `sidebar-nav-item ${isActive ? 'active' : ''}`
           }
@@ -228,5 +258,6 @@ export function Sidebar(){
         </button>
       </div>
     </aside>
+    </>
   )
 }

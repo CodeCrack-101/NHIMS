@@ -19,6 +19,14 @@ const formatCurrency = (val) => {
   })}`
 }
 
+const formatNumber = (val) => {
+  const num = Number(val) || 0
+  return num.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
 const loadImage = (src) =>
   new Promise((resolve) => {
     const img = new Image()
@@ -98,6 +106,7 @@ export const generateInvoiceImageBlob = async (invoice) => {
   const ctx = canvas.getContext('2d')
   const p = createPainter(ctx)
   const right = PAGE_W - MARGIN_X
+  const billerDisplayName = invoice.billerName || invoice.createdBy?.fullName || invoice.createdBy?.email || 'Admin'
 
   // White page background
   p.rect(0, 0, PAGE_W, pageH, [255, 255, 255])
@@ -173,7 +182,7 @@ export const generateInvoiceImageBlob = async (invoice) => {
     y + 8.5
   )
   p.text(
-    `Billed By: ${invoice.createdBy?.fullName || invoice.createdBy?.email || 'Admin'}`,
+    `Billed By: ${billerDisplayName}`,
     right - 42,
     y + 12.5
   )
@@ -183,12 +192,12 @@ export const generateInvoiceImageBlob = async (invoice) => {
   p.rect(MARGIN_X, y, PAGE_W - MARGIN_X * 2, 6.5, [241, 245, 249], [203, 213, 225])
   p.color([15, 23, 42])
   p.font('bold', 6.5)
-  p.text('Sr', MARGIN_X + 2, y + 4.5)
-  p.text('Catalogue', MARGIN_X + 9, y + 4.5)
-  p.text('Pattern No.', MARGIN_X + 41, y + 4.5)
-  p.text('Qty', MARGIN_X + 59, y + 4.5)
-  p.text('Rate', MARGIN_X + 71, y + 4.5)
-  p.text('Amount', right - 2, y + 4.5, 'right')
+  p.text('Sr', MARGIN_X + 1.5, y + 4.5)
+  p.text('Catalogue', MARGIN_X + 7, y + 4.5)
+  p.text('Pattern No.', MARGIN_X + 29, y + 4.5)
+  p.text('Qty', MARGIN_X + 44, y + 4.5)
+  p.text('Rate', MARGIN_X + 57, y + 4.5)
+  p.text('Amount', right - 1.5, y + 4.5, 'right')
   y += 6.5
 
   items.forEach((item, idx) => {
@@ -196,20 +205,20 @@ export const generateInvoiceImageBlob = async (invoice) => {
 
     p.color([71, 85, 105])
     p.font('normal', 6.5)
-    p.text(String(idx + 1), MARGIN_X + 2, y + 4.8)
+    p.text(String(idx + 1), MARGIN_X + 1.5, y + 4.8)
 
     p.color([15, 23, 42])
     p.font('bold', 6.5)
     const catLabel = formatCatalogueLabel(item.catalogueName || item.catalogueSlug)
-    p.text(catLabel.length > 18 ? catLabel.substring(0, 17) + '…' : catLabel, MARGIN_X + 9, y + 4.8)
-    p.text(String(item.patternNumber), MARGIN_X + 41, y + 4.8)
+    p.text(catLabel.length > 18 ? catLabel.substring(0, 17) + '…' : catLabel, MARGIN_X + 7, y + 4.8)
+    p.text(String(item.patternNumber), MARGIN_X + 29, y + 4.8)
 
     p.font('normal', 6.5)
-    p.text(`${item.quantity} Rolls`, MARGIN_X + 59, y + 4.8)
-    p.text(formatCurrency(item.rate), MARGIN_X + 71, y + 4.8)
+    p.text(String(item.quantity), MARGIN_X + 44, y + 4.8)
+    p.text(formatNumber(item.rate), MARGIN_X + 57, y + 4.8)
 
     p.font('bold', 6.5)
-    p.text(formatCurrency(item.subtotal), right - 2, y + 4.8, 'right')
+    p.text(formatNumber(item.subtotal), right - 1.5, y + 4.8, 'right')
 
     y += rowHeight
   })
@@ -262,9 +271,12 @@ export const generateInvoiceImageBlob = async (invoice) => {
   p.font('bold', 7)
   p.color([15, 23, 42])
   p.text('For NH Wallpaper', right - 3, sigY + 3.5, 'right')
+  p.font('bold', 6.5)
+  p.color([15, 23, 42])
+  p.text(billerDisplayName, right - 3, sigY + 8, 'right')
   p.font('normal', 5.5)
   p.color([100, 116, 139])
-  p.text('Authorised Signatory', right - 3, sigY + 11, 'right')
+  p.text('Authorised Signatory', right - 3, sigY + 13, 'right')
 
   // ---------- Terms & Conditions (bottom) ----------
   const termsY = pageH - 23

@@ -290,3 +290,45 @@
   color: #0f172a;
   white-space: nowrap;
 }
+
+/* ==========================================================================
+   Responsive Overrides for Mobile & Tablet Devices
+   ========================================================================== */
+@media (max-width: 900px) {
+  .invoice-history-page-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .invoice-history-top-actions {
+    width: 100%;
+  }
+
+  .invoice-history-top-actions button {
+    flex: 1;
+  }
+
+  .ih-summary-cards {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  .ih-filters-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  .ih-filter-group {
+    grid-column: span 1 !important;
+  }
+
+  .ih-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ih-table {
+    min-width: 720px;
+  }
+}

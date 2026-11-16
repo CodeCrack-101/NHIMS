@@ -17,7 +17,6 @@ const formatLocalDateKey = (d) => {
 function SingleMetricChart({
   metric, // 'revenue' | 'rolls'
   title,
-  icon,
   accent, // 'indigo' | 'emerald'
   seriesData,
   totalLabel,
@@ -145,7 +144,6 @@ function SingleMetricChart({
       {/* Subcard Header: Title, Metric Total Badge, and Bar/Line switcher */}
       <div className="subcard-header">
         <div className="subcard-title-group">
-          <div className={`subcard-icon ${accent}`}>{icon}</div>
           <div>
             <h3 className="subcard-name">{title}</h3>
             <span className="subcard-total">
@@ -1034,7 +1032,6 @@ export function SalesAnalyticsChart({
         <SingleMetricChart
           metric="revenue"
           title="Sales Revenue Trend"
-          icon="₹"
           accent="indigo"
           seriesData={seriesData}
           totalLabel={`₹${(reportData.summary?.totalSales || 0).toLocaleString('en-IN')}`}
@@ -1045,7 +1042,6 @@ export function SalesAnalyticsChart({
         <SingleMetricChart
           metric="rolls"
           title="Rolls Sold Trend"
-          icon="📦"
           accent="emerald"
           seriesData={seriesData}
           totalLabel={`${(reportData.summary?.totalRollsSold || 0).toLocaleString('en-IN')} Rolls`}
