@@ -37,10 +37,26 @@ app.use(
   })
 )
 
-// Strict CORS configuration restricted to the frontend origin
+// Strict CORS configuration restricted to the frontend origins
+const allowedOrigins = [
+  env.CLIENT_URL,
+  'https://nhims-seven.vercel.app',
+  'https://stock.nhwallpaper.com',
+  'http://stock.nhwallpaper.com',
+  'https://nhwallpaper.com',
+  'http://localhost:5173',
+].filter(Boolean)
+
 app.use(
   cors({
-    origin: [env.CLIENT_URL, 'https://nhims-seven.vercel.app', 'http://localhost:5173'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.) or matching allowed list
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.nhwallpaper.com') || origin.endsWith('.vercel.app')) {
+        callback(null, true)
+      } else {
+        callback(null, false)
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Session-Token', 'X-Idempotency-Key'],
