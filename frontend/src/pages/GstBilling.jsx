@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { billingService } from '../services/billingService.js'
 import { gstBillingService } from '../services/gstBillingService.js'
+import { catalogueService, formatCatalogueLabel } from '../services/catalogueService.js'
+import { SearchableSelect } from '../components/SearchableSelect.jsx'
 import { useToast } from '../context/ToastContext.jsx'
-import { useDownloadProgress, ProgressButton } from '../context/DownloadProgressContext.jsx'
+import { useDownloadProgress } from '../context/DownloadProgressContext.jsx'
 import { downloadGstInvoicePdf, printGstInvoiceDocument } from '../utils/exportGstInvoicePdf.js'
 import { TableSkeleton } from '../components/Skeleton.jsx'
 import '../styles/GstBilling.css'
@@ -81,16 +84,16 @@ export function GstBilling() {
     },
     {
       ...createDefaultRow('CATALOGUE'),
-      itemName: 'Royal texture bool',
       quantity: 1,
-      unit: 'Pcs',
-      pricePerUnit: 500,
-      gstRate: 0,
+      unit: 'Rol',
+      pricePerUnit: 1250,
+      gstRate: 18,
     },
   ])
 
   const [catalogues, setCatalogues] = useState([])
   const [cataloguePatterns, setCataloguePatterns] = useState({}) // catId -> patterns[]
+  const [loadingPatternsMap, setLoadingPatternsMap] = useState({})
 
   // Payment
   const [paymentStatus, setPaymentStatus] = useState('PAID')
@@ -100,7 +103,30 @@ export function GstBilling() {
   // Recent GST Invoices
   const [recentInvoices, setRecentInvoices] = useState([])
   const [loadingHistory, setLoadingHistory] = useState(false)
-  const [historySearch, setHistorySearch] = useState('')
+
+  // Load patterns when catalogue selected
+  const loadPatterns = useCallback(async (catId) => {
+    if (!catId) return []
+    const key = String(catId)
+    if (cataloguePatterns[key] && cataloguePatterns[key].length > 0) {
+      return cataloguePatterns[key]
+    }
+    setLoadingPatternsMap((prev) => ({ ...prev, [key]: true }))
+    try {
+      const res = await billingService.getPatternsByCatalogue(catId)
+      const patterns = res.data?.data?.patterns || []
+      setCataloguePatterns((prev) => ({
+        ...prev,
+        [key]: patterns,
+      }))
+      return patterns
+    } catch (err) {
+      console.error('Failed to load patterns for', catId, err)
+      return []
+    } finally {
+      setLoadingPatternsMap((prev) => ({ ...prev, [key]: false }))
+    }
+  }, [cataloguePatterns])
 
   // Load catalogues and next invoice number
   useEffect(() => {
@@ -113,13 +139,26 @@ export function GstBilling() {
       })
       .catch(() => {})
 
-    billingService
-      .getCatalogues()
-      .then((res) => {
-        setCatalogues(res.data?.data?.catalogues || [])
-      })
-      .catch(() => {})
+    const fetchAllCatalogues = async () => {
+      try {
+        const res = await billingService.getCatalogues()
+        let cats = res.data?.data?.catalogues || []
+        if (!cats.length) {
+          const fallback = await catalogueService.getAllCatalogues()
+          cats = fallback.data?.data?.catalogues || []
+        }
+        setCatalogues(cats)
+      } catch {
+        try {
+          const fallback = await catalogueService.getAllCatalogues()
+          setCatalogues(fallback.data?.data?.catalogues || [])
+        } catch {
+          // silent
+        }
+      }
+    }
 
+    fetchAllCatalogues()
     fetchRecentInvoices()
   }, [])
 
@@ -134,20 +173,6 @@ export function GstBilling() {
       setLoadingHistory(false)
     }
   }, [])
-
-  // Load patterns when catalogue selected
-  const loadPatterns = async (catId) => {
-    if (!catId || cataloguePatterns[catId]) return
-    try {
-      const res = await billingService.getPatternsByCatalogue(catId)
-      setCataloguePatterns((prev) => ({
-        ...prev,
-        [catId]: res.data?.data?.patterns || [],
-      }))
-    } catch {
-      // silent
-    }
-  }
 
   // Row operations
   const handleAddRow = (itemType = 'CUSTOM') => {
@@ -165,28 +190,47 @@ export function GstBilling() {
         if (r.id !== id) return r
         const updated = { ...r, [field]: value }
 
-        // If switching catalogue, reset pattern
+        // If switching catalogue, reset pattern and fetch patterns
         if (field === 'catalogueId') {
-          const selectedCat = catalogues.find((c) => c._id === value)
-          updated.catalogueName = selectedCat?.name || ''
+          const selectedCat = catalogues.find(
+            (c) => String(c._id) === String(value) || c.slug === value
+          )
+          updated.catalogueId = value
+          updated.catalogueName = selectedCat ? formatCatalogueLabel(selectedCat.name) : ''
           updated.patternId = ''
           updated.patternNumber = ''
           updated.availableStock = 0
           if (selectedCat) {
-            updated.itemName = `${selectedCat.name}`
+            updated.itemName = `${updated.catalogueName}`
+            if (selectedCat.defaultRate) {
+              updated.pricePerUnit = selectedCat.defaultRate
+            }
             loadPatterns(value)
           }
         }
 
-        // If selecting pattern, update name & available stock
+        // If selecting pattern, update name & available stock & price
         if (field === 'patternNumber') {
-          const pats = cataloguePatterns[r.catalogueId] || []
-          const pat = pats.find((p) => p.patternNumber === value)
+          const pats = cataloguePatterns[String(r.catalogueId)] || []
+          const pat = pats.find((p) => String(p.patternNumber) === String(value))
           if (pat) {
             updated.patternId = pat._id
-            updated.availableStock = pat.quantity
-            updated.itemName = `${r.catalogueName} - ${pat.patternNumber}`
+            updated.availableStock = pat.quantity ?? 0
+            updated.itemName = `${r.catalogueName || 'Catalogue'} - ${pat.patternNumber}`
             if (pat.rate) updated.pricePerUnit = pat.rate
+          } else {
+            updated.patternNumber = value
+          }
+        }
+
+        // If changing itemType
+        if (field === 'itemType') {
+          if (value === 'CUSTOM') {
+            updated.catalogueId = ''
+            updated.catalogueName = ''
+            updated.patternId = ''
+            updated.patternNumber = ''
+            updated.availableStock = 0
           }
         }
 
@@ -272,6 +316,26 @@ export function GstBilling() {
     if (rows.length === 0) {
       showToast({ type: 'warning', title: 'Items Required', message: 'Please add at least one item.' })
       return
+    }
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i]
+      if (r.itemType === 'CATALOGUE' && (!r.catalogueId || !r.patternNumber)) {
+        showToast({
+          type: 'warning',
+          title: 'Select Catalogue & Pattern',
+          message: `Row #${i + 1} is set to Catalogue Roll. Please select both Catalogue and Pattern Number.`,
+        })
+        return
+      }
+      if (r.itemType === 'CUSTOM' && !r.itemName.trim()) {
+        showToast({
+          type: 'warning',
+          title: 'Enter Item Name',
+          message: `Row #${i + 1} is missing an item description.`,
+        })
+        return
+      }
     }
 
     try {
@@ -365,78 +429,104 @@ export function GstBilling() {
 
   return (
     <div className="gst-billing-page">
-      {/* Page Header */}
-      <div className="gst-header-banner">
+      {/* 1. Breadcrumb matching Billing page */}
+      <nav className="gst-breadcrumb" aria-label="Breadcrumb">
+        <Link to="/dashboard" className="gst-breadcrumb-link">
+          Home
+        </Link>
+        <span className="gst-breadcrumb-sep">&gt;</span>
+        <span className="gst-breadcrumb-current">GST Billing</span>
+      </nav>
+
+      {/* 2. Top Header with Invoice No & Date Pills matching Billing page */}
+      <div className="gst-topbar">
         <div>
-          <div className="gst-tag">Official GST System</div>
-          <h1 className="gst-title">GST Tax Invoice Billing</h1>
-          <p className="gst-subtitle">
+          <h1 className="gst-heading">GST Tax Invoice Billing</h1>
+          <p className="gst-subtext">
             Generate standard GST compliant tax invoices with live catalogue stock deduction and custom products
           </p>
         </div>
-        <div className="gst-header-actions">
-          <div className="gst-inv-badge">
-            Next Invoice No: <strong>{invoiceNumberPreview}</strong>
+
+        <div className="gst-meta-pills">
+          <div className="gst-meta-pill">
+            <span className="gst-meta-label">INVOICE NO:</span>
+            <strong className="gst-meta-value">{invoiceNumberPreview}</strong>
+          </div>
+          <div className="gst-meta-pill">
+            <span className="gst-meta-label">DATE:</span>
+            <strong className="gst-meta-value">
+              {new Date(invoiceDate).toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </strong>
           </div>
         </div>
       </div>
 
-      {/* Invoice Meta Grid */}
-      <div className="gst-card gst-meta-card">
-        <div className="gst-field">
-          <label>Invoice Date *</label>
-          <input
-            type="date"
-            className="gst-input"
-            value={invoiceDate}
-            onChange={(e) => setInvoiceDate(e.target.value)}
-          />
+      {/* 3. Invoice Meta Section inside main card */}
+      <div className="gst-main-card">
+        <div className="gst-card-section-title">
+          <h3>Invoice Configuration</h3>
         </div>
 
-        <div className="gst-field">
-          <label>Place of Supply (State) *</label>
-          <select
-            className="gst-select"
-            value={placeOfSupply}
-            onChange={(e) => {
-              setPlaceOfSupply(e.target.value)
-              if (sameAsBillTo) {
-                setBillToState(e.target.value)
-              }
-            }}
-          >
-            {INDIAN_STATES.map((s) => (
-              <option key={s.code} value={`${s.code}-${s.name}`}>
-                {s.code}-{s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="gst-field">
-          <label>Tax Type</label>
-          <div className={`gst-tax-type-pill ${isInterState ? 'igst' : 'cgst'}`}>
-            {isInterState ? 'IGST (Inter-State 18%)' : 'CGST + SGST (Intra-State 9% + 9%)'}
+        <div className="gst-meta-grid">
+          <div className="gst-field">
+            <label>Invoice Date *</label>
+            <input
+              type="date"
+              className="gst-input"
+              value={invoiceDate}
+              onChange={(e) => setInvoiceDate(e.target.value)}
+            />
           </div>
-        </div>
 
-        <div className="gst-field">
-          <label>Billed By (Employee)</label>
-          <input
-            type="text"
-            className="gst-input"
-            value={billerName}
-            onChange={(e) => setBillerName(e.target.value)}
-            placeholder="e.g. Shifa"
-          />
+          <div className="gst-field">
+            <label>Place of Supply (State) *</label>
+            <select
+              className="gst-select"
+              value={placeOfSupply}
+              onChange={(e) => {
+                setPlaceOfSupply(e.target.value)
+                if (sameAsBillTo) {
+                  setBillToState(e.target.value)
+                }
+              }}
+            >
+              {INDIAN_STATES.map((s) => (
+                <option key={s.code} value={`${s.code}-${s.name}`}>
+                  {s.code}-{s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="gst-field">
+            <label>Tax Type</label>
+            <div className={`gst-tax-type-pill ${isInterState ? 'igst' : 'cgst'}`}>
+              {isInterState ? 'IGST (Inter-State 18%)' : 'CGST + SGST (Intra-State 9% + 9%)'}
+            </div>
+          </div>
+
+          <div className="gst-field">
+            <label>Billed By (Employee)</label>
+            <input
+              type="text"
+              className="gst-input"
+              value={billerName}
+              onChange={(e) => setBillerName(e.target.value)}
+              placeholder="e.g. Shifa"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Bill To & Ship To Section */}
+      {/* 4. Bill To & Ship To Section */}
       <div className="gst-parties-grid">
         {/* Bill To Box */}
-        <div className="gst-card">
-          <div className="gst-card-header">
+        <div className="gst-main-card">
+          <div className="gst-card-section-title">
             <h3>Bill To (Customer / Firm Details)</h3>
           </div>
           <div className="gst-party-fields">
@@ -489,8 +579,8 @@ export function GstBilling() {
         </div>
 
         {/* Ship To Box */}
-        <div className="gst-card">
-          <div className="gst-card-header" style={{ justifyContent: 'space-between' }}>
+        <div className="gst-main-card">
+          <div className="gst-card-section-title">
             <h3>Ship To Details</h3>
             <label className="gst-checkbox-label">
               <input
@@ -561,8 +651,8 @@ export function GstBilling() {
         </div>
       </div>
 
-      {/* Items Table Builder */}
-      <div className="gst-card gst-items-card">
+      {/* 5. Items Table Builder */}
+      <div className="gst-main-card">
         <div className="gst-items-header">
           <h3>Billing Items ({rows.length})</h3>
           <div className="gst-item-btn-group">
@@ -616,32 +706,59 @@ export function GstBilling() {
                   <td>
                     {r.itemType === 'CATALOGUE' ? (
                       <div className="gst-cat-picker-grid">
-                        <select
-                          className="gst-table-select"
-                          value={r.catalogueId}
-                          onChange={(e) => handleUpdateRow(r.id, 'catalogueId', e.target.value)}
-                        >
-                          <option value="">Select Catalogue...</option>
-                          {catalogues.map((c) => (
-                            <option key={c._id} value={c._id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div style={{ minWidth: 0 }}>
+                          <SearchableSelect
+                            value={r.catalogueId}
+                            onChange={(val) => handleUpdateRow(r.id, 'catalogueId', val)}
+                            placeholder="Type or select catalogue..."
+                            emptyText="No matching catalogue"
+                            options={catalogues.map((c) => ({
+                              value: c._id,
+                              label: formatCatalogueLabel(c.name),
+                              searchKeywords: `${c.name} ${c.slug || ''}`,
+                              badgeText: `Stock: ${c.totalStock ?? 0}`,
+                              badgeTone: (c.totalStock ?? 0) > 0 ? 'success' : 'danger',
+                            }))}
+                          />
+                        </div>
 
-                        <select
-                          className="gst-table-select"
-                          disabled={!r.catalogueId}
-                          value={r.patternNumber}
-                          onChange={(e) => handleUpdateRow(r.id, 'patternNumber', e.target.value)}
-                        >
-                          <option value="">Select Pattern...</option>
-                          {(cataloguePatterns[r.catalogueId] || []).map((p) => (
-                            <option key={p._id} value={p.patternNumber}>
-                              {p.patternNumber} ({p.quantity} rolls left)
-                            </option>
-                          ))}
-                        </select>
+                        <div style={{ minWidth: 0 }}>
+                          <SearchableSelect
+                            value={r.patternNumber}
+                            disabled={!r.catalogueId || loadingPatternsMap[String(r.catalogueId)]}
+                            onChange={(val) => handleUpdateRow(r.id, 'patternNumber', val)}
+                            placeholder={
+                              !r.catalogueId
+                                ? 'Select catalogue first'
+                                : loadingPatternsMap[String(r.catalogueId)]
+                                ? 'Loading patterns...'
+                                : 'Type or select pattern...'
+                            }
+                            emptyText="No patterns found"
+                            options={(cataloguePatterns[String(r.catalogueId)] || []).map((p) => {
+                              const outOfStock = (p.quantity ?? 0) <= 0
+                              return {
+                                value: p.patternNumber,
+                                label: String(p.patternNumber),
+                                searchKeywords: String(p.patternNumber),
+                                disabled: outOfStock,
+                                badgeText: outOfStock
+                                  ? 'Out of Stock (0)'
+                                  : `Avail: ${p.quantity}`,
+                                badgeTone: outOfStock
+                                  ? 'danger'
+                                  : p.quantity < 10
+                                  ? 'warning'
+                                  : 'success',
+                              }
+                            })}
+                          />
+                          {r.patternNumber && (
+                            <span className="gst-cat-hint">
+                              ✓ {r.catalogueName} - {r.patternNumber} ({r.availableStock} in stock)
+                            </span>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <input
@@ -725,11 +842,11 @@ export function GstBilling() {
         </div>
       </div>
 
-      {/* Bottom Summary & Actions */}
+      {/* 6. Bottom Summary & Actions */}
       <div className="gst-bottom-grid">
         {/* Payment Configuration */}
-        <div className="gst-card">
-          <div className="gst-card-header">
+        <div className="gst-main-card">
+          <div className="gst-card-section-title">
             <h3>Payment & Mode</h3>
           </div>
           <div className="gst-payment-config-row">
@@ -769,7 +886,7 @@ export function GstBilling() {
         </div>
 
         {/* Totals Summary Card */}
-        <div className="gst-card gst-summary-card">
+        <div className="gst-main-card gst-summary-card">
           <div className="gst-sum-line">
             <span>Sub Total (Taxable):</span>
             <strong>₹{calculatedSummary.subTotal.toFixed(2)}</strong>
@@ -800,7 +917,7 @@ export function GstBilling() {
 
           <div className="gst-sum-line" style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '8px' }}>
             <span>Received: ₹{calculatedSummary.received.toFixed(2)}</span>
-            <span style={{ color: calculatedSummary.balance > 0 ? '#dc2626' : '#166534' }}>
+            <span style={{ color: calculatedSummary.balance > 0 ? '#dc2626' : '#166534', fontWeight: '600' }}>
               Balance: ₹{calculatedSummary.balance.toFixed(2)}
             </span>
           </div>
@@ -826,9 +943,9 @@ export function GstBilling() {
         </div>
       </div>
 
-      {/* History Table */}
-      <div className="gst-card gst-history-card">
-        <div className="gst-card-header">
+      {/* 7. History Table */}
+      <div className="gst-main-card gst-history-card">
+        <div className="gst-card-section-title">
           <h3>Previously Generated GST Tax Invoices</h3>
           <button
             type="button"
@@ -861,7 +978,9 @@ export function GstBilling() {
               {recentInvoices.map((inv) => (
                 <tr key={inv._id}>
                   <td>
-                    <span className="gst-inv-badge">{inv.invoiceNumber}</span>
+                    <span className="gst-meta-pill" style={{ padding: '3px 8px', fontSize: '12px' }}>
+                      <strong>{inv.invoiceNumber}</strong>
+                    </span>
                   </td>
                   <td>{new Date(inv.invoiceDate).toLocaleDateString('en-IN')}</td>
                   <td>

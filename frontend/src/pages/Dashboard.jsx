@@ -451,31 +451,34 @@ export function Dashboard() {
   }
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-layout">
+      <div className="mobile-topbar">
+        <button
+          type="button"
+          className="mobile-hamburger-btn"
+          onClick={() => setMobileMenuOpen(true)}
+          aria-label="Open menu"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <span className="mobile-brand-title">
+          <img src="/Logo.png" alt="Logo" className="mobile-brand-logo" />
+          NH Wallpaper
+        </span>
+        <div style={{ width: '24px' }}></div>
+      </div>
+
       <Sidebar
         mobileOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      <main className="dashboard-main-content">
-        <header className="dashboard-topbar">
-          <button
-            type="button"
-            className="mobile-menu-trigger"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open Navigation Menu"
-          >
-            ☰
-          </button>
-          <div className="topbar-branding">
-            <span className="topbar-title">NH Wallpaper CRM</span>
-            <span className="topbar-chip">Wholesale Suite</span>
-          </div>
-        </header>
-
-        <section className="dashboard-content-area">
-          {renderMainContent()}
-        </section>
+      <main className="dashboard-content">
+        {renderMainContent()}
       </main>
 
       {/* Out of stock details modal */}

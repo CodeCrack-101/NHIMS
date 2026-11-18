@@ -164,7 +164,7 @@ export const createGstInvoice = async (payload, userId, req = null) => {
     totalQuantity += qty
 
     // Catalogue item deduction
-    if (it.itemType === 'CATALOGUE' && it.patternId) {
+    if (it.itemType === 'CATALOGUE' && (it.patternId || it.patternNumber)) {
       stockDeductions.push({
         patternId: it.patternId,
         catalogueId: it.catalogueId,
@@ -222,7 +222,16 @@ export const createGstInvoice = async (payload, userId, req = null) => {
   try {
     // 1. Deduct stock for catalogue items
     for (const d of stockDeductions) {
-      const invRecord = await Inventory.findById(d.patternId).session(session)
+      let invRecord = null
+      if (d.patternId) {
+        invRecord = await Inventory.findById(d.patternId).session(session)
+      }
+      if (!invRecord && d.catalogueId && d.patternNumber) {
+        invRecord = await Inventory.findOne({
+          catalogueId: d.catalogueId,
+          patternNumber: d.patternNumber,
+        }).session(session)
+      }
       if (!invRecord) {
         throw new AppError(
           `Catalogue pattern "${d.patternNumber}" not found in inventory.`,
