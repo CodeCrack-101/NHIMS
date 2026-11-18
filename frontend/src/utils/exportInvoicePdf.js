@@ -38,7 +38,7 @@ const loadLogoAsDataUrl = (src = '/Logo.png') =>
   })
 
 /**
- * 1. PDF DOWNLOAD: 4 x 10 Inches Auto-Fitting Single Page Engine
+ * 1. PDF DOWNLOAD & PRINT ENGINE: 4 x 10 Inches Auto-Fitting Single Page Engine
  */
 const generateInvoicePdfDoc = async (invoice) => {
   if (!invoice) return
@@ -47,9 +47,6 @@ const generateInvoicePdfDoc = async (invoice) => {
   const n = items.length
 
   // Dynamic automatic scaling strictly for 4x10 inches (101.6 mm x 254 mm)
-  // Low quantity (1-4): Fonts increase (8.5-11pt), row padding expands, spacious layout.
-  // Medium quantity (5-10): Standard readable font (7-8pt), balanced spacing.
-  // High quantity (11-25+): Fonts decrease automatically (5-6.5pt), table padding condenses so it NEVER overflows and stays on 1 single page!
   let scale = 1.0
   let rowHeight = 7.5
   let tableFontSize = 7.5
@@ -106,6 +103,9 @@ const generateInvoicePdfDoc = async (invoice) => {
   const pageHeight = 254
   const marginX = 4.0
   const usableWidth = pageWidth - marginX * 2 // 93.6 mm
+
+  // Payment Status resolution
+  const isUnpaid = (invoice.paymentStatus || '').toUpperCase() === 'UNPAID'
 
   // 1. Header Banner
   const topY = 3.5
@@ -222,10 +222,34 @@ const generateInvoicePdfDoc = async (invoice) => {
     currentY + 7.5 * scale
   )
   doc.text(
-    `Billed By: ${billerDisplayName}  |  Status: ${(invoice.paymentStatus || 'PAID').toUpperCase()}`,
+    `Billed By: ${billerDisplayName}`,
     custSplitX + 3,
     currentY + 11.2 * scale
   )
+
+  // Status Badge in the Customer Box (Top right corner of box)
+  const statusBoxW = isUnpaid ? 22 * scale : 15 * scale
+  const statusBoxH = 4.2 * scale
+  const statusBoxX = pageWidth - marginX - statusBoxW - 2.5
+  const statusBoxY = currentY + 8.2 * scale
+
+  if (isUnpaid) {
+    doc.setFillColor(254, 226, 226) // light red
+    doc.setDrawColor(239, 68, 68)   // red border
+    doc.roundedRect(statusBoxX, statusBoxY, statusBoxW, statusBoxH, 0.8, 0.8, 'FD')
+    doc.setTextColor(185, 28, 28)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(5.2 * scale)
+    doc.text('UNPAID', statusBoxX + statusBoxW / 2, statusBoxY + 3.0 * scale, { align: 'center' })
+  } else {
+    doc.setFillColor(220, 252, 231) // light green
+    doc.setDrawColor(34, 197, 94)   // green border
+    doc.roundedRect(statusBoxX, statusBoxY, statusBoxW, statusBoxH, 0.8, 0.8, 'FD')
+    doc.setTextColor(21, 128, 61)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(5.5 * scale)
+    doc.text('PAID', statusBoxX + statusBoxW / 2, statusBoxY + 3.0 * scale, { align: 'center' })
+  }
 
   // 3. Items Table
   currentY += customerBoxHeight + (scale < 0.8 ? 1.8 : 2.5)
@@ -322,19 +346,20 @@ const generateInvoicePdfDoc = async (invoice) => {
 
   // 4. Totals & Calculations Box
   currentY += scale < 0.8 ? 2 : 3
-  const summaryBoxWidth = Math.round(48 * scale)
+  const summaryBoxWidth = Math.round(52 * scale)
   const summaryBoxX = pageWidth - marginX - summaryBoxWidth
 
   const showDiscount = invoice.discountAmount && invoice.discountAmount > 0
   const showGst = invoice.taxRate && invoice.taxRate > 0
 
-  let numSummaryLines = 2 // Subtotal + Final
+  let numSummaryLines = 3 // Subtotal + Final + Payment Status
   if (showDiscount) numSummaryLines++
   if (showGst) numSummaryLines++
 
   const summaryLineH = scale < 0.8 ? 4.2 : 5.0
-  const summaryBoxHeight = numSummaryLines * summaryLineH + 4
+  const summaryBoxHeight = numSummaryLines * summaryLineH + 5
 
+  // Background and border for summary box
   doc.setFillColor(248, 250, 252)
   doc.setDrawColor(203, 213, 225)
   doc.roundedRect(summaryBoxX, currentY, summaryBoxWidth, summaryBoxHeight, 2, 2, 'FD')
@@ -388,6 +413,56 @@ const generateInvoicePdfDoc = async (invoice) => {
   doc.text(formatCurrencyPdf(invoice.finalTotal), summaryBoxX + summaryBoxWidth - 2.5, boxLineY, {
     align: 'right',
   })
+
+  // Prominent Payment Status Line at bottom of summary box
+  boxLineY += summaryLineH * 0.95
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(6.8 * scale)
+  if (isUnpaid) {
+    doc.setTextColor(185, 28, 28)
+    doc.text('Status:', summaryBoxX + 2.5, boxLineY)
+    doc.text('UNPAID (Pending)', summaryBoxX + summaryBoxWidth - 2.5, boxLineY, { align: 'right' })
+  } else {
+    doc.setTextColor(21, 128, 61)
+    doc.text('Status:', summaryBoxX + 2.5, boxLineY)
+    doc.text('PAID (Received)', summaryBoxX + summaryBoxWidth - 2.5, boxLineY, { align: 'right' })
+  }
+
+  // Large Stamp / Watermark on the left side of Summary Box (optional visible stamp)
+  const stampX = marginX + 4
+  const stampY = currentY + 2
+  const stampW = 34 * scale
+  const stampH = 12 * scale
+
+  if (isUnpaid) {
+    // UNPAID Stamp Box
+    doc.setFillColor(254, 242, 242)
+    doc.setDrawColor(239, 68, 68)
+    doc.setLineWidth(0.6)
+    doc.roundedRect(stampX, stampY, stampW, stampH, 1.5, 1.5, 'FD')
+
+    doc.setTextColor(220, 38, 38)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10 * scale)
+    doc.text('UNPAID', stampX + stampW / 2, stampY + 5.5 * scale, { align: 'center' })
+
+    doc.setFontSize(5.2 * scale)
+    doc.text('PAYMENT PENDING', stampX + stampW / 2, stampY + 9.5 * scale, { align: 'center' })
+  } else {
+    // PAID Stamp Box
+    doc.setFillColor(240, 253, 244)
+    doc.setDrawColor(34, 197, 94)
+    doc.setLineWidth(0.6)
+    doc.roundedRect(stampX, stampY, stampW, stampH, 1.5, 1.5, 'FD')
+
+    doc.setTextColor(22, 163, 74)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10.5 * scale)
+    doc.text('PAID', stampX + stampW / 2, stampY + 5.5 * scale, { align: 'center' })
+
+    doc.setFontSize(5.2 * scale)
+    doc.text('AMOUNT RECEIVED', stampX + stampW / 2, stampY + 9.5 * scale, { align: 'center' })
+  }
 
   // Signatory
   const sigY = currentY + summaryBoxHeight + 1.5

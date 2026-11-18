@@ -98,7 +98,7 @@ export const generateInvoiceImageBlob = async (invoice) => {
   const tableStartY = 45
   const itemsEndY = tableStartY + 6.5 + items.length * rowHeight
   // Single tall image: grow page if items exceed
-  const pageH = Math.max(MIN_PAGE_H, itemsEndY + 4 + 30 + 26)
+  const pageH = Math.max(MIN_PAGE_H, itemsEndY + 4 + 32 + 26)
 
   const canvas = document.createElement('canvas')
   canvas.width = PAGE_W * S
@@ -107,6 +107,7 @@ export const generateInvoiceImageBlob = async (invoice) => {
   const p = createPainter(ctx)
   const right = PAGE_W - MARGIN_X
   const billerDisplayName = invoice.billerName || invoice.createdBy?.fullName || invoice.createdBy?.email || 'Admin'
+  const isUnpaid = (invoice.paymentStatus || '').toUpperCase() === 'UNPAID'
 
   // White page background
   p.rect(0, 0, PAGE_W, pageH, [255, 255, 255])
@@ -187,6 +188,23 @@ export const generateInvoiceImageBlob = async (invoice) => {
     y + 12.5
   )
 
+  // Status Badge in Customer Box
+  const statusBoxW = isUnpaid ? 22 : 14
+  const statusBoxH = 4.5
+  const statusBoxX = right - statusBoxW - 2
+  const statusBoxY = y + 2.5
+  if (isUnpaid) {
+    p.rect(statusBoxX, statusBoxY, statusBoxW, statusBoxH, [254, 226, 226], [239, 68, 68])
+    p.font('bold', 5.5)
+    p.color([185, 28, 28])
+    p.text('UNPAID', statusBoxX + statusBoxW / 2, statusBoxY + 3.2, 'center')
+  } else {
+    p.rect(statusBoxX, statusBoxY, statusBoxW, statusBoxH, [220, 252, 231], [34, 197, 94])
+    p.font('bold', 5.5)
+    p.color([21, 128, 61])
+    p.text('PAID', statusBoxX + statusBoxW / 2, statusBoxY + 3.2, 'center')
+  }
+
   // ---------- Items Table ----------
   y = tableStartY
   p.rect(MARGIN_X, y, PAGE_W - MARGIN_X * 2, 6.5, [241, 245, 249], [203, 213, 225])
@@ -225,10 +243,10 @@ export const generateInvoiceImageBlob = async (invoice) => {
 
   // ---------- Totals Summary ----------
   y += 4
-  const summaryW = 46
+  const summaryW = 48
   const summaryX = right - summaryW
   const hasGst = Boolean(invoice.taxRate && invoice.taxRate > 0)
-  const summaryH = hasGst ? 27 : 23
+  const summaryH = hasGst ? 31 : 27
   p.rect(summaryX, y, summaryW, summaryH, [248, 250, 252], [203, 213, 225])
 
   p.font('normal', 6.5)
@@ -265,6 +283,39 @@ export const generateInvoiceImageBlob = async (invoice) => {
   p.color([15, 23, 42])
   p.text('Final Total:', summaryX + 2.5, finalY + 3)
   p.text(formatCurrency(invoice.finalTotal), right - 2.5, finalY + 3, 'right')
+
+  // Payment Status Line inside summary box
+  p.font('bold', 6.5)
+  if (isUnpaid) {
+    p.color([185, 28, 28])
+    p.text('Payment Status:', summaryX + 2.5, finalY + 7.5)
+    p.text('UNPAID', right - 2.5, finalY + 7.5, 'right')
+  } else {
+    p.color([21, 128, 61])
+    p.text('Payment Status:', summaryX + 2.5, finalY + 7.5)
+    p.text('PAID', right - 2.5, finalY + 7.5, 'right')
+  }
+
+  // Stamp badge on left side of summary
+  const stampW = 32
+  const stampH = 12
+  const stampX = MARGIN_X + 2
+  const stampY = y + 2
+  if (isUnpaid) {
+    p.rect(stampX, stampY, stampW, stampH, [254, 242, 242], [239, 68, 68])
+    p.font('bold', 9.5)
+    p.color([220, 38, 38])
+    p.text('UNPAID', stampX + stampW / 2, stampY + 5.5, 'center')
+    p.font('bold', 5)
+    p.text('PAYMENT PENDING', stampX + stampW / 2, stampY + 9.5, 'center')
+  } else {
+    p.rect(stampX, stampY, stampW, stampH, [240, 253, 244], [34, 197, 94])
+    p.font('bold', 9.5)
+    p.color([22, 163, 74])
+    p.text('PAID', stampX + stampW / 2, stampY + 5.5, 'center')
+    p.font('bold', 5)
+    p.text('AMOUNT RECEIVED', stampX + stampW / 2, stampY + 9.5, 'center')
+  }
 
   // ---------- Signature ----------
   const sigY = y + summaryH + 2
