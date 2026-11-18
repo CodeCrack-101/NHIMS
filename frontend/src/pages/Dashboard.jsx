@@ -5,6 +5,7 @@ import { LottieIcon } from '../components/LottieIcon.jsx'
 import { RollDetails } from './RollDetails.jsx'
 import { AddProducts } from './AddProducts.jsx'
 import { Billing } from './Billing.jsx'
+import { GstBilling } from './GstBilling.jsx'
 import { Reports } from './Reports.jsx'
 import { Customers } from './Customers.jsx'
 import { InvoiceHistory } from './InvoiceHistory.jsx'
@@ -28,7 +29,8 @@ export function Dashboard() {
 
   const isRollDetailsRoute = location.pathname.startsWith('/roll-details')
   const isAddProductsRoute = location.pathname.startsWith('/add-products')
-  const isBillingRoute = location.pathname.startsWith('/billing')
+  const isBillingRoute = location.pathname === '/billing'
+  const isGstBillingRoute = location.pathname.startsWith('/gst-billing')
   const isInvoiceHistoryRoute = location.pathname.startsWith('/invoice-history')
   const isReportsRoute = location.pathname.startsWith('/reports')
   const isCustomersRoute = location.pathname.startsWith('/customers')
@@ -51,41 +53,44 @@ export function Dashboard() {
       !isRollDetailsRoute &&
       !isAddProductsRoute &&
       !isBillingRoute &&
+      !isGstBillingRoute &&
       !isInvoiceHistoryRoute &&
       !isReportsRoute &&
       !isCustomersRoute &&
       !isUnpaidUsersRoute &&
       !isSearchRollRoute
     ) {
-      setPageLoading(true)
       loadDashboardCatalogues()
     } else {
       setPageLoading(false)
     }
   }, [
-    location.pathname,
     isRollDetailsRoute,
     isAddProductsRoute,
     isBillingRoute,
+    isGstBillingRoute,
     isInvoiceHistoryRoute,
     isReportsRoute,
     isCustomersRoute,
+    isUnpaidUsersRoute,
     isSearchRollRoute,
     loadDashboardCatalogues,
   ])
 
-  // Real-time SSE sync on Dashboard Overview
+  // Live real-time updates via Server-Sent Events (SSE)
   useEffect(() => {
     if (
       isRollDetailsRoute ||
       isAddProductsRoute ||
       isBillingRoute ||
+      isGstBillingRoute ||
       isInvoiceHistoryRoute ||
       isReportsRoute ||
       isCustomersRoute ||
       isSearchRollRoute
-    )
+    ) {
       return
+    }
 
     const eventSource = new EventSource(getStreamUrl('/inventory/stream'), {
       withCredentials: true,
@@ -109,6 +114,7 @@ export function Dashboard() {
     isRollDetailsRoute,
     isAddProductsRoute,
     isBillingRoute,
+    isGstBillingRoute,
     isInvoiceHistoryRoute,
     isReportsRoute,
     isCustomersRoute,
@@ -148,6 +154,9 @@ export function Dashboard() {
     if (isBillingRoute) {
       return <Billing />
     }
+    if (isGstBillingRoute) {
+      return <GstBilling />
+    }
     if (isInvoiceHistoryRoute) {
       return <InvoiceHistory />
     }
@@ -181,8 +190,10 @@ export function Dashboard() {
         </div>
       )
     }
+
     return (
       <div className="dashboard-overview">
+        {/* Header Bar with Action & Filter */}
         <div className="dashboard-overview-header">
           <div>
             <h1 className="dashboard-overview-title">
@@ -192,349 +203,241 @@ export function Dashboard() {
               Live overview of all roll catalogues and pattern stock
             </p>
           </div>
-          <div className="dashboard-header-badge">
-            <span className="dash-pulse-dot" />
-            <span>Real-time Stock Live</span>
+          <div className="dashboard-actions">
+            <button
+              type="button"
+              className="dashboard-primary-btn"
+              onClick={() => navigate('/billing')}
+            >
+              + Create New Bill
+            </button>
+            <button
+              type="button"
+              className="dashboard-secondary-btn"
+              onClick={() => navigate('/add-products')}
+            >
+              Manage Catalogues
+            </button>
           </div>
         </div>
 
-        {/* 4 Professional Executive KPI Cards */}
-        <div className="dashboard-kpi-grid">
-          {/* Card 1: Total Catalogues */}
-          <div
-            className="dashboard-kpi-card"
-            onClick={() => navigate('/roll-details')}
-            role="button"
-            tabIndex={0}
-          >
-            <div className="dashboard-kpi-top">
-              <div className="dashboard-kpi-icon-wrap kpi-icon-blue">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Global Stock KPI Cards */}
+        <div className="dashboard-metrics-grid">
+          <div className="dashboard-metric-card">
+            <div className="metric-header">
+              <span className="metric-title">Catalogues</span>
+              <div className="metric-icon blue">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                 </svg>
               </div>
-              <span className="dashboard-kpi-badge kpi-badge-blue">Catalogues</span>
             </div>
-            <div className="dashboard-kpi-body">
-              <span className="dashboard-kpi-label">TOTAL CATALOGUES</span>
-              <div className="dashboard-kpi-value-row">
-                <strong className="dashboard-kpi-value">
-                  {String(totals.catalogues).padStart(2, '0')}
-                </strong>
-                <span className="dashboard-kpi-unit">Active</span>
-              </div>
-              <p className="dashboard-kpi-subtext">Active collections in CRM</p>
-            </div>
-            <button
-              type="button"
-              className="dashboard-kpi-btn"
-              onClick={(e) => {
-                e.stopPropagation()
-                navigate('/roll-details')
-              }}
-            >
-              <span>View Catalogues</span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
+            <div className="metric-value">{totals.catalogues}</div>
+            <div className="metric-caption">Active Catalogue Series</div>
           </div>
 
-          {/* Card 2: Total Patterns */}
-          <div
-            className="dashboard-kpi-card"
-            onClick={() => navigate('/search-roll')}
-            role="button"
-            tabIndex={0}
-          >
-            <div className="dashboard-kpi-top">
-              <div className="dashboard-kpi-icon-wrap kpi-icon-purple">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="7" height="7" />
-                  <rect x="14" y="3" width="7" height="7" />
-                  <rect x="14" y="14" width="7" height="7" />
-                  <rect x="3" y="14" width="7" height="7" />
+          <div className="dashboard-metric-card">
+            <div className="metric-header">
+              <span className="metric-title">Total Patterns</span>
+              <div className="metric-icon purple">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="M21 15l-5-5L5 21" />
                 </svg>
               </div>
-              <span className="dashboard-kpi-badge kpi-badge-purple">Patterns</span>
             </div>
-            <div className="dashboard-kpi-body">
-              <span className="dashboard-kpi-label">TOTAL PATTERNS</span>
-              <div className="dashboard-kpi-value-row">
-                <strong className="dashboard-kpi-value">
-                  {totals.patterns.toLocaleString('en-IN')}
-                </strong>
-                <span className="dashboard-kpi-unit">Designs</span>
-              </div>
-              <p className="dashboard-kpi-subtext">Across all catalogues</p>
-            </div>
-            <button
-              type="button"
-              className="dashboard-kpi-btn"
-              onClick={(e) => {
-                e.stopPropagation()
-                navigate('/search-roll')
-              }}
-            >
-              <span>View Patterns</span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
+            <div className="metric-value">{totals.patterns}</div>
+            <div className="metric-caption">Unique Design Skus</div>
           </div>
 
-          {/* Card 3: Total Available Rolls */}
-          <div
-            className="dashboard-kpi-card"
-            onClick={() => navigate('/roll-details')}
-            role="button"
-            tabIndex={0}
-          >
-            <div className="dashboard-kpi-top">
-              <div className="dashboard-kpi-icon-wrap kpi-icon-green">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <circle cx="12" cy="12" r="3" />
+          <div className="dashboard-metric-card">
+            <div className="metric-header">
+              <span className="metric-title">Total Rolls in Stock</span>
+              <div className="metric-icon green">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                  <line x1="12" y1="22.08" x2="12" y2="12" />
                 </svg>
               </div>
-              <span className="dashboard-kpi-badge kpi-badge-green">Roll Stock</span>
             </div>
-            <div className="dashboard-kpi-body">
-              <span className="dashboard-kpi-label">TOTAL AVAILABLE ROLLS</span>
-              <div className="dashboard-kpi-value-row">
-                <strong className="dashboard-kpi-value">
-                  {totals.stock.toLocaleString('en-IN')}
-                </strong>
-                <span className="dashboard-kpi-unit">Rolls</span>
-              </div>
-              <p className="dashboard-kpi-subtext">Ready for sale & billing</p>
-            </div>
-            <button
-              type="button"
-              className="dashboard-kpi-btn"
-              onClick={(e) => {
-                e.stopPropagation()
-                navigate('/roll-details')
-              }}
-            >
-              <span>View Stock</span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
+            <div className="metric-value">{totals.stock}</div>
+            <div className="metric-caption">Physical Rolls Available</div>
           </div>
 
-          {/* Card 4: Out of Stock Patterns */}
-          <div
-            className="dashboard-kpi-card dashboard-kpi-danger-card"
-            onClick={() => setStockAlertModal('OUT_OF_STOCK')}
-            role="button"
-            tabIndex={0}
-          >
-            <div className="dashboard-kpi-top">
-              <div className="dashboard-kpi-icon-wrap kpi-icon-red">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
+          <div className="dashboard-metric-card">
+            <div className="metric-header">
+              <span className="metric-title">Out of Stock Alerts</span>
+              <div
+                className={`metric-icon ${totals.outOfStock > 0 ? 'red' : 'green'}`}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
               </div>
-              <span className="dashboard-kpi-badge kpi-badge-red">Attention</span>
             </div>
-            <div className="dashboard-kpi-body">
-              <span className="dashboard-kpi-label">OUT OF STOCK PATTERNS</span>
-              <div className="dashboard-kpi-value-row">
-                <strong className="dashboard-kpi-value kpi-val-danger">
-                  {totals.outOfStock.toLocaleString('en-IN')}
-                </strong>
-                <span className="dashboard-kpi-unit kpi-val-danger">Zero Stock</span>
-              </div>
-              <p className="dashboard-kpi-subtext">Patterns requiring restock</p>
-            </div>
-            <button
-              type="button"
-              className="dashboard-kpi-btn dashboard-kpi-btn-danger"
-              onClick={(e) => {
-                e.stopPropagation()
-                setStockAlertModal('OUT_OF_STOCK')
-              }}
+            <div
+              className={`metric-value ${totals.outOfStock > 0 ? 'text-red' : ''}`}
             >
-              <span>View Out of Stock</span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
+              {totals.outOfStock}
+            </div>
+            <div className="metric-caption">
+              {totals.outOfStock > 0
+                ? 'Patterns need urgent restock'
+                : 'All patterns in healthy stock'}
+            </div>
           </div>
         </div>
 
-        {/* Professional Sales & Roll Volume Analytics Graph with Catalogue & Custom Date Filters */}
-        <SalesAnalyticsChart
-          catalogues={catalogues}
-          selectedCatalogue={dashboardCatalogueFilter}
-          onSelectCatalogue={setDashboardCatalogueFilter}
-        />
+        {/* Live Monthly Sales & Revenue Analytics Chart */}
+        <SalesAnalyticsChart />
 
-        {/* Catalogue Stock Overview Table */}
+        {/* Catalogue Breakdown Table */}
         <div className="dashboard-table-card">
-          <div className="dashboard-table-header">
+          <div className="table-card-header">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h2 className="dashboard-table-title">Catalogue Stock Breakdown</h2>
-                {dashboardCatalogueFilter !== 'ALL' && (
-                  <span className="dash-table-filter-tag">
-                    Showing: <strong>{dashboardCatalogueFilter}</strong>
-                    <button
-                      type="button"
-                      onClick={() => setDashboardCatalogueFilter('ALL')}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: '#64748b',
-                        fontWeight: 'bold',
-                        marginLeft: '4px',
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </span>
-                )}
-              </div>
-              <p className="dashboard-table-subtitle">
-                Overview of patterns and live roll inventory across each catalogue
+              <h2 className="table-card-title">Catalogue Stock Breakdown</h2>
+              <p className="table-card-subtitle">
+                Quick inventory breakdown across individual catalogue binders
               </p>
             </div>
-            <div className="dashboard-table-actions">
-              <button
-                type="button"
-                className="dashboard-sub-action-btn"
-                onClick={() => navigate('/search-roll')}
+            <div className="table-actions-row">
+              <select
+                className="dashboard-filter-select"
+                value={dashboardCatalogueFilter}
+                onChange={(e) => setDashboardCatalogueFilter(e.target.value)}
               >
-                Search Pattern
-              </button>
-              <button
-                type="button"
-                className="dashboard-sub-action-btn dashboard-sub-action-primary"
-                onClick={() => navigate('/roll-details')}
-              >
-                Open Roll Details
-              </button>
+                <option value="ALL">All Catalogues ({catalogues.length})</option>
+                {catalogues.map((cat) => (
+                  <option key={cat.slug} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          <div className="dashboard-table-wrap">
-            <table className="dashboard-overview-table">
+          <div className="table-responsive">
+            <table className="dashboard-table">
               <thead>
                 <tr>
                   <th>Catalogue Name</th>
                   <th>Total Patterns</th>
-                  <th>Available Rolls</th>
-                  <th style={{ textAlign: 'center' }}>Out of Stock (Zero)</th>
-                  <th style={{ textAlign: 'center' }}>Low Stock (Below 10)</th>
-                  <th style={{ textAlign: 'center' }}>Direct Views</th>
+                  <th>Current Stock</th>
+                  <th>Out of Stock</th>
+                  <th>Stock Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {displayedCatalogues.map((cat) => {
                   const outOfStockCount = cat.outOfStock || 0
-                  const lowStockCount = cat.lowStock || 0
+                  const isHealthy = outOfStockCount === 0
+
                   return (
-                    <tr key={cat._id || cat.slug}>
-                      <td>
-                        <div className="dash-cat-cell">
-                          <span className="dash-cat-dot" />
+                    <tr
+                      key={cat.slug}
+                      className="dashboard-table-row"
+                      onClick={() => navigate(`/roll-details/${cat.slug}`)}
+                    >
+                      <td className="catalogue-name-cell">
+                        <div className="catalogue-name-wrap">
+                          <span className="catalogue-initial">
+                            {cat.name.charAt(0)}
+                          </span>
                           <div>
-                            <strong className="dash-cat-title">
-                              {formatCatalogueLabel(cat.name)}
-                            </strong>
-                            <span className="dash-cat-code">{cat.slug}</span>
+                            <span className="catalogue-title-text">{cat.name}</span>
+                            <span className="catalogue-slug-text">
+                              /{cat.slug}
+                            </span>
                           </div>
                         </div>
                       </td>
                       <td>
-                        <strong>{cat.totalPatterns || 0}</strong> patterns
-                      </td>
-                      <td>
-                        <span className="dash-rolls-badge">
-                          {(cat.totalStock || 0).toLocaleString('en-IN')} Rolls
+                        <span className="pattern-count-badge">
+                          {cat.totalPatterns || 0} patterns
                         </span>
                       </td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td>
+                        <span className="stock-count-number">
+                          {cat.totalStock || 0} rolls
+                        </span>
+                      </td>
+                      <td>
                         {outOfStockCount > 0 ? (
                           <button
                             type="button"
-                            className="dash-direct-pill dash-direct-danger"
-                            onClick={() =>
-                              navigate(
-                                `/roll-details/${cat.slug.toUpperCase()}?filter=OUT_OF_STOCK`
-                              )
-                            }
-                            title={`Directly open Out of Stock page for ${formatCatalogueLabel(cat.name)}`}
+                            className="stock-alert-pill"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setStockAlertModal(cat)
+                            }}
                           >
-                            <span>{outOfStockCount} Out of Stock</span>
-                            <span className="dash-pill-arrow">↗</span>
+                            ⚠️ {outOfStockCount} out of stock
                           </button>
                         ) : (
-                          <span className="dash-pill-neutral">0 Out of Stock</span>
+                          <span className="stock-ok-text">0</span>
                         )}
                       </td>
-                      <td style={{ textAlign: 'center' }}>
-                        {lowStockCount > 0 ? (
-                          <button
-                            type="button"
-                            className="dash-direct-pill dash-direct-warning"
-                            onClick={() =>
-                              navigate(
-                                `/roll-details/${cat.slug.toUpperCase()}?filter=LOW_STOCK`
-                              )
-                            }
-                            title={`Directly open Below 10 page for ${formatCatalogueLabel(cat.name)}`}
-                          >
-                            <span>{lowStockCount} Below 10</span>
-                            <span className="dash-pill-arrow">↗</span>
-                          </button>
-                        ) : (
-                          <span className="dash-pill-neutral">0 Below 10</span>
-                        )}
+                      <td>
+                        <span
+                          className={`status-pill ${isHealthy ? 'status-in-stock' : 'status-low-stock'}`}
+                        >
+                          <span className="status-dot"></span>
+                          {isHealthy ? 'Fully Stocked' : 'Action Required'}
+                        </span>
                       </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <div className="dash-row-actions-group">
-                          <button
-                            type="button"
-                            className="dash-row-btn dash-row-btn-main"
-                            onClick={() =>
-                              navigate(`/roll-details/${cat.slug.toUpperCase()}`)
-                            }
-                            title="Open All Patterns"
-                          >
-                            All Rolls
-                          </button>
-                          <button
-                            type="button"
-                            className="dash-row-btn dash-row-btn-danger"
-                            onClick={() =>
-                              navigate(
-                                `/roll-details/${cat.slug.toUpperCase()}?filter=OUT_OF_STOCK`
-                              )
-                            }
-                            title={`Open Out of Stock patterns for ${formatCatalogueLabel(cat.name)}`}
-                          >
-                            Out of Stock ({outOfStockCount}) ↗
-                          </button>
-                          <button
-                            type="button"
-                            className="dash-row-btn dash-row-btn-warning"
-                            onClick={() =>
-                              navigate(
-                                `/roll-details/${cat.slug.toUpperCase()}?filter=LOW_STOCK`
-                              )
-                            }
-                            title={`Open Below 10 patterns for ${formatCatalogueLabel(cat.name)}`}
-                          >
-                            Below 10 ({lowStockCount}) ↗
-                          </button>
-                        </div>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          type="button"
+                          className="view-catalogue-btn"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate(`/roll-details/${cat.slug}`)
+                          }}
+                        >
+                          View Rolls →
+                        </button>
                       </td>
                     </tr>
                   )
@@ -543,149 +446,87 @@ export function Dashboard() {
             </table>
           </div>
         </div>
-
-        {/* Modal: Direct Out of Stock / Below 10 Catalogue Launcher */}
-        {stockAlertModal && (
-          <div
-            className="billing-modal-backdrop"
-            onClick={() => setStockAlertModal(null)}
-          >
-            <div
-              className="billing-modal-card"
-              style={{ maxWidth: '640px' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingBottom: '12px',
-                  borderBottom: '1px solid #e2e8f0',
-                }}
-              >
-                <div>
-                  <h3 className="billing-modal-title">
-                    {stockAlertModal === 'OUT_OF_STOCK'
-                      ? 'Out of Stock – Select Catalogue'
-                      : 'Below 10 (Low Stock) – Select Catalogue'}
-                  </h3>
-                  <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>
-                    Click any catalogue to directly open its{' '}
-                    <strong>
-                      {stockAlertModal === 'OUT_OF_STOCK' ? 'Out of Stock' : 'Below 10'}
-                    </strong>{' '}
-                    inventory page
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="billing-glass-btn"
-                  onClick={() => setStockAlertModal(null)}
-                  style={{ padding: '4px 10px', fontSize: '12px' }}
-                >
-                  ✕ Close
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                {catalogues.map((cat) => {
-                  const oos = cat.outOfStock || 0
-                  const low = cat.lowStock || 0
-                  return (
-                    <div
-                      key={cat._id || cat.slug}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 16px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '10px',
-                        background: '#f8fafc',
-                        gap: '12px',
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <div>
-                        <strong style={{ fontSize: '14px', color: '#0f172a' }}>
-                          {formatCatalogueLabel(cat.name)}
-                        </strong>
-                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                          Out of Stock:{' '}
-                          <span style={{ color: oos > 0 ? '#dc2626' : '#16a34a', fontWeight: 700 }}>
-                            {oos}
-                          </span>{' '}
-                          | Below 10:{' '}
-                          <span style={{ color: low > 0 ? '#d97706' : '#64748b', fontWeight: 700 }}>
-                            {low}
-                          </span>{' '}
-                          | Total: {cat.totalPatterns || 0}
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        <button
-                          type="button"
-                          className="dash-row-btn dash-row-btn-danger"
-                          style={{ padding: '6px 12px', fontSize: '12px' }}
-                          onClick={() => {
-                            setStockAlertModal(null)
-                            navigate(
-                              `/roll-details/${cat.slug.toUpperCase()}?filter=OUT_OF_STOCK`
-                            )
-                          }}
-                        >
-                          Open Out of Stock ↗
-                        </button>
-                        <button
-                          type="button"
-                          className="dash-row-btn dash-row-btn-warning"
-                          style={{ padding: '6px 12px', fontSize: '12px' }}
-                          onClick={() => {
-                            setStockAlertModal(null)
-                            navigate(
-                              `/roll-details/${cat.slug.toUpperCase()}?filter=LOW_STOCK`
-                            )
-                          }}
-                        >
-                          Open Below 10 ↗
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     )
   }
 
   return (
-    <div className="dashboard-layout">
-      <header className="mobile-topbar">
-        <button
-          type="button"
-          className="mobile-hamburger-btn"
-          onClick={() => setMobileMenuOpen(true)}
-          aria-label="Open Navigation"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-        <div className="mobile-brand-title">
-          <img src="/Logo.png" alt="NH Wallpaper" className="mobile-brand-logo" />
-          <span>NH Wallpaper</span>
-        </div>
-      </header>
+    <div className="dashboard-container">
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
 
-      <Sidebar mobileOpen={mobileMenuOpen} onCloseMobile={() => setMobileMenuOpen(false)} />
-      <main className="dashboard-content">{renderMainContent()}</main>
+      <main className="dashboard-main-content">
+        <header className="dashboard-topbar">
+          <button
+            type="button"
+            className="mobile-menu-trigger"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open Navigation Menu"
+          >
+            ☰
+          </button>
+          <div className="topbar-branding">
+            <span className="topbar-title">NH Wallpaper CRM</span>
+            <span className="topbar-chip">Wholesale Suite</span>
+          </div>
+        </header>
+
+        <section className="dashboard-content-area">
+          {renderMainContent()}
+        </section>
+      </main>
+
+      {/* Out of stock details modal */}
+      {stockAlertModal && (
+        <div
+          className="stock-alert-modal-backdrop"
+          onClick={() => setStockAlertModal(null)}
+        >
+          <div
+            className="stock-alert-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3>
+                Stock Alert: {stockAlertModal.name}
+              </h3>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setStockAlertModal(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <p className="modal-description">
+              The following patterns currently have 0 rolls available in stock:
+            </p>
+            <div className="modal-patterns-list">
+              {(stockAlertModal.outOfStockPatterns || []).map((pat) => (
+                <div key={pat.patternNumber} className="out-of-stock-card">
+                  <span className="pattern-badge">{pat.patternNumber}</span>
+                  <span className="zero-stock-badge">0 rolls left</span>
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="dashboard-primary-btn"
+                onClick={() => {
+                  const targetSlug = stockAlertModal.slug
+                  setStockAlertModal(null)
+                  navigate(`/roll-details/${targetSlug}`)
+                }}
+              >
+                Open Catalogue to Restock
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

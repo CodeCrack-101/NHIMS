@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes.js'
 import catalogueRoutes from './routes/catalogue.routes.js'
 import inventoryRoutes from './routes/inventory.routes.js'
 import billingRoutes from './routes/billing.routes.js'
+import gstBillingRoutes from './routes/gstBilling.routes.js'
 import reportsRoutes from './routes/reports.routes.js'
 import customerRoutes from './routes/customer.routes.js'
 import { generalApiRateLimiter } from './middleware/rateLimit.middleware.js'
@@ -100,6 +101,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/catalogues', catalogueRoutes)
 app.use('/api/inventory', inventoryRoutes)
 app.use('/api/billing', billingRoutes)
+app.use('/api/gst-billing', gstBillingRoutes)
 app.use('/api/reports', reportsRoutes)
 app.use('/api/customers', customerRoutes)
 

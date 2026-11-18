@@ -151,6 +151,43 @@ export function Sidebar({ mobileOpen = false, onCloseMobile = () => {} }) {
           <span>Billing</span>
         </NavLink>
 
+        {/* Official GST Billing */}
+        <NavLink
+          to="/gst-billing"
+          onClick={handleNavClick}
+          className={({ isActive }) =>
+            `sidebar-nav-item ${isActive ? 'active' : ''}`
+          }
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <line x1="6" y1="8" x2="18" y2="8" />
+            <line x1="6" y1="12" x2="14" y2="12" />
+            <line x1="6" y1="16" x2="10" y2="16" />
+          </svg>
+          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span>GST Billing</span>
+            <span style={{
+              fontSize: '10px',
+              padding: '2px 6px',
+              borderRadius: '999px',
+              backgroundColor: '#e0e7ff',
+              color: '#3730a3',
+              fontWeight: '800',
+              lineHeight: 1,
+            }}>Tax</span>
+          </span>
+        </NavLink>
+
         <NavLink
           to="/invoice-history"
           onClick={handleNavClick}
@@ -286,13 +323,27 @@ export function Sidebar({ mobileOpen = false, onCloseMobile = () => {} }) {
         <button
           type="button"
           onClick={handleLogout}
-          disabled={signingOut}
           className="sidebar-logout-btn"
+          disabled={signingOut}
         >
-          <span>{signingOut ? 'Logging out...' : 'Logout'}</span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span>{signingOut ? 'Signing Out...' : 'Logout'}</span>
         </button>
       </div>
     </aside>
-    </>
+  </>
   )
 }

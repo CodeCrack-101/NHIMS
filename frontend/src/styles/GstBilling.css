@@ -1,0 +1,417 @@
+.gst-billing-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  padding-bottom: 40px;
+}
+
+.gst-header-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.gst-tag {
+  display: inline-block;
+  background-color: #dbeafe;
+  color: #1e40af;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gst-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+
+.gst-subtitle {
+  color: #64748b;
+  font-size: 13.5px;
+  margin: 0;
+}
+
+.gst-inv-badge {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.gst-inv-badge strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+/* Card Container */
+.gst-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.gst-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.gst-card-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* Meta Card */
+.gst-meta-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.gst-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gst-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.gst-input,
+.gst-select,
+.gst-textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  color: #0f172a;
+  background-color: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.gst-input:focus,
+.gst-select:focus,
+.gst-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.gst-tax-type-pill {
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.gst-tax-type-pill.igst {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.gst-tax-type-pill.cgst {
+  background-color: #e0e7ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+}
+
+/* Parties Grid */
+.gst-parties-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.gst-party-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gst-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.gst-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3b82f6;
+  cursor: pointer;
+}
+
+.gst-same-banner {
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 28px 16px;
+  text-align: center;
+  color: #64748b;
+  font-size: 13.5px;
+}
+
+/* Items Card */
+.gst-items-card {
+  padding: 20px 16px;
+}
+
+.gst-items-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gst-items-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.gst-item-btn-group {
+  display: flex;
+  gap: 10px;
+}
+
+.gst-btn-sm {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.gst-btn-primary {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.gst-btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.gst-btn-secondary {
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.gst-btn-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+}
+
+/* Table */
+.gst-table-wrapper {
+  overflow-x: auto;
+}
+
+.gst-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.gst-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid #cbd5e1;
+  font-size: 12px;
+}
+
+.gst-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.gst-table-input,
+.gst-table-select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12.5px;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.gst-table-input:focus,
+.gst-table-select:focus {
+  border-color: #3b82f6;
+}
+
+.gst-cat-picker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.gst-row-del-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.gst-row-del-btn:hover:not(:disabled) {
+  background-color: #fee2e2;
+}
+
+.gst-row-del-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Bottom Grid */
+.gst-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 20px;
+}
+
+.gst-payment-config-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.gst-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gst-sum-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+  color: #475569;
+}
+
+.gst-sum-line strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.gst-total-line {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
+  margin-top: 4px;
+  font-size: 16px;
+}
+
+.gst-total-line strong {
+  font-size: 22px;
+  color: #1e3a8a;
+  font-weight: 800;
+}
+
+.gst-action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.gst-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.gst-btn-print {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+.gst-btn-print:hover:not(:disabled) {
+  background-color: #1e293b;
+}
+
+.gst-btn-download {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.gst-btn-download:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+/* History Table */
+.gst-history-card {
+  overflow-x: auto;
+}
+
+.gst-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.gst-history-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 12px;
+}
+
+.gst-history-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+@media (max-width: 900px) {
+  .gst-parties-grid,
+  .gst-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}

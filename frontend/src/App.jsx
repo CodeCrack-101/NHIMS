@@ -70,6 +70,14 @@ function App() {
             }
           />
           <Route
+            path="/gst-billing"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/invoice-history"
             element={
               <ProtectedRoute>
@@ -118,7 +126,7 @@ function App() {
             }
           />
             <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
+            </Routes>
           </AuthProvider>
         </DownloadProgressProvider>
       </ToastProvider>
