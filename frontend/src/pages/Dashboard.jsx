@@ -222,11 +222,15 @@ export function Dashboard() {
         </div>
 
         {/* Global Stock KPI Cards */}
-        <div className="dashboard-metrics-grid">
-          <div className="dashboard-metric-card">
-            <div className="metric-header">
-              <span className="metric-title">Catalogues</span>
-              <div className="metric-icon blue">
+        <div className="dashboard-kpi-grid">
+          {/* 1. Catalogues */}
+          <div
+            className="dashboard-kpi-card"
+            onClick={() => navigate('/roll-details')}
+          >
+            <div className="dashboard-kpi-top">
+              <span className="dashboard-kpi-label">Catalogues</span>
+              <div className="dashboard-kpi-icon-wrap kpi-icon-blue">
                 <svg
                   width="20"
                   height="20"
@@ -242,14 +246,36 @@ export function Dashboard() {
                 </svg>
               </div>
             </div>
-            <div className="metric-value">{totals.catalogues}</div>
-            <div className="metric-caption">Active Catalogue Series</div>
+            <div className="dashboard-kpi-body">
+              <div className="dashboard-kpi-value-row">
+                <span className="dashboard-kpi-value">{totals.catalogues}</span>
+                <span className="dashboard-kpi-unit">Series</span>
+              </div>
+              <span className="dashboard-kpi-subtext">Active Catalogue Series</span>
+            </div>
+            <button
+              type="button"
+              className="dashboard-kpi-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate('/roll-details')
+              }}
+            >
+              <span>Explore Catalogues</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
           </div>
 
-          <div className="dashboard-metric-card">
-            <div className="metric-header">
-              <span className="metric-title">Total Patterns</span>
-              <div className="metric-icon purple">
+          {/* 2. Total Patterns */}
+          <div
+            className="dashboard-kpi-card"
+            onClick={() => navigate('/roll-details')}
+          >
+            <div className="dashboard-kpi-top">
+              <span className="dashboard-kpi-label">Total Patterns</span>
+              <div className="dashboard-kpi-icon-wrap kpi-icon-purple">
                 <svg
                   width="20"
                   height="20"
@@ -266,14 +292,36 @@ export function Dashboard() {
                 </svg>
               </div>
             </div>
-            <div className="metric-value">{totals.patterns}</div>
-            <div className="metric-caption">Unique Design Skus</div>
+            <div className="dashboard-kpi-body">
+              <div className="dashboard-kpi-value-row">
+                <span className="dashboard-kpi-value">{totals.patterns}</span>
+                <span className="dashboard-kpi-unit">SKUs</span>
+              </div>
+              <span className="dashboard-kpi-subtext">Unique Design Skus</span>
+            </div>
+            <button
+              type="button"
+              className="dashboard-kpi-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate('/roll-details')
+              }}
+            >
+              <span>View All Designs</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
           </div>
 
-          <div className="dashboard-metric-card">
-            <div className="metric-header">
-              <span className="metric-title">Total Rolls in Stock</span>
-              <div className="metric-icon green">
+          {/* 3. Total Rolls in Stock */}
+          <div
+            className="dashboard-kpi-card"
+            onClick={() => navigate('/roll-details')}
+          >
+            <div className="dashboard-kpi-top">
+              <span className="dashboard-kpi-label">Total Rolls in Stock</span>
+              <div className="dashboard-kpi-icon-wrap kpi-icon-green">
                 <svg
                   width="20"
                   height="20"
@@ -290,16 +338,39 @@ export function Dashboard() {
                 </svg>
               </div>
             </div>
-            <div className="metric-value">{totals.stock}</div>
-            <div className="metric-caption">Physical Rolls Available</div>
+            <div className="dashboard-kpi-body">
+              <div className="dashboard-kpi-value-row">
+                <span className="dashboard-kpi-value">{totals.stock}</span>
+                <span className="dashboard-kpi-unit">Rolls</span>
+              </div>
+              <span className="dashboard-kpi-subtext">Physical Rolls Available</span>
+            </div>
+            <button
+              type="button"
+              className="dashboard-kpi-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate('/billing')
+              }}
+            >
+              <span>Quick Bill</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
           </div>
 
-          <div className="dashboard-metric-card">
-            <div className="metric-header">
-              <span className="metric-title">Out of Stock Alerts</span>
-              <div
-                className={`metric-icon ${totals.outOfStock > 0 ? 'red' : 'green'}`}
-              >
+          {/* 4. Out of Stock Alerts */}
+          <div
+            className={`dashboard-kpi-card ${totals.outOfStock > 0 ? 'dashboard-kpi-danger-card' : ''}`}
+            onClick={() => {
+              const firstOutOfStock = catalogues.find((c) => (c.outOfStock || 0) > 0)
+              if (firstOutOfStock) setStockAlertModal(firstOutOfStock)
+            }}
+          >
+            <div className="dashboard-kpi-top">
+              <span className="dashboard-kpi-label">Out of Stock Alerts</span>
+              <div className="dashboard-kpi-icon-wrap kpi-icon-red">
                 <svg
                   width="20"
                   height="20"
@@ -316,16 +387,37 @@ export function Dashboard() {
                 </svg>
               </div>
             </div>
-            <div
-              className={`metric-value ${totals.outOfStock > 0 ? 'text-red' : ''}`}
+            <div className="dashboard-kpi-body">
+              <div className="dashboard-kpi-value-row">
+                <span className={`dashboard-kpi-value ${totals.outOfStock > 0 ? 'kpi-val-danger' : ''}`}>
+                  {totals.outOfStock}
+                </span>
+                <span className="dashboard-kpi-unit">Alerts</span>
+              </div>
+              <span className="dashboard-kpi-subtext">
+                {totals.outOfStock > 0
+                  ? 'Patterns need urgent restock'
+                  : 'All patterns in healthy stock'}
+              </span>
+            </div>
+            <button
+              type="button"
+              className={`dashboard-kpi-btn ${totals.outOfStock > 0 ? 'dashboard-kpi-btn-danger' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                const firstOutOfStock = catalogues.find((c) => (c.outOfStock || 0) > 0)
+                if (firstOutOfStock) {
+                  setStockAlertModal(firstOutOfStock)
+                } else {
+                  navigate('/roll-details')
+                }
+              }}
             >
-              {totals.outOfStock}
-            </div>
-            <div className="metric-caption">
-              {totals.outOfStock > 0
-                ? 'Patterns need urgent restock'
-                : 'All patterns in healthy stock'}
-            </div>
+              <span>{totals.outOfStock > 0 ? 'Review Low Stock' : 'Stock Status'}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -334,16 +426,16 @@ export function Dashboard() {
 
         {/* Catalogue Breakdown Table */}
         <div className="dashboard-table-card">
-          <div className="table-card-header">
+          <div className="dashboard-table-header">
             <div>
-              <h2 className="table-card-title">Catalogue Stock Breakdown</h2>
-              <p className="table-card-subtitle">
+              <h2 className="dashboard-table-title">Catalogue Stock Breakdown</h2>
+              <p className="dashboard-table-subtitle">
                 Quick inventory breakdown across individual catalogue binders
               </p>
             </div>
-            <div className="table-actions-row">
+            <div className="dashboard-table-actions">
               <select
-                className="dashboard-filter-select"
+                className="dashboard-sub-action-btn"
                 value={dashboardCatalogueFilter}
                 onChange={(e) => setDashboardCatalogueFilter(e.target.value)}
               >
@@ -357,8 +449,8 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="table-responsive">
-            <table className="dashboard-table">
+          <div className="dashboard-table-wrap">
+            <table className="dashboard-overview-table">
               <thead>
                 <tr>
                   <th>Catalogue Name</th>
@@ -377,29 +469,27 @@ export function Dashboard() {
                   return (
                     <tr
                       key={cat.slug}
-                      className="dashboard-table-row"
+                      style={{ cursor: 'pointer' }}
                       onClick={() => navigate(`/roll-details/${cat.slug}`)}
                     >
-                      <td className="catalogue-name-cell">
-                        <div className="catalogue-name-wrap">
-                          <span className="catalogue-initial">
-                            {cat.name.charAt(0)}
-                          </span>
+                      <td>
+                        <div className="dash-cat-cell">
+                          <span className="dash-cat-dot"></span>
                           <div>
-                            <span className="catalogue-title-text">{cat.name}</span>
-                            <span className="catalogue-slug-text">
+                            <span className="dash-cat-title">{cat.name}</span>
+                            <span className="dash-cat-code">
                               /{cat.slug}
                             </span>
                           </div>
                         </div>
                       </td>
                       <td>
-                        <span className="pattern-count-badge">
+                        <span className="dash-rolls-badge">
                           {cat.totalPatterns || 0} patterns
                         </span>
                       </td>
                       <td>
-                        <span className="stock-count-number">
+                        <span style={{ fontWeight: 700, color: '#0f172a' }}>
                           {cat.totalStock || 0} rolls
                         </span>
                       </td>
@@ -407,7 +497,7 @@ export function Dashboard() {
                         {outOfStockCount > 0 ? (
                           <button
                             type="button"
-                            className="stock-alert-pill"
+                            className="dash-direct-pill dash-direct-danger"
                             onClick={(e) => {
                               e.stopPropagation()
                               setStockAlertModal(cat)
@@ -416,12 +506,12 @@ export function Dashboard() {
                             ⚠️ {outOfStockCount} out of stock
                           </button>
                         ) : (
-                          <span className="stock-ok-text">0</span>
+                          <span className="dash-pill-neutral">0</span>
                         )}
                       </td>
                       <td>
                         <span
-                          className={`status-pill ${isHealthy ? 'status-in-stock' : 'status-low-stock'}`}
+                          className={`dash-health-pill ${isHealthy ? 'health-ok' : 'health-alert'}`}
                         >
                           <span className="status-dot"></span>
                           {isHealthy ? 'Fully Stocked' : 'Action Required'}
@@ -430,7 +520,7 @@ export function Dashboard() {
                       <td style={{ textAlign: 'right' }}>
                         <button
                           type="button"
-                          className="view-catalogue-btn"
+                          className="dash-row-view-btn"
                           onClick={(e) => {
                             e.stopPropagation()
                             navigate(`/roll-details/${cat.slug}`)
