@@ -40,7 +40,7 @@ const loadLogoAsDataUrl = (src = '/Logo.png') =>
 /**
  * 1. PDF DOWNLOAD: 4 x 10 Inches Auto-Fitting Single Page Engine
  */
-export const downloadInvoicePdf = async (invoice) => {
+const generateInvoicePdfDoc = async (invoice) => {
   if (!invoice) return
 
   const items = invoice.items || []
@@ -427,15 +427,63 @@ export const downloadInvoicePdf = async (invoice) => {
   doc.setFont('helvetica', 'bold')
   doc.text('Thank you! — NH Wallpaper', pageWidth - marginX, bottomTermsY + termGap * 4 + 0.5, { align: 'right' })
 
+  return doc
+}
+
+/**
+ * 1. PDF DOWNLOAD: 4 x 10 Inches Auto-Fitting Single Page Engine
+ */
+export const downloadInvoicePdf = async (invoice) => {
+  if (!invoice) return
+  const doc = await generateInvoicePdfDoc(invoice)
+  if (!doc) return
   doc.save(`${invoice.invoiceNumber}.pdf`)
 }
 
 /**
  * 2. BROWSER PRINT / THERMAL PRINTER: 4 x 10 Inches Dynamic Adaptive Engine
+ * Direct browser print dialog via hidden iframe without downloading
  */
 export const printInvoiceDocument = async (invoice) => {
-  // Mobile Android/iOS browsers and Desktop printers alike:
-  // Using direct PDF rendering guarantees 100% exact 4x10 inch dimensions (101.6mm x 254mm)
-  // on every phone without being stretched or zoomed by mobile HTML print engines.
-  await downloadInvoicePdf(invoice)
+  if (!invoice) return
+  const doc = await generateInvoicePdfDoc(invoice)
+  if (!doc) return
+
+  const blob = doc.output('blob')
+  const blobUrl = URL.createObjectURL(blob)
+
+  let printIframe = document.getElementById('invoice-print-frame')
+  if (!printIframe) {
+    printIframe = document.createElement('iframe')
+    printIframe.id = 'invoice-print-frame'
+    printIframe.style.position = 'fixed'
+    printIframe.style.right = '0'
+    printIframe.style.bottom = '0'
+    printIframe.style.width = '0'
+    printIframe.style.height = '0'
+    printIframe.style.border = '0'
+    document.body.appendChild(printIframe)
+  }
+
+  printIframe.src = blobUrl
+  printIframe.onload = () => {
+    setTimeout(() => {
+      try {
+        printIframe.contentWindow?.focus()
+        printIframe.contentWindow?.print()
+      } catch (err) {
+        const win = window.open(blobUrl, '_blank')
+        if (win) {
+          win.onload = () => {
+            win.focus()
+            win.print()
+          }
+        }
+      } finally {
+        setTimeout(() => {
+          URL.revokeObjectURL(blobUrl)
+        }, 60000)
+      }
+    }, 250)
+  }
 }
