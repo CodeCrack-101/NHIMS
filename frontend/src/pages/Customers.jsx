@@ -10,7 +10,7 @@ import {
   generateCustomerStatementPdf,
 } from '../utils/customerExportHelpers.js'
 import { downloadInvoicePdf } from '../utils/exportInvoicePdf.js'
-import { MetricsSkeleton, TableSkeleton } from '../components/Skeleton.jsx'
+import { TableSkeleton } from '../components/Skeleton.jsx'
 import '../styles/Customers.css'
 
 export function Customers({ filterUnpaidOnly = false }) {
@@ -23,7 +23,7 @@ export function Customers({ filterUnpaidOnly = false }) {
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [sortOption, setSortOption] = useState('spend_desc') // spend_desc (most bought), spend_asc (least bought), latest, etc.
+  const [sortOption, setSortOption] = useState('spend_desc')
   const [listDateFilter, setListDateFilter] = useState('')
   const [listStartDate, setListStartDate] = useState('')
   const [listEndDate, setListEndDate] = useState('')
@@ -39,6 +39,7 @@ export function Customers({ filterUnpaidOnly = false }) {
   const [billMinPrice, setBillMinPrice] = useState('')
   const [billMaxPrice, setBillMaxPrice] = useState('')
   const [billSort, setBillSort] = useState('latest')
+  const [updatingInvoiceId, setUpdatingInvoiceId] = useState(null)
 
   // Load Customers Summary
   const fetchCustomers = useCallback(async () => {
@@ -117,7 +118,7 @@ export function Customers({ filterUnpaidOnly = false }) {
     setBillEndDate('')
     setBillMinPrice('')
     setBillMaxPrice('')
-    navigate('/customers')
+    navigate(filterUnpaidOnly ? '/unpaid-users' : '/customers')
   }
 
   // Quick Date Range Handler for Main List
@@ -146,10 +147,38 @@ export function Customers({ filterUnpaidOnly = false }) {
     setListEndDate(e)
   }
 
+  // Handle changing payment status inside the drawer
+  const handleTogglePaymentStatus = async (invoiceId, currentStatus) => {
+    const nextStatus = currentStatus === 'PAID' ? 'UNPAID' : 'PAID'
+    try {
+      setUpdatingInvoiceId(invoiceId)
+      await billingService.updatePaymentStatus(invoiceId, nextStatus)
+      showToast({
+        type: 'success',
+        title: 'Payment Status Updated',
+        message: `Invoice marked as ${nextStatus}.`,
+      })
+      if (selectedCustomer?.mobileNumber) {
+        await fetchCustomerBills(selectedCustomer.mobileNumber)
+      }
+      await fetchCustomers()
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: err.response?.data?.message || err.message,
+      })
+    } finally {
+      setUpdatingInvoiceId(null)
+    }
+  }
+
   // Metrics aggregation
   const displayedCustomers = useMemo(() => {
     if (!filterUnpaidOnly) return customers
-    return customers.filter((c) => (Number(c.unpaidAmount) > 0 || Number(c.unpaidInvoicesCount) > 0))
+    return customers.filter(
+      (c) => Number(c.unpaidAmount) > 0 || Number(c.unpaidInvoicesCount) > 0
+    )
   }, [customers, filterUnpaidOnly])
 
   const totals = useMemo(() => {
@@ -158,11 +187,19 @@ export function Customers({ filterUnpaidOnly = false }) {
         acc.totalSpend += Number(c.totalSpend) || 0
         acc.totalRolls += Number(c.totalQuantity) || 0
         acc.totalInvoices += Number(c.totalInvoices) || 0
+        acc.totalUnpaidAmount += Number(c.unpaidAmount) || 0
+        acc.totalUnpaidInvoices += Number(c.unpaidInvoicesCount) || 0
         return acc
       },
-      { totalSpend: 0, totalRolls: 0, totalInvoices: 0 }
+      {
+        totalSpend: 0,
+        totalRolls: 0,
+        totalInvoices: 0,
+        totalUnpaidAmount: 0,
+        totalUnpaidInvoices: 0,
+      }
     )
-  }, [customers])
+  }, [displayedCustomers])
 
   // Download Individual Invoice PDF
   const handleDownloadInvoicePdf = async (invoiceId) => {
@@ -175,7 +212,11 @@ export function Customers({ filterUnpaidOnly = false }) {
         }
         await downloadInvoicePdf(invoiceData)
       })
-      showToast({ type: 'success', title: 'Downloaded', message: 'Invoice PDF downloaded successfully.' })
+      showToast({
+        type: 'success',
+        title: 'Downloaded',
+        message: 'Invoice PDF downloaded successfully.',
+      })
     } catch (err) {
       showToast({
         type: 'error',
@@ -190,12 +231,27 @@ export function Customers({ filterUnpaidOnly = false }) {
       {/* Page Header */}
       <div className="customers-header">
         <div className="customers-title-wrap">
-          <h1>Users & Customer Billing Directory</h1>
+          <h1>
+            {filterUnpaidOnly
+              ? 'Unpaid Users & Outstanding Dues'
+              : 'Users & Customer Billing Directory'}
+          </h1>
           <p className="customers-subtitle">
-            Directory of all customers who have purchased and billed with NH Wallpaper
+            {filterUnpaidOnly
+              ? 'List of customers with pending or unpaid invoices and outstanding balance'
+              : 'Directory of all customers who have purchased and billed with NH Wallpaper'}
           </p>
         </div>
         <div className="customers-header-actions">
+          {filterUnpaidOnly && (
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => navigate('/customers')}
+            >
+              View All Customers
+            </button>
+          )}
           <ProgressButton
             id="export-all-users-csv"
             type="button"
@@ -203,13 +259,13 @@ export function Customers({ filterUnpaidOnly = false }) {
             onClick={() =>
               trackDownload('export-all-users-csv', async () => {
                 await new Promise((r) => setTimeout(r, 600))
-                exportCustomersListCsv(customers)
+                exportCustomersListCsv(displayedCustomers)
               })
             }
-            disabled={customers.length === 0}
+            disabled={displayedCustomers.length === 0}
             loadingText="Exporting"
           >
-            Export All Users CSV
+            {filterUnpaidOnly ? 'Export Unpaid Users CSV' : 'Export All Users CSV'}
           </ProgressButton>
         </div>
       </div>
@@ -217,23 +273,53 @@ export function Customers({ filterUnpaidOnly = false }) {
       {/* KPI Stats */}
       <div className="customers-stats-grid">
         <div className="customer-stat-card">
-          <span className="customer-stat-label">Total Unique Customers</span>
-          <span className="customer-stat-value">{customers.length}</span>
-        </div>
-        <div className="customer-stat-card">
-          <span className="customer-stat-label">Total Rolls Billed</span>
-          <span className="customer-stat-value">{totals.totalRolls}</span>
-        </div>
-        <div className="customer-stat-card">
-          <span className="customer-stat-label">Total Revenue</span>
-          <span className="customer-stat-value">
-            Rs {totals.totalSpend.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          <span className="customer-stat-label">
+            {filterUnpaidOnly ? 'Unpaid Customers' : 'Total Unique Customers'}
+          </span>
+          <span
+            className="customer-stat-value"
+            style={{ color: filterUnpaidOnly && displayedCustomers.length > 0 ? '#dc2626' : undefined }}
+          >
+            {displayedCustomers.length}
           </span>
         </div>
-        <div className="customer-stat-card">
-          <span className="customer-stat-label">Total Invoices Issued</span>
-          <span className="customer-stat-value">{totals.totalInvoices}</span>
-        </div>
+        {filterUnpaidOnly ? (
+          <>
+            <div className="customer-stat-card" style={{ borderLeft: '4px solid #ef4444' }}>
+              <span className="customer-stat-label">Total Outstanding Due</span>
+              <span className="customer-stat-value" style={{ color: '#dc2626' }}>
+                ₹{totals.totalUnpaidAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+            <div className="customer-stat-card">
+              <span className="customer-stat-label">Pending Invoices</span>
+              <span className="customer-stat-value" style={{ color: '#dc2626' }}>
+                {totals.totalUnpaidInvoices}
+              </span>
+            </div>
+            <div className="customer-stat-card">
+              <span className="customer-stat-label">Total Customer Count</span>
+              <span className="customer-stat-value">{customers.length}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="customer-stat-card">
+              <span className="customer-stat-label">Total Rolls Billed</span>
+              <span className="customer-stat-value">{totals.totalRolls}</span>
+            </div>
+            <div className="customer-stat-card">
+              <span className="customer-stat-label">Total Revenue</span>
+              <span className="customer-stat-value">
+                Rs {totals.totalSpend.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+            <div className="customer-stat-card">
+              <span className="customer-stat-label">Total Invoices Issued</span>
+              <span className="customer-stat-value">{totals.totalInvoices}</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Filter and Sort Toolbar */}
@@ -323,7 +409,12 @@ export function Customers({ filterUnpaidOnly = false }) {
             />
           </div>
 
-          {(search || listStartDate || listEndDate || minSpend || maxSpend || sortOption !== 'spend_desc') && (
+          {(search ||
+            listStartDate ||
+            listEndDate ||
+            minSpend ||
+            maxSpend ||
+            sortOption !== 'spend_desc') && (
             <button
               type="button"
               className="btn-secondary"
@@ -349,56 +440,179 @@ export function Customers({ filterUnpaidOnly = false }) {
           <div style={{ padding: '8px' }}>
             <TableSkeleton rows={7} cols={7} />
           </div>
-        ) : customers.length === 0 ? (
-          <div className="empty-state">No customers found matching your criteria.</div>
+        ) : displayedCustomers.length === 0 ? (
+          <div
+            className="empty-state"
+            style={{
+              padding: '48px 24px',
+              textAlign: 'center',
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+            }}
+          >
+            {filterUnpaidOnly ? (
+              <div style={{ maxWidth: '440px', margin: '0 auto' }}>
+                <div
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    backgroundColor: '#dcfce7',
+                    color: '#16a34a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 16px',
+                    fontSize: '28px',
+                  }}
+                >
+                  ✓
+                </div>
+                <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', marginBottom: '8px' }}>
+                  All Clear! No Unpaid Users
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '20px' }}>
+                  All {customers.length} registered customers currently have their invoices marked as
+                  Paid. When creating a bill or in Invoice History, you can mark any invoice as &ldquo;Unpaid&rdquo; to track outstanding dues here.
+                </p>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => navigate('/customers')}
+                  >
+                    View All Users ({customers.length})
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => navigate('/billing')}
+                  >
+                    Go to Billing
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>No customers found matching your criteria.</div>
+            )}
+          </div>
         ) : (
           <table className="customers-table">
             <thead>
               <tr>
                 <th>Customer Name</th>
                 <th>Mobile Number</th>
-                <th>Total Invoices</th>
-                <th>Total Rolls Bought</th>
-                <th>Total Spend</th>
-                <th>Last Purchase</th>
+                {filterUnpaidOnly ? (
+                  <>
+                    <th>Pending Due</th>
+                    <th>Unpaid Invoices</th>
+                    <th>Total Spend</th>
+                    <th>Last Purchase</th>
+                  </>
+                ) : (
+                  <>
+                    <th>Total Invoices</th>
+                    <th>Total Rolls Bought</th>
+                    <th>Total Spend</th>
+                    <th>Last Purchase</th>
+                  </>
+                )}
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {displayedCustomers.map((c) => (
-                <tr key={c._id || c.mobileNumber} onClick={() => handleOpenCustomer(c)}>
-                  <td className="customer-name-cell">{c.customerName || 'N/A'}</td>
-                  <td>
-                    <span className="customer-mobile-pill">{c.mobileNumber}</span>
-                  </td>
-                  <td>{c.totalInvoices} bills</td>
-                  <td>{c.totalQuantity} rolls</td>
-                  <td className="customer-spend-badge">
-                    Rs {Number(c.totalSpend || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </td>
-                  <td>
-                    {c.lastPurchaseDate
-                      ? new Date(c.lastPurchaseDate).toLocaleDateString('en-IN', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })
-                      : 'N/A'}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleOpenCustomer(c)
-                      }}
-                    >
-                      View Bills
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {displayedCustomers.map((c) => {
+                const hasUnpaid = Number(c.unpaidAmount) > 0 || Number(c.unpaidInvoicesCount) > 0
+                return (
+                  <tr key={c._id || c.mobileNumber} onClick={() => handleOpenCustomer(c)}>
+                    <td className="customer-name-cell">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{c.customerName || 'N/A'}</span>
+                        {hasUnpaid && (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              backgroundColor: '#fee2e2',
+                              color: '#dc2626',
+                              fontWeight: '700',
+                            }}
+                          >
+                            DUE
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="customer-mobile-pill">{c.mobileNumber}</span>
+                    </td>
+                    {filterUnpaidOnly ? (
+                      <>
+                        <td style={{ fontWeight: '700', color: '#dc2626' }}>
+                          ₹{Number(c.unpaidAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td>
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              backgroundColor: '#fee2e2',
+                              color: '#b91c1c',
+                              fontWeight: '700',
+                              fontSize: '12px',
+                            }}
+                          >
+                            {c.unpaidInvoicesCount || 0} unpaid
+                          </span>
+                        </td>
+                        <td className="customer-spend-badge">
+                          Rs {Number(c.totalSpend || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td>
+                          {c.lastPurchaseDate
+                            ? new Date(c.lastPurchaseDate).toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })
+                            : 'N/A'}
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td>{c.totalInvoices} bills</td>
+                        <td>{c.totalQuantity} rolls</td>
+                        <td className="customer-spend-badge">
+                          Rs {Number(c.totalSpend || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td>
+                          {c.lastPurchaseDate
+                            ? new Date(c.lastPurchaseDate).toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })
+                            : 'N/A'}
+                        </td>
+                      </>
+                    )}
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleOpenCustomer(c)
+                        }}
+                      >
+                        View Bills
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}
@@ -436,7 +650,10 @@ export function Customers({ filterUnpaidOnly = false }) {
                 </div>
                 <div className="ribbon-item">
                   <span>Total Rolls Bought</span>
-                  <strong>{selectedCustomer.lifetimeQuantity || customerBills.reduce((s, b) => s + b.totalQuantity, 0)}</strong>
+                  <strong>
+                    {selectedCustomer.lifetimeQuantity ||
+                      customerBills.reduce((s, b) => s + (b.totalQuantity || 0), 0)}
+                  </strong>
                 </div>
                 <div className="ribbon-item">
                   <span>Total Purchases</span>
@@ -444,7 +661,10 @@ export function Customers({ filterUnpaidOnly = false }) {
                     Rs{' '}
                     {(
                       selectedCustomer.lifetimeSpend ||
-                      customerBills.reduce((s, b) => s + (Number(b.finalTotal ?? b.grandTotal) || 0), 0)
+                      customerBills.reduce(
+                        (s, b) => s + (Number(b.finalTotal ?? b.grandTotal) || 0),
+                        0
+                      )
                     ).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </strong>
                 </div>
@@ -501,7 +721,10 @@ export function Customers({ filterUnpaidOnly = false }) {
               </div>
 
               {/* Drawer Filter Controls */}
-              <div className="customers-filter-card" style={{ padding: '12px 16px', marginBottom: '16px' }}>
+              <div
+                className="customers-filter-card"
+                style={{ padding: '12px 16px', marginBottom: '16px' }}
+              >
                 <div className="customers-filter-row">
                   <div className="customers-filter-group">
                     <label>Filter Date:</label>
@@ -573,6 +796,7 @@ export function Customers({ filterUnpaidOnly = false }) {
                         <th>Items Summary</th>
                         <th>Rolls</th>
                         <th>Amount</th>
+                        <th>Status</th>
                         <th style={{ textAlign: 'right' }}>Invoice PDF</th>
                       </tr>
                     </thead>
@@ -587,12 +811,49 @@ export function Customers({ filterUnpaidOnly = false }) {
                           </td>
                           <td style={{ fontSize: '13px', maxWidth: '240px' }}>
                             {(b.items || [])
-                              .map((it) => `${it.catalogueName} (${it.patternNumber}) x${it.quantity}`)
+                              .map(
+                                (it) =>
+                                  `${it.catalogueName} (${it.patternNumber}) x${it.quantity}`
+                              )
                               .join(', ')}
                           </td>
                           <td>{b.totalQuantity}</td>
                           <td style={{ fontWeight: 700, color: '#0f172a' }}>
-                            Rs {Number(b.finalTotal ?? b.grandTotal ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            Rs{' '}
+                            {Number(b.finalTotal ?? b.grandTotal ?? 0).toLocaleString('en-IN', {
+                              minimumFractionDigits: 2,
+                            })}
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleTogglePaymentStatus(b._id, b.paymentStatus || 'PAID')
+                              }
+                              disabled={updatingInvoiceId === b._id}
+                              style={{
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                border: '1px solid',
+                                transition: 'all 0.15s ease',
+                                backgroundColor:
+                                  b.paymentStatus === 'UNPAID' ? '#fee2e2' : '#dcfce7',
+                                borderColor:
+                                  b.paymentStatus === 'UNPAID' ? '#fca5a5' : '#86efac',
+                                color:
+                                  b.paymentStatus === 'UNPAID' ? '#991b1b' : '#166534',
+                              }}
+                              title="Click to toggle Paid/Unpaid"
+                            >
+                              {updatingInvoiceId === b._id
+                                ? '...'
+                                : b.paymentStatus === 'UNPAID'
+                                ? 'UNPAID (Pending)'
+                                : 'PAID'}
+                            </button>
                           </td>
                           <td style={{ textAlign: 'right' }}>
                             <ProgressButton
