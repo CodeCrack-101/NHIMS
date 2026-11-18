@@ -132,6 +132,12 @@ const invoiceSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    paymentStatus: {
+      type: String,
+      enum: ['PAID', 'UNPAID'],
+      default: 'PAID',
+      index: true,
+    },
     finalTotal: {
       type: Number,
       required: true,

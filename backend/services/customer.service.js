@@ -52,6 +52,21 @@ export const getCustomersSummary = async ({
       mobileNumber: { $first: '$mobileNumber' },
       totalInvoices: { $sum: 1 },
       totalSpend: { $sum: '$finalTotal' },
+      paidAmount: {
+        $sum: {
+          $cond: [{ $eq: ['$paymentStatus', 'UNPAID'] }, 0, '$finalTotal'],
+        },
+      },
+      unpaidAmount: {
+        $sum: {
+          $cond: [{ $eq: ['$paymentStatus', 'UNPAID'] }, '$finalTotal', 0],
+        },
+      },
+      unpaidInvoicesCount: {
+        $sum: {
+          $cond: [{ $eq: ['$paymentStatus', 'UNPAID'] }, 1, 0],
+        },
+      },
       totalQuantity: { $sum: '$totalQuantity' },
       firstPurchaseDate: { $min: '$invoiceDate' },
       lastPurchaseDate: { $max: '$invoiceDate' },

@@ -7,6 +7,8 @@ import {
   getInvoiceById,
   generateNextInvoiceNumber,
   getDistinctBillers,
+  updateInvoicePaymentStatus,
+  getPendingAmountSummary,
 } from '../services/billing.service.js'
 
 export const listBillingCataloguesController = async (_req, res, next) => {
@@ -57,6 +59,7 @@ export const createBillController = async (req, res, next) => {
   try {
     const {
       customerName,
+      paymentStatus,
       mobileNumber,
       items,
       discountType,
@@ -76,6 +79,7 @@ export const createBillController = async (req, res, next) => {
       discountValue,
       taxRate: Number(taxRate) || 0,
       idempotencyKey: idempotencyKey || headerIdempotencyKey || null,
+      paymentStatus: paymentStatus || 'PAID',
       billerName: billerName || (req.user?.fullName ? req.user.fullName : ''),
       userId: req.user.id,
       req,
@@ -100,7 +104,7 @@ export const createBillController = async (req, res, next) => {
 
 export const listInvoicesController = async (req, res, next) => {
   try {
-    const { search, date, startDate, endDate, catalogue, minPrice, maxPrice, billerName, page, limit } = req.query
+    const { search, date, startDate, endDate, catalogue, minPrice, maxPrice, billerName, paymentStatus, page, limit } = req.query
     const [data, billers] = await Promise.all([
       searchAndListInvoices({
         search,
@@ -111,6 +115,7 @@ export const listInvoicesController = async (req, res, next) => {
         minPrice,
         maxPrice,
         billerName,
+        paymentStatus,
         page,
         limit,
       }),
@@ -189,6 +194,39 @@ export const getInvoicePdfDataController = async (req, res, next) => {
         },
         invoice,
       },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+
+export const updateInvoicePaymentStatusController = async (req, res, next) => {
+  try {
+    const { invoiceId } = req.params
+    const { paymentStatus } = req.body
+    const updatedInvoice = await updateInvoicePaymentStatus(
+      invoiceId,
+      paymentStatus,
+      req.user.id,
+      req
+    )
+    res.status(200).json({
+      success: true,
+      message: `Invoice payment status updated to ${paymentStatus}.`,
+      data: { invoice: updatedInvoice },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const getPendingAmountSummaryController = async (_req, res, next) => {
+  try {
+    const data = await getPendingAmountSummary()
+    res.status(200).json({
+      success: true,
+      data,
     })
   } catch (err) {
     next(err)

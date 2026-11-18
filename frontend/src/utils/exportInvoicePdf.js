@@ -222,7 +222,7 @@ const generateInvoicePdfDoc = async (invoice) => {
     currentY + 7.5 * scale
   )
   doc.text(
-    `Billed By: ${billerDisplayName}`,
+    `Billed By: ${billerDisplayName}  |  Status: ${(invoice.paymentStatus || 'PAID').toUpperCase()}`,
     custSplitX + 3,
     currentY + 11.2 * scale
   )

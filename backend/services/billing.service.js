@@ -170,6 +170,7 @@ export const createBillTransaction = async ({
   discountType = 'PERCENTAGE',
   discountValue = 0,
   taxRate = 0,
+  paymentStatus = 'PAID',
   idempotencyKey = null,
   billerName = '',
   userId,
@@ -458,6 +459,9 @@ export const createBillTransaction = async ({
         taxRate: cleanTaxRate,
         taxAmount: computedTaxAmount,
         finalTotal,
+        paymentStatus: ['PAID', 'UNPAID'].includes(String(paymentStatus).toUpperCase())
+          ? String(paymentStatus).toUpperCase()
+          : 'PAID',
         billerName: String(billerName || '').trim(),
         createdBy: userId,
       }
@@ -547,6 +551,7 @@ export const searchAndListInvoices = async ({
   minPrice = '',
   maxPrice = '',
   billerName = '',
+  paymentStatus = '',
   page = 1,
   limit = 50,
 }) => {
@@ -562,6 +567,10 @@ export const searchAndListInvoices = async ({
       { mobileNumber: regex },
       { billerName: regex },
     ]
+  }
+
+  if (paymentStatus && paymentStatus !== 'ALL') {
+    filter.paymentStatus = String(paymentStatus).toUpperCase()
   }
 
   if (billerName && billerName !== 'ALL') {
@@ -663,4 +672,85 @@ export const getInvoiceById = async (invoiceIdOrNumber) => {
   }
 
   return invoice
+}
+
+
+export const updateInvoicePaymentStatus = async (invoiceId, paymentStatus, userId, req) => {
+  const normalized = String(paymentStatus).toUpperCase()
+  if (!['PAID', 'UNPAID'].includes(normalized)) {
+    throw new AppError('Invalid payment status. Must be PAID or UNPAID.', 400, 'INVALID_PAYMENT_STATUS')
+  }
+
+  const invoice = await Invoice.findByIdAndUpdate(
+    invoiceId,
+    { $set: { paymentStatus: normalized } },
+    { new: true }
+  ).populate('createdBy', 'fullName email role')
+
+  if (!invoice) {
+    throw new AppError('Invoice not found.', 404, 'INVOICE_NOT_FOUND')
+  }
+
+  if (req) {
+    await recordAuditLog({
+      userId,
+      event: 'INVOICE_PAYMENT_STATUS_UPDATED',
+      severity: 'INFO',
+      req,
+      metadata: {
+        invoiceNumber: invoice.invoiceNumber,
+        newStatus: normalized,
+      },
+    }).catch(() => {})
+  }
+
+  return invoice
+}
+
+export const getPendingAmountSummary = async () => {
+  const pendingInvoices = await Invoice.find({ paymentStatus: 'UNPAID' })
+    .sort({ invoiceDate: -1 })
+    .lean()
+
+  const customerMap = new Map()
+
+  for (const inv of pendingInvoices) {
+    const key = inv.mobileNumber || 'UNKNOWN'
+    if (!customerMap.has(key)) {
+      customerMap.set(key, {
+        customerName: inv.customerName,
+        mobileNumber: inv.mobileNumber,
+        totalPendingAmount: 0,
+        unpaidInvoicesCount: 0,
+        invoices: [],
+      })
+    }
+    const c = customerMap.get(key)
+    c.totalPendingAmount += Number(inv.finalTotal) || 0
+    c.unpaidInvoicesCount += 1
+    c.invoices.push({
+      _id: inv._id,
+      invoiceNumber: inv.invoiceNumber,
+      invoiceDate: inv.invoiceDate,
+      finalTotal: inv.finalTotal,
+      totalQuantity: inv.totalQuantity,
+      billerName: inv.billerName,
+    })
+  }
+
+  const customers = Array.from(customerMap.values()).sort(
+    (a, b) => b.totalPendingAmount - a.totalPendingAmount
+  )
+
+  const overallPendingAmount = customers.reduce(
+    (sum, c) => sum + c.totalPendingAmount,
+    0
+  )
+
+  return {
+    overallPendingAmount,
+    totalPendingCustomers: customers.length,
+    totalPendingInvoices: pendingInvoices.length,
+    customers,
+  }
 }

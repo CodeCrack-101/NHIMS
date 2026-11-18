@@ -34,6 +34,7 @@ export function InvoiceHistory() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [selectedCatalogue, setSelectedCatalogue] = useState('ALL')
+  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState('ALL')
   const [selectedBiller, setSelectedBiller] = useState('ALL')
   const [billersList, setBillersList] = useState([])
   const [minPrice, setMinPrice] = useState('')
@@ -93,6 +94,7 @@ export function InvoiceHistory() {
     setStartDate('')
     setEndDate('')
     setSelectedCatalogue('ALL')
+    setSelectedPaymentStatus('ALL')
     setSelectedBiller('ALL')
     setMinPrice('')
     setMaxPrice('')
@@ -389,6 +391,7 @@ export function InvoiceHistory() {
                   <th>Catalogues &amp; Patterns</th>
                   <th>Qty</th>
                   <th>Final Amount</th>
+                <th>Payment Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>

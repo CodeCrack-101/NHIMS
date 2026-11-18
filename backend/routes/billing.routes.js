@@ -13,6 +13,8 @@ import {
   searchInvoicesController,
   getInvoiceByIdController,
   getInvoicePdfDataController,
+  updateInvoicePaymentStatusController,
+  getPendingAmountSummaryController,
 } from '../controllers/billing.controller.js'
 
 const router = Router()
@@ -35,3 +37,7 @@ router.get('/invoices/:invoiceId', getInvoiceByIdController)
 router.get('/invoices/:invoiceId/pdf', getInvoicePdfDataController)
 
 export default router
+
+// 4. Payment Status & Pending Amount
+router.get('/pending-summary', getPendingAmountSummaryController)
+router.patch('/invoices/:invoiceId/payment-status', updateInvoicePaymentStatusController)

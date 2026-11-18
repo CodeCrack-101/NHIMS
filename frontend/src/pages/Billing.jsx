@@ -334,6 +334,17 @@ export function Billing() {
 
   // GST State (Default 0, optional 18% or custom)
   const [taxRate, setTaxRate] = useState(0)
+  const [paymentStatus, setPaymentStatus] = useState('PAID') // 'PAID' | 'UNPAID'
+  const [historyPaymentStatus, setHistoryPaymentStatus] = useState('ALL')
+  const [showPendingSidebar, setShowPendingSidebar] = useState(false)
+  const [pendingSummary, setPendingSummary] = useState({
+    overallPendingAmount: 0,
+    totalPendingCustomers: 0,
+    totalPendingInvoices: 0,
+    customers: [],
+  })
+  const [loadingPendingSummary, setLoadingPendingSummary] = useState(false)
+  const [pendingSearch, setPendingSearch] = useState('')
 
   // Submission & confirmation modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -347,6 +358,45 @@ export function Billing() {
   const [historyDate, setHistoryDate] = useState('')
   const [selectedInvoiceModal, setSelectedInvoiceModal] = useState(null)
   const [downloadingPdfId, setDownloadingPdfId] = useState(null)
+
+  const loadPendingSummary = useCallback(async () => {
+    try {
+      setLoadingPendingSummary(true)
+      const res = await billingService.getPendingSummary()
+      setPendingSummary(
+        res.data?.data || {
+          overallPendingAmount: 0,
+          totalPendingCustomers: 0,
+          totalPendingInvoices: 0,
+          customers: [],
+        }
+      )
+    } catch {
+      // Handled silently
+    } finally {
+      setLoadingPendingSummary(false)
+    }
+  }, [])
+
+  const handleUpdatePaymentStatus = async (invoiceId, newStatus) => {
+    try {
+      await billingService.updatePaymentStatus(invoiceId, newStatus)
+      showToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: `Invoice marked as ${newStatus} successfully.`,
+      })
+      await loadPendingSummary()
+      await loadInvoiceHistory(historySearch, historyDate, historyPaymentStatus, true)
+      await loadPendingSummary()
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: err.response?.data?.message || err.message,
+      })
+    }
+  }
 
   const loadBillingCatalogues = useCallback(async (silent = false) => {
     if (!silent) setInitialLoading(true)
@@ -397,12 +447,18 @@ export function Billing() {
   )
 
   const loadInvoiceHistory = useCallback(
-    async (searchVal = historySearch, dateVal = historyDate, silent = false) => {
+    async (
+      searchVal = historySearch,
+      dateVal = historyDate,
+      statusVal = historyPaymentStatus,
+      silent = false
+    ) => {
       if (!silent) setLoadingInvoices(true)
       try {
         const res = await billingService.searchInvoices({
           q: searchVal.trim(),
           date: dateVal,
+          paymentStatus: statusVal,
         })
         const data = res.data?.data
         setInvoices(data?.invoices || [])
@@ -415,7 +471,7 @@ export function Billing() {
         if (!silent) setLoadingInvoices(false)
       }
     },
-    [historySearch, historyDate]
+    [historySearch, historyDate, historyPaymentStatus]
   )
 
   useEffect(() => {
@@ -838,6 +894,7 @@ export function Billing() {
         discountType,
         discountValue: Number(discountValue) || 0,
         taxRate: Number(taxRate) || 0,
+        paymentStatus,
         idempotencyKey: idempotencyKeyRef.current,
       }
 
@@ -1330,7 +1387,7 @@ export function Billing() {
 
             {/* GST (Tax) Selection - By default 0% */}
             <div className="gst-configuration-row" style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #f1f5f9' }}>
-              <div className="discount-type-field" style={{ maxWidth: '220px' }}>
+              <div className="discount-type-field" style={{ maxWidth: '200px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span>Applicable GST Tax</span>
                   <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>(Default: 0%)</span>
@@ -1345,6 +1402,39 @@ export function Billing() {
                   <option value={5}>GST 5%</option>
                   <option value={12}>GST 12%</option>
                   <option value={28}>GST 28%</option>
+                </select>
+              </div>
+
+              {/* Payment Status Dropdown Menu: Paid vs Unpaid */}
+              <div className="discount-type-field" style={{ maxWidth: '200px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>Payment Status</span>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      fontWeight: '700',
+                      backgroundColor: paymentStatus === 'PAID' ? '#dcfce7' : '#fee2e2',
+                      color: paymentStatus === 'PAID' ? '#166534' : '#991b1b',
+                    }}
+                  >
+                    {paymentStatus === 'PAID' ? 'PAID' : 'PENDING'}
+                  </span>
+                </label>
+                <select
+                  value={paymentStatus}
+                  onChange={(e) => setPaymentStatus(e.target.value)}
+                  className="billing-select"
+                  style={{
+                    borderColor: paymentStatus === 'UNPAID' ? '#f87171' : '#cbd5e1',
+                    backgroundColor: paymentStatus === 'UNPAID' ? '#fff5f5' : '#ffffff',
+                    fontWeight: '600',
+                    color: paymentStatus === 'UNPAID' ? '#b91c1c' : '#0f172a',
+                  }}
+                >
+                  <option value="PAID">Amount Paid (Full)</option>
+                  <option value="UNPAID">Amount Unpaid (Pending / Due)</option>
                 </select>
               </div>
             </div>
@@ -1413,7 +1503,30 @@ export function Billing() {
       <section className="invoice-history-section">
         <div className="invoice-history-header">
           <div>
-            <h2 className="invoice-history-title">Invoice History</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              <h2 className="invoice-history-title">Invoice History</h2>
+              <button
+                type="button"
+                className="btn-open-pending-sidebar"
+                onClick={() => {
+                  loadPendingSummary()
+                  setShowPendingSidebar(true)
+                }}
+                title="View all customers with pending amounts"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span>Pending Amounts</span>
+                {pendingSummary.totalPendingCustomers > 0 && (
+                  <span className="pending-badge-count">
+                    {pendingSummary.totalPendingCustomers}
+                  </span>
+                )}
+              </button>
+            </div>
             <p className="invoice-history-subtitle">
               Search, view, print, or download previously generated customer bills
             </p>
@@ -1433,6 +1546,19 @@ export function Billing() {
               onChange={(e) => setHistoryDate(e.target.value)}
               className="history-date-input"
             />
+            <select
+              value={historyPaymentStatus}
+              onChange={(e) => {
+                setHistoryPaymentStatus(e.target.value)
+                loadInvoiceHistory(historySearch, historyDate, e.target.value)
+              }}
+              className="history-date-input"
+              style={{ minWidth: '150px', cursor: 'pointer', fontWeight: '600' }}
+            >
+              <option value="ALL">All Payments</option>
+              <option value="PAID">Paid Only</option>
+              <option value="UNPAID">Unpaid / Pending Only</option>
+            </select>
             {(historySearch || historyDate) && (
               <button
                 type="button"
@@ -1440,6 +1566,8 @@ export function Billing() {
                 onClick={() => {
                   setHistorySearch('')
                   setHistoryDate('')
+                  setHistoryPaymentStatus('ALL')
+                  loadInvoiceHistory('', '', 'ALL')
                 }}
               >
                 Clear
@@ -1468,6 +1596,7 @@ export function Billing() {
                     <th>Invoice Date</th>
                     <th>Total Qty</th>
                     <th>Final Amount</th>
+                    <th>Payment Status</th>
                     <th>Created By</th>
                     <th style={{ textAlign: 'center' }}>Actions</th>
                   </tr>
@@ -1498,6 +1627,29 @@ export function Billing() {
                       </td>
                       <td className="inv-amount-cell">
                         <strong>{formatINR(inv.finalTotal)}</strong>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdatePaymentStatus(inv._id, (inv.paymentStatus || 'PAID') === 'PAID' ? 'UNPAID' : 'PAID')}
+                          title="Click to toggle Paid / Unpaid"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '3px 8px',
+                            borderRadius: '999px',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            backgroundColor: (inv.paymentStatus || 'PAID') === 'PAID' ? '#dcfce7' : '#fee2e2',
+                            color: (inv.paymentStatus || 'PAID') === 'PAID' ? '#166534' : '#991b1b',
+                            border: `1px solid ${(inv.paymentStatus || 'PAID') === 'PAID' ? '#86efac' : '#fca5a5'}`,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: (inv.paymentStatus || 'PAID') === 'PAID' ? '#16a34a' : '#dc2626' }}></span>
+                          {(inv.paymentStatus || 'PAID') === 'PAID' ? 'PAID' : 'UNPAID'}
+                        </button>
                       </td>
                       <td>
                         {inv.createdBy?.fullName ||
@@ -1548,6 +1700,141 @@ export function Billing() {
           )}
         </div>
       </section>
+
+      
+      {/* 6. Pending Amount Users Sidebar Drawer */}
+      {showPendingSidebar && (
+        <div
+          className="pending-drawer-backdrop"
+          onClick={() => setShowPendingSidebar(false)}
+        >
+          <div
+            className="pending-drawer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="pending-drawer-header">
+              <div className="pending-drawer-title-box">
+                <h3>Pending Amount Users</h3>
+                <p>
+                  {pendingSummary.totalPendingCustomers} customer(s) with unpaid invoices
+                </p>
+              </div>
+              <button
+                type="button"
+                className="pending-drawer-close-btn"
+                onClick={() => setShowPendingSidebar(false)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="pending-total-banner">
+              <div>
+                <div className="pending-total-label">Total Outstanding Due</div>
+                <div className="pending-total-sub">
+                  Across {pendingSummary.totalPendingInvoices} unpaid invoices
+                </div>
+              </div>
+              <div className="pending-total-val">
+                {formatINR(pendingSummary.overallPendingAmount)}
+              </div>
+            </div>
+
+            <div className="pending-search-bar">
+              <input
+                type="text"
+                placeholder="Search pending customer name or mobile..."
+                value={pendingSearch}
+                onChange={(e) => setPendingSearch(e.target.value)}
+                className="pending-search-input"
+              />
+            </div>
+
+            <div className="pending-customers-list">
+              {loadingPendingSummary ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
+                  Loading pending details...
+                </div>
+              ) : pendingSummary.customers.length === 0 ? (
+                <div style={{ padding: '36px 16px', textAlign: 'center', color: '#10b981' }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ margin: '0 auto 10px', display: 'block' }}>
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  <strong>All Clear!</strong>
+                  <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: '#64748b' }}>
+                    There are no pending or unpaid customer amounts.
+                  </p>
+                </div>
+              ) : (
+                pendingSummary.customers
+                  .filter((c) => {
+                    if (!pendingSearch.trim()) return true
+                    const q = pendingSearch.toLowerCase()
+                    return (
+                      (c.customerName || '').toLowerCase().includes(q) ||
+                      (c.mobileNumber || '').includes(q)
+                    )
+                  })
+                  .map((c) => (
+                    <div key={c.mobileNumber} className="pending-customer-card">
+                      <div className="pending-card-top">
+                        <div>
+                          <div className="pending-cust-name">{c.customerName}</div>
+                          <div className="pending-cust-phone">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                            </svg>
+                            +91 {c.mobileNumber}
+                          </div>
+                        </div>
+                        <div className="pending-cust-amount">
+                          {formatINR(c.totalPendingAmount)}
+                          <div style={{ fontSize: '11px', fontWeight: '500', color: '#64748b' }}>
+                            {c.unpaidInvoicesCount} bill(s) pending
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pending-card-invoices">
+                        {c.invoices.map((inv) => (
+                          <div key={inv._id} className="pending-inv-row">
+                            <div>
+                              <div className="pending-inv-num">{inv.invoiceNumber}</div>
+                              <div className="pending-inv-date">
+                                {new Date(inv.invoiceDate).toLocaleDateString('en-IN', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                                {inv.billerName ? ` • ${inv.billerName}` : ''}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <strong style={{ color: '#b91c1c' }}>
+                                {formatINR(inv.finalTotal)}
+                              </strong>
+                              <button
+                                type="button"
+                                className="pending-mark-paid-btn"
+                                onClick={() => handleUpdatePaymentStatus(inv._id, 'PAID')}
+                                title="Mark this invoice as Paid"
+                              >
+                                Mark Paid
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* 5. Confirmation Modal Before Generating Bill */}
       {showConfirmModal && (

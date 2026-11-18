@@ -26,4 +26,11 @@ export const billingService = {
 
   getInvoicePdfData: (invoiceId) =>
     api.get(`/billing/invoices/${encodeURIComponent(invoiceId)}/pdf`),
+
+  updatePaymentStatus: (invoiceId, paymentStatus) =>
+    api.patch(`/billing/invoices/${encodeURIComponent(invoiceId)}/payment-status`, {
+      paymentStatus,
+    }),
+
+  getPendingSummary: () => api.get('/billing/pending-summary'),
 }
