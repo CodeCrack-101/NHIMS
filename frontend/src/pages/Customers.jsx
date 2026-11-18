@@ -13,7 +13,7 @@ import { downloadInvoicePdf } from '../utils/exportInvoicePdf.js'
 import { MetricsSkeleton, TableSkeleton } from '../components/Skeleton.jsx'
 import '../styles/Customers.css'
 
-export function Customers() {
+export function Customers({ filterUnpaidOnly = false }) {
   const { mobileNumber: routeMobile } = useParams()
   const navigate = useNavigate()
   const { showToast } = useToast()
@@ -147,8 +147,13 @@ export function Customers() {
   }
 
   // Metrics aggregation
+  const displayedCustomers = useMemo(() => {
+    if (!filterUnpaidOnly) return customers
+    return customers.filter((c) => (Number(c.unpaidAmount) > 0 || Number(c.unpaidInvoicesCount) > 0))
+  }, [customers, filterUnpaidOnly])
+
   const totals = useMemo(() => {
-    return customers.reduce(
+    return displayedCustomers.reduce(
       (acc, c) => {
         acc.totalSpend += Number(c.totalSpend) || 0
         acc.totalRolls += Number(c.totalQuantity) || 0
@@ -360,7 +365,7 @@ export function Customers() {
               </tr>
             </thead>
             <tbody>
-              {customers.map((c) => (
+              {displayedCustomers.map((c) => (
                 <tr key={c._id || c.mobileNumber} onClick={() => handleOpenCustomer(c)}>
                   <td className="customer-name-cell">{c.customerName || 'N/A'}</td>
                   <td>

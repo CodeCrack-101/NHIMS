@@ -224,6 +224,41 @@ export function Sidebar({ mobileOpen = false, onCloseMobile = () => {} }) {
         </NavLink>
 
         <NavLink
+          to="/unpaid-users"
+          onClick={handleNavClick}
+          className={({ isActive }) =>
+            `sidebar-nav-item ${isActive ? 'active' : ''}`
+          }
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span>Unpaid Users</span>
+            <span style={{
+              fontSize: '10px',
+              padding: '2px 6px',
+              borderRadius: '999px',
+              backgroundColor: '#fee2e2',
+              color: '#b91c1c',
+              fontWeight: '800',
+              lineHeight: 1,
+            }}>Due</span>
+          </span>
+        </NavLink>
+
+        <NavLink
           to="/search-roll"
           onClick={handleNavClick}
           className={({ isActive }) =>

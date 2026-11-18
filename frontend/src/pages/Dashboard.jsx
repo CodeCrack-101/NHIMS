@@ -32,6 +32,7 @@ export function Dashboard() {
   const isInvoiceHistoryRoute = location.pathname.startsWith('/invoice-history')
   const isReportsRoute = location.pathname.startsWith('/reports')
   const isCustomersRoute = location.pathname.startsWith('/customers')
+  const isUnpaidUsersRoute = location.pathname.startsWith('/unpaid-users')
   const isSearchRollRoute = location.pathname.startsWith('/search-roll')
 
   const loadDashboardCatalogues = useCallback(async () => {
@@ -53,6 +54,7 @@ export function Dashboard() {
       !isInvoiceHistoryRoute &&
       !isReportsRoute &&
       !isCustomersRoute &&
+      !isUnpaidUsersRoute &&
       !isSearchRollRoute
     ) {
       setPageLoading(true)
@@ -154,6 +156,9 @@ export function Dashboard() {
     }
     if (isCustomersRoute) {
       return <Customers />
+    }
+    if (isUnpaidUsersRoute) {
+      return <Customers filterUnpaidOnly={true} />
     }
     if (isSearchRollRoute) {
       return <SearchRoll />

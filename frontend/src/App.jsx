@@ -94,6 +94,14 @@ function App() {
             }
           />
           <Route
+            path="/unpaid-users"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/customers/:mobileNumber"
             element={
               <ProtectedRoute>
