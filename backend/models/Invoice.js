@@ -138,6 +138,12 @@ const invoiceSchema = new mongoose.Schema(
       default: 'PAID',
       index: true,
     },
+    paymentMode: {
+      type: String,
+      enum: ['Cash', 'COD', 'GPay', 'Card', 'UPI', 'Cheque', 'Bank Transfer (NEFT/RTGS)'],
+      default: 'Cash',
+      trim: true,
+    },
     finalTotal: {
       type: Number,
       required: true,

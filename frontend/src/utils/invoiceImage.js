@@ -269,14 +269,15 @@ export const generateInvoiceImageBlob = async (invoice) => {
 
   // Payment Status Line inside summary box
   p.font('bold', 6.5)
+  const payModeLabel = invoice.paymentMode ? ` (${invoice.paymentMode})` : ''
   if (isUnpaid) {
     p.color([185, 28, 28])
     p.text('Payment Status:', summaryX + 2.5, finalY + 7.5)
-    p.text('UNPAID', right - 2.5, finalY + 7.5, 'right')
+    p.text(`UNPAID${payModeLabel}`, right - 2.5, finalY + 7.5, 'right')
   } else {
     p.color([21, 128, 61])
     p.text('Payment Status:', summaryX + 2.5, finalY + 7.5)
-    p.text('PAID', right - 2.5, finalY + 7.5, 'right')
+    p.text(`PAID${payModeLabel}`, right - 2.5, finalY + 7.5, 'right')
   }
 
   // Stamp badge on left side of summary (compact, no overlap with summary box)

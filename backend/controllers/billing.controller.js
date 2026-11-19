@@ -60,6 +60,7 @@ export const createBillController = async (req, res, next) => {
     const {
       customerName,
       paymentStatus,
+      paymentMode,
       mobileNumber,
       items,
       discountType,
@@ -80,6 +81,7 @@ export const createBillController = async (req, res, next) => {
       taxRate: Number(taxRate) || 0,
       idempotencyKey: idempotencyKey || headerIdempotencyKey || null,
       paymentStatus: paymentStatus || 'PAID',
+      paymentMode: paymentMode || 'Cash',
       billerName: billerName || (req.user?.fullName ? req.user.fullName : ''),
       userId: req.user.id,
       req,

@@ -171,6 +171,7 @@ export const createBillTransaction = async ({
   discountValue = 0,
   taxRate = 0,
   paymentStatus = 'PAID',
+  paymentMode = 'Cash',
   idempotencyKey = null,
   billerName = '',
   userId,
@@ -462,6 +463,7 @@ export const createBillTransaction = async ({
         paymentStatus: ['PAID', 'UNPAID'].includes(String(paymentStatus).toUpperCase())
           ? String(paymentStatus).toUpperCase()
           : 'PAID',
+        paymentMode: String(paymentMode || 'Cash').trim(),
         billerName: String(billerName || '').trim(),
         createdBy: userId,
       }
@@ -735,6 +737,7 @@ export const getPendingAmountSummary = async () => {
       finalTotal: inv.finalTotal,
       totalQuantity: inv.totalQuantity,
       billerName: inv.billerName,
+      paymentMode: inv.paymentMode || 'Cash',
     })
   }
 

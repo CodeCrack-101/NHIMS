@@ -335,6 +335,7 @@ export function Billing() {
   // GST State (Default 0, optional 18% or custom)
   const [taxRate, setTaxRate] = useState(0)
   const [paymentStatus, setPaymentStatus] = useState('PAID') // 'PAID' | 'UNPAID'
+  const [paymentMode, setPaymentMode] = useState('Cash') // 'Cash' | 'COD' | 'GPay' | 'Card' | 'UPI' | 'Cheque' | 'Bank Transfer (NEFT/RTGS)'
   const [historyPaymentStatus, setHistoryPaymentStatus] = useState('ALL')
   const [showPendingSidebar, setShowPendingSidebar] = useState(false)
   const [pendingSummary, setPendingSummary] = useState({
@@ -734,6 +735,8 @@ export function Billing() {
     setDiscountType('PERCENTAGE')
     setDiscountValue('')
     setTaxRate(0)
+    setPaymentStatus('PAID')
+    setPaymentMode('Cash')
     idempotencyKeyRef.current = `idem_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
   }
 
@@ -895,6 +898,7 @@ export function Billing() {
         discountValue: Number(discountValue) || 0,
         taxRate: Number(taxRate) || 0,
         paymentStatus,
+        paymentMode,
         idempotencyKey: idempotencyKeyRef.current,
       }
 
@@ -1405,6 +1409,25 @@ export function Billing() {
                 </select>
               </div>
 
+              {/* Payment Mode Selection: COD, GPay, Card, Cash, etc. */}
+              <div className="discount-type-field" style={{ maxWidth: '200px' }}>
+                <label>Payment Method</label>
+                <select
+                  value={paymentMode}
+                  onChange={(e) => setPaymentMode(e.target.value)}
+                  className="billing-select"
+                  style={{ fontWeight: '600' }}
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="COD">COD (Cash on Delivery)</option>
+                  <option value="GPay">GPay (Google Pay)</option>
+                  <option value="Card">Credit / Debit Card</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Cheque">Cheque</option>
+                  <option value="Bank Transfer (NEFT/RTGS)">Bank Transfer (NEFT/RTGS)</option>
+                </select>
+              </div>
+
               {/* Payment Status Dropdown Menu: Paid vs Unpaid */}
               <div className="discount-type-field" style={{ maxWidth: '200px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1476,6 +1499,13 @@ export function Billing() {
               <strong className="final-payable-amount">
                 {formatINR(calculations.finalTotal)}
               </strong>
+            </div>
+
+            <div className="summary-line" style={{ paddingTop: '6px', borderTop: '1px dashed #cbd5e1' }}>
+              <span style={{ fontSize: '12px', color: '#64748b' }}>Payment Details:</span>
+              <span style={{ fontSize: '12.5px', fontWeight: '700', color: paymentStatus === 'PAID' ? '#166534' : '#991b1b' }}>
+                {paymentMode} • {paymentStatus === 'PAID' ? 'Paid' : 'Unpaid (Due)'}
+              </span>
             </div>
 
             <div className="billing-submit-actions">
@@ -1808,6 +1838,7 @@ export function Billing() {
                                   month: 'short',
                                   year: 'numeric',
                                 })}
+                                {inv.paymentMode ? ` • ${inv.paymentMode}` : ''}
                                 {inv.billerName ? ` • ${inv.billerName}` : ''}
                               </div>
                             </div>
@@ -1882,6 +1913,12 @@ export function Billing() {
               <div className="confirm-row confirm-row-final">
                 <span>Final Payable:</span>
                 <strong>{formatINR(calculations.finalTotal)}</strong>
+              </div>
+              <div className="confirm-row" style={{ paddingTop: '4px' }}>
+                <span>Payment Method &amp; Status:</span>
+                <strong style={{ color: paymentStatus === 'PAID' ? '#16a34a' : '#dc2626' }}>
+                  {paymentMode} • {paymentStatus}
+                </strong>
               </div>
             </div>
 
@@ -1986,6 +2023,12 @@ export function Billing() {
                     'Admin'}
                 </strong>
               </div>
+              {selectedInvoiceModal.paymentMode && (
+                <div>
+                  <span>Payment Method:</span>{' '}
+                  <strong style={{ color: '#2563eb' }}>{selectedInvoiceModal.paymentMode}</strong>
+                </div>
+              )}
             </div>
 
             <div className="billing-table-wrapper">

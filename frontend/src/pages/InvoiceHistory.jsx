@@ -570,6 +570,12 @@ export function InvoiceHistory() {
                     'Admin'}
                 </strong>
               </div>
+              {selectedInvoice.paymentMode && (
+                <div>
+                  <span>Payment Method:</span>{' '}
+                  <strong style={{ color: '#2563eb' }}>{selectedInvoice.paymentMode}</strong>
+                </div>
+              )}
             </div>
 
             <div className="billing-table-wrapper">

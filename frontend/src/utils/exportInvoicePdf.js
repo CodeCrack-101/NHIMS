@@ -395,14 +395,15 @@ const generateInvoicePdfDoc = async (invoice) => {
   boxLineY += summaryLineH * 0.95
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(6.8 * scale)
+  const payModeText = invoice.paymentMode ? ` (${invoice.paymentMode})` : ''
   if (isUnpaid) {
     doc.setTextColor(185, 28, 28)
     doc.text('Status:', summaryBoxX + 2.5, boxLineY)
-    doc.text('UNPAID (Pending)', summaryBoxX + summaryBoxWidth - 2.5, boxLineY, { align: 'right' })
+    doc.text(`UNPAID${payModeText}`, summaryBoxX + summaryBoxWidth - 2.5, boxLineY, { align: 'right' })
   } else {
     doc.setTextColor(21, 128, 61)
     doc.text('Status:', summaryBoxX + 2.5, boxLineY)
-    doc.text('PAID (Received)', summaryBoxX + summaryBoxWidth - 2.5, boxLineY, { align: 'right' })
+    doc.text(`PAID${payModeText}`, summaryBoxX + summaryBoxWidth - 2.5, boxLineY, { align: 'right' })
   }
 
   // Payment Status Stamp (Compact, well-spaced on the left side of Summary Box without overlap)
