@@ -1389,12 +1389,23 @@ export function Billing() {
               </p>
             )}
 
-            {/* GST (Tax) Selection - By default 0% */}
-            <div className="gst-configuration-row" style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #f1f5f9' }}>
-              <div className="discount-type-field" style={{ maxWidth: '200px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>Applicable GST Tax</span>
-                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>(Default: 0%)</span>
+            {/* GST, Payment Method & Payment Status in a single aligned row */}
+            <div
+              className="gst-configuration-row"
+              style={{
+                marginTop: '16px',
+                paddingTop: '14px',
+                borderTop: '1px solid #f1f5f9',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: '12px',
+                alignItems: 'flex-start',
+              }}
+            >
+              <div className="discount-type-field" style={{ minWidth: 0 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                  <span>GST Tax</span>
+                  <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '500' }}>(0%)</span>
                 </label>
                 <select
                   value={taxRate}
@@ -1410,8 +1421,8 @@ export function Billing() {
               </div>
 
               {/* Payment Mode Selection: COD, GPay, Card, Cash, etc. */}
-              <div className="discount-type-field" style={{ maxWidth: '200px' }}>
-                <label>Payment Method</label>
+              <div className="discount-type-field" style={{ minWidth: 0 }}>
+                <label style={{ whiteSpace: 'nowrap' }}>Payment Method</label>
                 <select
                   value={paymentMode}
                   onChange={(e) => setPaymentMode(e.target.value)}
@@ -1424,18 +1435,18 @@ export function Billing() {
                   <option value="Card">Credit / Debit Card</option>
                   <option value="UPI">UPI</option>
                   <option value="Cheque">Cheque</option>
-                  <option value="Bank Transfer (NEFT/RTGS)">Bank Transfer (NEFT/RTGS)</option>
+                  <option value="Bank Transfer (NEFT/RTGS)">Bank Transfer</option>
                 </select>
               </div>
 
               {/* Payment Status Dropdown Menu: Paid vs Unpaid */}
-              <div className="discount-type-field" style={{ maxWidth: '200px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="discount-type-field" style={{ minWidth: 0 }}>
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px', whiteSpace: 'nowrap' }}>
                   <span>Payment Status</span>
                   <span
                     style={{
                       fontSize: '10px',
-                      padding: '1px 6px',
+                      padding: '1px 5px',
                       borderRadius: '4px',
                       fontWeight: '700',
                       backgroundColor: paymentStatus === 'PAID' ? '#dcfce7' : '#fee2e2',
@@ -1457,7 +1468,7 @@ export function Billing() {
                   }}
                 >
                   <option value="PAID">Amount Paid (Full)</option>
-                  <option value="UNPAID">Amount Unpaid (Pending / Due)</option>
+                  <option value="UNPAID">Amount Unpaid (Due)</option>
                 </select>
               </div>
             </div>
