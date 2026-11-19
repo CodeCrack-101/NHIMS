@@ -24,7 +24,8 @@ export const requireAuth = async (req, res, next) => {
       ? authHeader.slice(7).trim()
       : req.headers['x-session-token']
 
-    const rawSessionToken = req.cookies?.[SESSION_COOKIE_NAME] || headerToken
+    const queryToken = req.query?.token || req.query?.t || req.query?.sessionToken
+    const rawSessionToken = req.cookies?.[SESSION_COOKIE_NAME] || headerToken || queryToken
     if (!rawSessionToken) {
       if (isSilentCheck) {
         req.user = null
