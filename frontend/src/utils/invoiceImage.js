@@ -132,7 +132,7 @@ export const generateInvoiceImageBlob = async (invoice) => {
   p.color([226, 232, 240])
   p.text('Mob: +91 8828251111, +91 9930317192', titleX, 14.5)
   p.wrapText(
-    'Rani Residency, Shop No 02, Opp Apha Park Near Taj Darbar, Chirag Nagar, Ghatkopar (W), Mumbai 400086',
+    'Rani Residency, Shop No 02, Opp Alpha Park Near Taj Darbar, Chirag Nagar, Ghatkopar (W), Mumbai 400086',
     titleX,
     18,
     44,
@@ -187,23 +187,6 @@ export const generateInvoiceImageBlob = async (invoice) => {
     right - 42,
     y + 12.5
   )
-
-  // Status Badge in Customer Box
-  const statusBoxW = isUnpaid ? 22 : 14
-  const statusBoxH = 4.5
-  const statusBoxX = right - statusBoxW - 2
-  const statusBoxY = y + 2.5
-  if (isUnpaid) {
-    p.rect(statusBoxX, statusBoxY, statusBoxW, statusBoxH, [254, 226, 226], [239, 68, 68])
-    p.font('bold', 5.5)
-    p.color([185, 28, 28])
-    p.text('UNPAID', statusBoxX + statusBoxW / 2, statusBoxY + 3.2, 'center')
-  } else {
-    p.rect(statusBoxX, statusBoxY, statusBoxW, statusBoxH, [220, 252, 231], [34, 197, 94])
-    p.font('bold', 5.5)
-    p.color([21, 128, 61])
-    p.text('PAID', statusBoxX + statusBoxW / 2, statusBoxY + 3.2, 'center')
-  }
 
   // ---------- Items Table ----------
   y = tableStartY
@@ -296,25 +279,25 @@ export const generateInvoiceImageBlob = async (invoice) => {
     p.text('PAID', right - 2.5, finalY + 7.5, 'right')
   }
 
-  // Stamp badge on left side of summary
-  const stampW = 32
-  const stampH = 12
+  // Stamp badge on left side of summary (compact, no overlap with summary box)
+  const stampW = 26
+  const stampH = 9.5
   const stampX = MARGIN_X + 2
   const stampY = y + 2
   if (isUnpaid) {
     p.rect(stampX, stampY, stampW, stampH, [254, 242, 242], [239, 68, 68])
-    p.font('bold', 9.5)
+    p.font('bold', 8)
     p.color([220, 38, 38])
-    p.text('UNPAID', stampX + stampW / 2, stampY + 5.5, 'center')
-    p.font('bold', 5)
-    p.text('PAYMENT PENDING', stampX + stampW / 2, stampY + 9.5, 'center')
+    p.text('UNPAID', stampX + stampW / 2, stampY + 4.5, 'center')
+    p.font('bold', 4.5)
+    p.text('PAYMENT PENDING', stampX + stampW / 2, stampY + 7.8, 'center')
   } else {
     p.rect(stampX, stampY, stampW, stampH, [240, 253, 244], [34, 197, 94])
-    p.font('bold', 9.5)
+    p.font('bold', 8)
     p.color([22, 163, 74])
-    p.text('PAID', stampX + stampW / 2, stampY + 5.5, 'center')
-    p.font('bold', 5)
-    p.text('AMOUNT RECEIVED', stampX + stampW / 2, stampY + 9.5, 'center')
+    p.text('PAID', stampX + stampW / 2, stampY + 4.5, 'center')
+    p.font('bold', 4.5)
+    p.text('AMOUNT RECEIVED', stampX + stampW / 2, stampY + 7.8, 'center')
   }
 
   // ---------- Signature ----------

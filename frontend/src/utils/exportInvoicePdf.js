@@ -136,7 +136,7 @@ const generateInvoicePdfDoc = async (invoice) => {
   doc.setFontSize(4.6 * scale)
   doc.setTextColor(203, 213, 225)
   doc.text(
-    'Rani Residency, Shop 02, Opp Apha Park, Chirag Ngr, Ghatkopar(W), Mumbai 400086',
+    'Rani Residency, Shop 02, Opp Alpha Park, Chirag Ngr, Ghatkopar(W), Mumbai 400086',
     titleX,
     topY + 15.8 * scale,
     { maxWidth: 36 * scale }
@@ -224,32 +224,9 @@ const generateInvoicePdfDoc = async (invoice) => {
   doc.text(
     `Billed By: ${billerDisplayName}`,
     custSplitX + 3,
-    currentY + 11.2 * scale
+    currentY + 11.2 * scale,
+    { maxWidth: usableWidth * 0.45 - 6 }
   )
-
-  // Status Badge in the Customer Box (Top right corner of box)
-  const statusBoxW = isUnpaid ? 22 * scale : 15 * scale
-  const statusBoxH = 4.2 * scale
-  const statusBoxX = pageWidth - marginX - statusBoxW - 2.5
-  const statusBoxY = currentY + 8.2 * scale
-
-  if (isUnpaid) {
-    doc.setFillColor(254, 226, 226) // light red
-    doc.setDrawColor(239, 68, 68)   // red border
-    doc.roundedRect(statusBoxX, statusBoxY, statusBoxW, statusBoxH, 0.8, 0.8, 'FD')
-    doc.setTextColor(185, 28, 28)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(5.2 * scale)
-    doc.text('UNPAID', statusBoxX + statusBoxW / 2, statusBoxY + 3.0 * scale, { align: 'center' })
-  } else {
-    doc.setFillColor(220, 252, 231) // light green
-    doc.setDrawColor(34, 197, 94)   // green border
-    doc.roundedRect(statusBoxX, statusBoxY, statusBoxW, statusBoxH, 0.8, 0.8, 'FD')
-    doc.setTextColor(21, 128, 61)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(5.5 * scale)
-    doc.text('PAID', statusBoxX + statusBoxW / 2, statusBoxY + 3.0 * scale, { align: 'center' })
-  }
 
   // 3. Items Table
   currentY += customerBoxHeight + (scale < 0.8 ? 1.8 : 2.5)
@@ -428,40 +405,41 @@ const generateInvoicePdfDoc = async (invoice) => {
     doc.text('PAID (Received)', summaryBoxX + summaryBoxWidth - 2.5, boxLineY, { align: 'right' })
   }
 
-  // Large Stamp / Watermark on the left side of Summary Box (optional visible stamp)
-  const stampX = marginX + 4
-  const stampY = currentY + 2
-  const stampW = 34 * scale
-  const stampH = 12 * scale
+  // Payment Status Stamp (Compact, well-spaced on the left side of Summary Box without overlap)
+  const maxStampW = summaryBoxX - marginX - 6
+  const stampW = Math.min(26 * scale, maxStampW)
+  const stampH = 9.5 * scale
+  const stampX = marginX + 3
+  const stampY = currentY + 1.5
 
   if (isUnpaid) {
     // UNPAID Stamp Box
     doc.setFillColor(254, 242, 242)
     doc.setDrawColor(239, 68, 68)
-    doc.setLineWidth(0.6)
-    doc.roundedRect(stampX, stampY, stampW, stampH, 1.5, 1.5, 'FD')
+    doc.setLineWidth(0.5)
+    doc.roundedRect(stampX, stampY, stampW, stampH, 1.2, 1.2, 'FD')
 
     doc.setTextColor(220, 38, 38)
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(10 * scale)
-    doc.text('UNPAID', stampX + stampW / 2, stampY + 5.5 * scale, { align: 'center' })
+    doc.setFontSize(8 * scale)
+    doc.text('UNPAID', stampX + stampW / 2, stampY + 4.2 * scale, { align: 'center' })
 
-    doc.setFontSize(5.2 * scale)
-    doc.text('PAYMENT PENDING', stampX + stampW / 2, stampY + 9.5 * scale, { align: 'center' })
+    doc.setFontSize(4.4 * scale)
+    doc.text('PAYMENT PENDING', stampX + stampW / 2, stampY + 7.5 * scale, { align: 'center' })
   } else {
     // PAID Stamp Box
     doc.setFillColor(240, 253, 244)
     doc.setDrawColor(34, 197, 94)
-    doc.setLineWidth(0.6)
-    doc.roundedRect(stampX, stampY, stampW, stampH, 1.5, 1.5, 'FD')
+    doc.setLineWidth(0.5)
+    doc.roundedRect(stampX, stampY, stampW, stampH, 1.2, 1.2, 'FD')
 
     doc.setTextColor(22, 163, 74)
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(10.5 * scale)
-    doc.text('PAID', stampX + stampW / 2, stampY + 5.5 * scale, { align: 'center' })
+    doc.setFontSize(8.5 * scale)
+    doc.text('PAID', stampX + stampW / 2, stampY + 4.2 * scale, { align: 'center' })
 
-    doc.setFontSize(5.2 * scale)
-    doc.text('AMOUNT RECEIVED', stampX + stampW / 2, stampY + 9.5 * scale, { align: 'center' })
+    doc.setFontSize(4.4 * scale)
+    doc.text('AMOUNT RECEIVED', stampX + stampW / 2, stampY + 7.5 * scale, { align: 'center' })
   }
 
   // Signatory

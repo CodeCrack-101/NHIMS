@@ -517,7 +517,7 @@ export function InvoiceHistory() {
                   <p>Premium Wallpaper &amp; Roll Collections – Tax / Retail Invoice</p>
                   <p className="invoice-header-contact">Mob: +91 8828251111, +91 9930317192</p>
                   <p className="invoice-header-address">
-                    Rani Residency, Shop No 02, Opp Apha Park Building Near Taj Darbar Hotel, Chirag Nagar, Ghatkopar (W), Mumbai 400086
+                    Rani Residency, Shop No 02, Opp Alpha Park Building Near Taj Darbar Hotel, Chirag Nagar, Ghatkopar (W), Mumbai 400086
                   </p>
                 </div>
               </div>

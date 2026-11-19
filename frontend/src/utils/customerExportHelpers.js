@@ -119,7 +119,7 @@ export const generateCustomerStatementPdf = async (customer, bills) => {
   doc.setTextColor(226, 232, 240)
   doc.text('Mob: +91 8828251111, +91 9930317192', titleX, 21)
   doc.text(
-    'Rani Residency, Shop No 02, Opp Apha Park Building Near Taj Darbar Hotel, Chirag Nagar, Ghatkopar (W), Mumbai 400086',
+    'Rani Residency, Shop No 02, Opp Alpha Park Building Near Taj Darbar Hotel, Chirag Nagar, Ghatkopar (W), Mumbai 400086',
     titleX,
     26,
     { maxWidth: 105 }

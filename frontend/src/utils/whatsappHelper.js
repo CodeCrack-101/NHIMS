@@ -130,7 +130,7 @@ ${itemsText}
 *FINAL AMOUNT:* *${formatINR(invoice.finalTotal)}*
 ----------------------------------------
 📍 *NH Wallpaper*
-Rani Residency, Shop No 02, Opp Apha Park Building Near Taj Darbar Hotel, Chirag Nagar, Ghatkopar (W), Mumbai 400086
+Rani Residency, Shop No 02, Opp Alpha Park Building Near Taj Darbar Hotel, Chirag Nagar, Ghatkopar (W), Mumbai 400086
 📞 Mob: +91 8828251111 / +91 9930317192
 
 _Thank you for your business!_`
