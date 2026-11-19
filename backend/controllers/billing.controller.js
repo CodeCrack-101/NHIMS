@@ -9,6 +9,8 @@ import {
   getDistinctBillers,
   updateInvoicePaymentStatus,
   getPendingAmountSummary,
+  deleteInvoiceAndRestoreStock,
+  updateInvoiceAndAdjustStock,
 } from '../services/billing.service.js'
 
 export const listBillingCataloguesController = async (_req, res, next) => {
@@ -216,6 +218,39 @@ export const updateInvoicePaymentStatusController = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: `Invoice payment status updated to ${paymentStatus}.`,
+      data: { invoice: updatedInvoice },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const deleteInvoiceController = async (req, res, next) => {
+  try {
+    const { invoiceId } = req.params
+    const result = await deleteInvoiceAndRestoreStock(invoiceId, req.user.id, req)
+    res.status(200).json({
+      success: true,
+      message: `Invoice ${result.invoiceNumber} deleted and ${result.restoredQuantity} rolls restored back to inventory stock.`,
+      data: result,
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const updateInvoiceController = async (req, res, next) => {
+  try {
+    const { invoiceId } = req.params
+    const updatedInvoice = await updateInvoiceAndAdjustStock(
+      invoiceId,
+      req.body,
+      req.user.id,
+      req
+    )
+    res.status(200).json({
+      success: true,
+      message: `Invoice ${updatedInvoice.invoiceNumber} updated and stock adjusted successfully.`,
       data: { invoice: updatedInvoice },
     })
   } catch (err) {

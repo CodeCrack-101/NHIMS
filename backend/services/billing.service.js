@@ -757,3 +757,357 @@ export const getPendingAmountSummary = async () => {
     customers,
   }
 }
+
+/**
+ * DELETE INVOICE & RESTORE STOCK
+ * Deletes invoice and reverts all deducted rolls back to inventory with logs and SSE broadcasts.
+ */
+export const deleteInvoiceAndRestoreStock = async (invoiceId, userId, req) => {
+  const invoice = await Invoice.findById(invoiceId)
+  if (!invoice) {
+    throw new AppError('Invoice not found.', 404, 'INVOICE_NOT_FOUND')
+  }
+
+  const invoiceNumber = invoice.invoiceNumber
+  const items = invoice.items || []
+  const logsToInsert = []
+  const sseEventsToBroadcast = []
+
+  const executeDeleteOperations = async (session) => {
+    // 1. Revert each item's stock
+    for (const item of items) {
+      const invQuery = Inventory.findOne({
+        catalogueId: item.catalogueId,
+        patternNumber: item.patternNumber,
+      })
+      if (session) invQuery.session(session)
+      const invDoc = await invQuery
+
+      if (invDoc) {
+        const previousQuantity = invDoc.quantity
+        const restoredQuantity = item.quantity
+        const newQuantity = previousQuantity + restoredQuantity
+
+        const updateQuery = Inventory.findByIdAndUpdate(
+          invDoc._id,
+          {
+            $set: { quantity: newQuantity },
+          },
+          { new: true }
+        )
+        if (session) updateQuery.session(session)
+        const updatedInventory = await updateQuery
+
+        logsToInsert.push({
+          catalogueId: item.catalogueId,
+          patternNumber: item.patternNumber,
+          previousQuantity,
+          newQuantity,
+          changeAmount: restoredQuantity,
+          actionType: 'INCREASE',
+          invoiceNumber,
+          reason: 'BILLING_CANCELLATION_RESTORE',
+          updatedBy: userId,
+        })
+
+        sseEventsToBroadcast.push({
+          type: 'INVENTORY_UPDATED',
+          catalogueId: item.catalogueId.toString(),
+          patternNumber: item.patternNumber,
+          quantity: newQuantity,
+          previousQuantity,
+          actionType: 'INCREASE',
+          invoiceNumber,
+          updatedAt: updatedInventory?.updatedAt || new Date(),
+        })
+      }
+    }
+
+    if (logsToInsert.length > 0) {
+      if (session) {
+        await InventoryLog.insertMany(logsToInsert, { session })
+      } else {
+        await InventoryLog.insertMany(logsToInsert)
+      }
+    }
+
+    // 2. Delete the Invoice
+    const deleteQuery = Invoice.findByIdAndDelete(invoiceId)
+    if (session) deleteQuery.session(session)
+    await deleteQuery
+  }
+
+  const session = await mongoose.startSession()
+  try {
+    await session.withTransaction(async () => {
+      await executeDeleteOperations(session)
+    })
+  } catch (txErr) {
+    if (txErr.isOperational) throw txErr
+    await executeDeleteOperations(null)
+  } finally {
+    await session.endSession()
+  }
+
+  // 3. Broadcast real-time stock updates
+  for (const evt of sseEventsToBroadcast) {
+    broadcastInventoryEvent(evt)
+  }
+
+  if (req) {
+    await recordAuditLog({
+      userId,
+      event: 'BILLING_INVOICE_DELETED',
+      severity: 'WARNING',
+      req,
+      metadata: {
+        invoiceNumber,
+        customerName: invoice.customerName,
+        totalQuantityRestored: invoice.totalQuantity,
+        finalTotal: invoice.finalTotal,
+      },
+    }).catch(() => {})
+  }
+
+  return { invoiceNumber, restoredQuantity: invoice.totalQuantity }
+}
+
+/**
+ * UPDATE/EDIT INVOICE & ADJUST STOCK
+ * Adjusts inventory stock differences (diff = newQty - oldQty), updates prices, customer, discount, tax, etc.
+ */
+export const updateInvoiceAndAdjustStock = async (
+  invoiceId,
+  {
+    customerName,
+    mobileNumber,
+    billerName,
+    paymentStatus,
+    paymentMode,
+    discountType,
+    discountValue,
+    taxRate,
+    items: newItemsReq = [],
+  },
+  userId,
+  req
+) => {
+  const existingInvoice = await Invoice.findById(invoiceId)
+  if (!existingInvoice) {
+    throw new AppError('Invoice not found.', 404, 'INVOICE_NOT_FOUND')
+  }
+
+  if (!newItemsReq || newItemsReq.length === 0) {
+    throw new AppError('Invoice must contain at least one billing item.', 400, 'ITEMS_REQUIRED')
+  }
+
+  const invoiceNumber = existingInvoice.invoiceNumber
+  const oldItems = existingInvoice.items || []
+
+  // Map of old items: key -> item
+  const oldItemMap = new Map()
+  for (const oi of oldItems) {
+    const key = `${oi.catalogueId.toString()}_${oi.patternNumber}`
+    oldItemMap.set(key, (oldItemMap.get(key) || 0) + Number(oi.quantity))
+  }
+
+  // Map of new items: key -> total new qty
+  const newItemMap = new Map()
+  for (const ni of newItemsReq) {
+    const key = `${ni.catalogueId.toString()}_${ni.patternNumber}`
+    newItemMap.set(key, (newItemMap.get(key) || 0) + Number(ni.quantity))
+  }
+
+  const logsToInsert = []
+  const sseEventsToBroadcast = []
+  let updatedInvoiceDoc = null
+
+  const executeUpdateOperations = async (session) => {
+    // 1. Process all keys in old and new items to adjust stock
+    const allKeys = new Set([...oldItemMap.keys(), ...newItemMap.keys()])
+
+    for (const key of allKeys) {
+      const [catIdStr, patternNumber] = key.split('_')
+      const oldQty = oldItemMap.get(key) || 0
+      const newQty = newItemMap.get(key) || 0
+      const diff = newQty - oldQty // if > 0: need to deduct diff rolls; if < 0: need to restore (-diff) rolls
+
+      if (diff !== 0) {
+        const invQuery = Inventory.findOne({
+          catalogueId: catIdStr,
+          patternNumber,
+        })
+        if (session) invQuery.session(session)
+        const invDoc = await invQuery
+
+        if (!invDoc) {
+          throw new AppError(
+            `Inventory record not found for pattern ${patternNumber}.`,
+            404,
+            'PATTERN_NOT_FOUND'
+          )
+        }
+
+        // If increasing bill quantity (diff > 0), verify stock availability
+        if (diff > 0 && invDoc.quantity < diff) {
+          throw new AppError(
+            `Insufficient stock for Pattern ${patternNumber}. Need ${diff} more, but only ${invDoc.quantity} available.`,
+            400,
+            'INSUFFICIENT_STOCK'
+          )
+        }
+
+        const previousQuantity = invDoc.quantity
+        const newQuantity = previousQuantity - diff // deduct if diff > 0, restore if diff < 0
+
+        const updateInvQuery = Inventory.findByIdAndUpdate(
+          invDoc._id,
+          { $set: { quantity: newQuantity } },
+          { new: true }
+        )
+        if (session) updateInvQuery.session(session)
+        const updatedInventory = await updateInvQuery
+
+        const actionType = diff > 0 ? 'DECREASE' : 'INCREASE'
+        const changeAmount = Math.abs(diff)
+
+        logsToInsert.push({
+          catalogueId: catIdStr,
+          patternNumber,
+          previousQuantity,
+          newQuantity,
+          changeAmount,
+          actionType,
+          invoiceNumber,
+          reason: 'BILLING_EDIT_ADJUSTMENT',
+          updatedBy: userId,
+        })
+
+        sseEventsToBroadcast.push({
+          type: 'INVENTORY_UPDATED',
+          catalogueId: catIdStr,
+          patternNumber,
+          quantity: newQuantity,
+          previousQuantity,
+          actionType,
+          invoiceNumber,
+          updatedAt: updatedInventory?.updatedAt || new Date(),
+        })
+      }
+    }
+
+    if (logsToInsert.length > 0) {
+      if (session) {
+        await InventoryLog.insertMany(logsToInsert, { session })
+      } else {
+        await InventoryLog.insertMany(logsToInsert)
+      }
+    }
+
+    // 2. Recalculate invoice totals
+    let runningSubtotal = 0
+    let runningTotalQty = 0
+    const processedInvoiceItems = []
+
+    for (const it of newItemsReq) {
+      const q = Number(it.quantity)
+      const r = Number(it.rate)
+      const itemSubtotal = roundCurrency(q * r)
+      runningTotalQty += q
+      runningSubtotal = roundCurrency(runningSubtotal + itemSubtotal)
+
+      // Fetch catalogue name/slug
+      const catQuery = Catalogue.findById(it.catalogueId)
+      if (session) catQuery.session(session)
+      const cat = await catQuery
+
+      processedInvoiceItems.push({
+        catalogueId: it.catalogueId,
+        catalogueName: cat?.name || it.catalogueName || 'Catalogue',
+        catalogueSlug: cat?.slug || it.catalogueSlug || 'catalogue',
+        patternNumber: it.patternNumber,
+        imagePath: it.imagePath || '',
+        quantity: q,
+        rate: r,
+        subtotal: itemSubtotal,
+      })
+    }
+
+    const normDiscountType = discountType === 'FIXED' ? 'FIXED' : 'PERCENTAGE'
+    const cleanDiscountVal = Math.max(0, Number(discountValue) || 0)
+    const computedDiscountAmount =
+      normDiscountType === 'PERCENTAGE'
+        ? roundCurrency((runningSubtotal * cleanDiscountVal) / 100)
+        : roundCurrency(cleanDiscountVal)
+
+    if (computedDiscountAmount > runningSubtotal) {
+      throw new AppError(
+        `Discount amount (₹${computedDiscountAmount}) cannot exceed subtotal (₹${runningSubtotal}).`,
+        400,
+        'DISCOUNT_EXCEEDS_SUBTOTAL'
+      )
+    }
+
+    const cleanTaxRate = roundCurrency(Math.max(0, Number(taxRate) || 0))
+    const taxableAmount = roundCurrency(runningSubtotal - computedDiscountAmount)
+    const computedTaxAmount = cleanTaxRate > 0 ? roundCurrency((taxableAmount * cleanTaxRate) / 100) : 0
+    const finalTotal = roundCurrency(taxableAmount + computedTaxAmount)
+
+    const updateData = {
+      customerName: String(customerName || existingInvoice.customerName).trim(),
+      mobileNumber: String(mobileNumber || existingInvoice.mobileNumber).trim(),
+      billerName: String(billerName || existingInvoice.billerName || '').trim(),
+      paymentStatus: ['PAID', 'UNPAID'].includes(String(paymentStatus).toUpperCase())
+        ? String(paymentStatus).toUpperCase()
+        : existingInvoice.paymentStatus,
+      paymentMode: String(paymentMode || existingInvoice.paymentMode || 'Cash').trim(),
+      items: processedInvoiceItems,
+      totalItems: processedInvoiceItems.length,
+      totalQuantity: runningTotalQty,
+      subtotal: runningSubtotal,
+      discountType: normDiscountType,
+      discountValue: cleanDiscountVal,
+      discountAmount: computedDiscountAmount,
+      taxRate: cleanTaxRate,
+      taxAmount: computedTaxAmount,
+      finalTotal,
+    }
+
+    const updateInvQuery = Invoice.findByIdAndUpdate(invoiceId, { $set: updateData }, { new: true })
+    if (session) updateInvQuery.session(session)
+    updatedInvoiceDoc = await updateInvQuery
+  }
+
+  const session = await mongoose.startSession()
+  try {
+    await session.withTransaction(async () => {
+      await executeUpdateOperations(session)
+    })
+  } catch (txErr) {
+    if (txErr.isOperational) throw txErr
+    await executeUpdateOperations(null)
+  } finally {
+    await session.endSession()
+  }
+
+  // 3. Broadcast real-time stock updates
+  for (const evt of sseEventsToBroadcast) {
+    broadcastInventoryEvent(evt)
+  }
+
+  if (req) {
+    await recordAuditLog({
+      userId,
+      event: 'BILLING_INVOICE_UPDATED',
+      severity: 'INFO',
+      req,
+      metadata: {
+        invoiceNumber,
+        newFinalTotal: updatedInvoiceDoc?.finalTotal,
+        newQuantity: updatedInvoiceDoc?.totalQuantity,
+      },
+    }).catch(() => {})
+  }
+
+  return updatedInvoiceDoc
+}

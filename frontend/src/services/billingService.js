@@ -32,5 +32,11 @@ export const billingService = {
       paymentStatus,
     }),
 
+  updateInvoice: (invoiceId, payload) =>
+    api.put(`/billing/invoices/${encodeURIComponent(invoiceId)}`, payload),
+
+  deleteInvoice: (invoiceId) =>
+    api.delete(`/billing/invoices/${encodeURIComponent(invoiceId)}`),
+
   getPendingSummary: () => api.get('/billing/pending-summary'),
 }
