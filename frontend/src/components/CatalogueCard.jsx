@@ -1,4 +1,7 @@
-import { formatCatalogueLabel } from '../services/catalogueService.js'
+import {
+  formatCatalogueLabel,
+  getCatalogueCoverImage,
+} from '../services/catalogueService.js'
 import '../styles/CatalogueCard.css'
 
 export function CatalogueCard({
@@ -9,6 +12,8 @@ export function CatalogueCard({
 }) {
   const cleanTitle = formatCatalogueLabel(catalogue.name || catalogue.slug)
   const cleanBadge = formatCatalogueLabel(catalogue.slug)
+  const coverImage = getCatalogueCoverImage(catalogue.slug || catalogue.name)
+
   return (
     <div
       className={`catalogue-card ${isSelected ? 'catalogue-card-selected' : ''}`}
@@ -22,6 +27,17 @@ export function CatalogueCard({
         }
       }}
     >
+      {coverImage && (
+        <div className="catalogue-card-cover-wrap">
+          <img
+            src={coverImage}
+            alt={`${cleanTitle} Cover`}
+            className="catalogue-card-cover-img"
+            loading="lazy"
+          />
+        </div>
+      )}
+
       <div className="catalogue-card-header">
         <div className="catalogue-badge">{cleanBadge}</div>
         <span className="catalogue-status-dot" title="Active Catalogue" />

@@ -8,6 +8,30 @@
   gap: 14px;
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+}
+
+.catalogue-card-cover-wrap {
+  width: calc(100% + 44px);
+  margin: -22px -22px 4px -22px;
+  height: 180px;
+  background-color: #f1f5f9;
+  overflow: hidden;
+  position: relative;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.catalogue-card-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.35s ease;
+  display: block;
+}
+
+.catalogue-card:hover .catalogue-card-cover-img {
+  transform: scale(1.04);
 }
 
 .catalogue-card:hover {

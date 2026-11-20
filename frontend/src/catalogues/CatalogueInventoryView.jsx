@@ -5,7 +5,10 @@ import { SearchBar } from '../components/SearchBar.jsx'
 import { InventoryTable } from '../components/InventoryTable.jsx'
 import { LottieIcon } from '../components/LottieIcon.jsx'
 import { inventoryService } from '../services/inventoryService.js'
-import { formatCatalogueLabel } from '../services/catalogueService.js'
+import {
+  formatCatalogueLabel,
+  getCatalogueCoverImage,
+} from '../services/catalogueService.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useDownloadProgress, ProgressButton } from '../context/DownloadProgressContext.jsx'
 import { IMAGE_MANIFEST } from '../assets/imageManifest.js'
@@ -378,6 +381,7 @@ export function CatalogueInventoryView({
   )
 
   const displayName = formatCatalogueLabel(catalogue?.name || slug)
+  const coverImage = getCatalogueCoverImage(slug || catalogue?.name)
 
   const handleDownloadPdf = async (type) => {
     if (downloadingPdfType) return
@@ -554,13 +558,24 @@ export function CatalogueInventoryView({
   return (
     <div className="catalogue-view-container">
       <div className="catalogue-view-header">
-        <div>
-          <h2 className="catalogue-view-title">
-            {formatCatalogueLabel(title) || `${displayName} Roll Inventory`}
-          </h2>
-          <p className="catalogue-view-subtitle">
-            Real-time stock management for {displayName} patterns
-          </p>
+        <div className="catalogue-view-title-group">
+          {coverImage && (
+            <div className="catalogue-header-thumbnail-wrap">
+              <img
+                src={coverImage}
+                alt={`${displayName} Cover`}
+                className="catalogue-header-thumbnail"
+              />
+            </div>
+          )}
+          <div>
+            <h2 className="catalogue-view-title">
+              {formatCatalogueLabel(title) || `${displayName} Roll Inventory`}
+            </h2>
+            <p className="catalogue-view-subtitle">
+              Real-time stock management for {displayName} patterns
+            </p>
+          </div>
         </div>
 
         <div className="catalogue-header-actions">

@@ -1,6 +1,18 @@
 import api from './api.js'
 import { IMAGE_MANIFEST } from '../assets/imageManifest.js'
 
+export const getCatalogueCoverImage = (raw = '') => {
+  const clean = String(raw || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '_')
+  if (clean === 'EW' || clean === 'EPIC_WALL') return '/epicwall.png'
+  if (clean === 'SELFIE_POINT' || clean === 'SP') return '/selfiepoint.png'
+  if (clean === 'ROYAL_TEXTURE' || clean === 'RT') return '/rt.png'
+  if (clean === 'SOHO') return '/soho.png'
+  return null
+}
+
 export const formatCatalogueLabel = (raw = '') => {
   const clean = String(raw || '')
     .trim()
