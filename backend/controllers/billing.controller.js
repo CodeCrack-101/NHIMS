@@ -70,6 +70,7 @@ export const createBillController = async (req, res, next) => {
       taxRate,
       idempotencyKey,
       billerName,
+      invoiceDate,
     } = req.body
 
     const headerIdempotencyKey = req.headers['x-idempotency-key']
@@ -85,6 +86,7 @@ export const createBillController = async (req, res, next) => {
       paymentStatus: paymentStatus || 'PAID',
       paymentMode: paymentMode || 'Cash',
       billerName: billerName || (req.user?.fullName ? req.user.fullName : ''),
+      invoiceDate,
       userId: req.user.id,
       req,
     })

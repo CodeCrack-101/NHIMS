@@ -302,13 +302,13 @@ export function Billing() {
 
   // Invoice header metadata
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState('NH-INV-AUTO')
-  const [invoiceDateStr] = useState(() =>
-    new Date().toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-  )
+  const [invoiceDate, setInvoiceDate] = useState(() => {
+    const d = new Date()
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  })
 
   // Customer info & Biller info
   const [customerName, setCustomerName] = useState('')
@@ -451,11 +451,18 @@ export function Billing() {
   // Handle Open Edit Invoice Modal
   const handleOpenEditModal = (inv) => {
     if (!inv) return
+    const rawD = inv.invoiceDate ? new Date(inv.invoiceDate) : new Date(inv.createdAt || Date.now())
+    const y = rawD.getFullYear()
+    const m = String(rawD.getMonth() + 1).padStart(2, '0')
+    const day = String(rawD.getDate()).padStart(2, '0')
+    const formattedDate = `${y}-${m}-${day}`
+
     setEditingInvoice(inv)
     setEditFormData({
       customerName: inv.customerName || '',
       mobileNumber: inv.mobileNumber || '',
       billerName: inv.billerName || '',
+      invoiceDate: formattedDate,
       paymentStatus: inv.paymentStatus || 'PAID',
       paymentMode: inv.paymentMode || 'Cash',
       discountType: inv.discountType || 'PERCENTAGE',
@@ -509,6 +516,7 @@ export function Billing() {
         customerName: editFormData.customerName.trim(),
         mobileNumber: cleanPhone,
         billerName: editFormData.billerName.trim(),
+        invoiceDate: editFormData.invoiceDate,
         paymentStatus: editFormData.paymentStatus,
         paymentMode: editFormData.paymentMode,
         discountType: editFormData.discountType,
@@ -875,6 +883,11 @@ export function Billing() {
   const handleResetForm = () => {
     setCustomerName('')
     setMobileNumber('')
+    const d = new Date()
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    setInvoiceDate(`${year}-${month}-${day}`)
     setCustomerErrors({})
     setRows([createEmptyBillingRow()])
     setRowErrors({})
@@ -1034,6 +1047,7 @@ export function Billing() {
         customerName: customerName.trim(),
         mobileNumber: mobileNumber.trim(),
         billerName: billerName.trim(),
+        invoiceDate,
         items: rows.map((r) => ({
           catalogueId: r.catalogueId,
           patternNumber: r.patternNumber,
@@ -1154,9 +1168,26 @@ export function Billing() {
             <span className="billing-meta-label">INVOICE NO:</span>
             <strong className="billing-meta-value">{nextInvoiceNumber}</strong>
           </div>
-          <div className="billing-meta-pill">
-            <span className="billing-meta-label">DATE:</span>
-            <strong className="billing-meta-value">{invoiceDateStr}</strong>
+          <div className="billing-meta-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <span className="billing-meta-label">BILL DATE:</span>
+            <input
+              type="date"
+              value={invoiceDate}
+              onChange={(e) => setInvoiceDate(e.target.value)}
+              className="billing-meta-date-input"
+              style={{
+                border: '1px solid #cbd5e1',
+                borderRadius: '6px',
+                padding: '2px 8px',
+                fontSize: '13px',
+                fontWeight: '700',
+                color: '#0f172a',
+                background: '#ffffff',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+              title="Click to select custom bill date (default is today)"
+            />
           </div>
         </div>
       </div>
@@ -2417,6 +2448,16 @@ export function Billing() {
                     className="billing-text-input"
                     value={editFormData.billerName}
                     onChange={(e) => setEditFormData({ ...editFormData, billerName: e.target.value })}
+                  />
+                </div>
+                <div className="discount-type-field">
+                  <label>Invoice Date</label>
+                  <input
+                    type="date"
+                    className="billing-text-input"
+                    value={editFormData.invoiceDate}
+                    onChange={(e) => setEditFormData({ ...editFormData, invoiceDate: e.target.value })}
+                    required
                   />
                 </div>
               </div>

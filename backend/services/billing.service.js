@@ -174,6 +174,7 @@ export const createBillTransaction = async ({
   paymentMode = 'Cash',
   idempotencyKey = null,
   billerName = '',
+  invoiceDate = null,
   userId,
   req,
 }) => {
@@ -445,11 +446,19 @@ export const createBillTransaction = async ({
       const computedTaxAmount = cleanTaxRate > 0 ? roundCurrency((taxableAmount * cleanTaxRate) / 100) : 0
       const finalTotal = roundCurrency(taxableAmount + computedTaxAmount)
 
+      let parsedInvoiceDate = new Date()
+      if (invoiceDate) {
+        const customD = new Date(invoiceDate)
+        if (!Number.isNaN(customD.getTime())) {
+          parsedInvoiceDate = customD
+        }
+      }
+
       const invoiceDocData = {
         invoiceNumber,
         customerName: cleanName,
         mobileNumber: normalizedMobile,
-        invoiceDate: new Date(),
+        invoiceDate: parsedInvoiceDate,
         items: invoiceItems,
         totalItems: invoiceItems.length,
         totalQuantity: runningTotalQty,
@@ -887,6 +896,7 @@ export const updateInvoiceAndAdjustStock = async (
     discountType,
     discountValue,
     taxRate,
+    invoiceDate,
     items: newItemsReq = [],
   },
   userId,
@@ -1053,10 +1063,19 @@ export const updateInvoiceAndAdjustStock = async (
     const computedTaxAmount = cleanTaxRate > 0 ? roundCurrency((taxableAmount * cleanTaxRate) / 100) : 0
     const finalTotal = roundCurrency(taxableAmount + computedTaxAmount)
 
+    let parsedUpdateDate = existingInvoice.invoiceDate
+    if (invoiceDate) {
+      const customD = new Date(invoiceDate)
+      if (!Number.isNaN(customD.getTime())) {
+        parsedUpdateDate = customD
+      }
+    }
+
     const updateData = {
       customerName: String(customerName || existingInvoice.customerName).trim(),
       mobileNumber: String(mobileNumber || existingInvoice.mobileNumber).trim(),
       billerName: String(billerName || existingInvoice.billerName || '').trim(),
+      invoiceDate: parsedUpdateDate,
       paymentStatus: ['PAID', 'UNPAID'].includes(String(paymentStatus).toUpperCase())
         ? String(paymentStatus).toUpperCase()
         : existingInvoice.paymentStatus,
