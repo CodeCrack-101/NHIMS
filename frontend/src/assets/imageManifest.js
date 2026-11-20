@@ -1625,6 +1625,328 @@ export const IMAGE_MANIFEST = {
       "patternNumber": "7265",
       "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ICONIC/pattern_65?_a=BAMAROiu0"
     }
+  ],
+  "ALPHA": [
+    {
+      "sequenceNumber": 1,
+      "patternNumber": "GA4001",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4001?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 2,
+      "patternNumber": "GA4002",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4002?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 3,
+      "patternNumber": "GA4003",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4003?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 4,
+      "patternNumber": "GA4004",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4004?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 5,
+      "patternNumber": "GA4005",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4005?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 6,
+      "patternNumber": "GA4006",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4006?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 7,
+      "patternNumber": "GA4007",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4007?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 8,
+      "patternNumber": "GA4008",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4008?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 9,
+      "patternNumber": "GA4009",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4009?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 10,
+      "patternNumber": "GA4010",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4010?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 11,
+      "patternNumber": "GA4011",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4011?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 12,
+      "patternNumber": "GA4012",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4012?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 13,
+      "patternNumber": "GA4013",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4013?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 14,
+      "patternNumber": "GA4014",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4014?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 15,
+      "patternNumber": "GA4015",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4015?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 16,
+      "patternNumber": "GA4016",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4016?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 17,
+      "patternNumber": "GA4017",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4017?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 18,
+      "patternNumber": "GA4018",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4018?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 19,
+      "patternNumber": "GA4019",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4019?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 20,
+      "patternNumber": "GA4020",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4020?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 21,
+      "patternNumber": "GA4021",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4021?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 22,
+      "patternNumber": "GA4022",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4022?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 23,
+      "patternNumber": "GA4023",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4023?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 24,
+      "patternNumber": "GA4024",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4024?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 25,
+      "patternNumber": "GA4025",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4025?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 26,
+      "patternNumber": "GA4026",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4026?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 27,
+      "patternNumber": "GA4027",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4027?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 28,
+      "patternNumber": "GA4028",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4028?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 29,
+      "patternNumber": "GA4029",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4029?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 30,
+      "patternNumber": "GA4030",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4030?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 31,
+      "patternNumber": "GA4031",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4031?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 32,
+      "patternNumber": "GA4032",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4032?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 33,
+      "patternNumber": "GA4033",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4033?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 34,
+      "patternNumber": "GA4034",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4034?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 35,
+      "patternNumber": "GA4035",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4035?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 36,
+      "patternNumber": "GA4036",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4036?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 37,
+      "patternNumber": "GA4037",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4037?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 38,
+      "patternNumber": "GA4038",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4038?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 39,
+      "patternNumber": "GA4039",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4039?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 40,
+      "patternNumber": "GA4040",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4040?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 41,
+      "patternNumber": "GA4041",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4041?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 42,
+      "patternNumber": "GA4042",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4042?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 43,
+      "patternNumber": "GA4043",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4043?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 44,
+      "patternNumber": "GA4044",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4044?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 45,
+      "patternNumber": "GA4045",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4045?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 46,
+      "patternNumber": "GA4046",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4046?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 47,
+      "patternNumber": "GA4047",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4047?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 48,
+      "patternNumber": "GA4048",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4048?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 49,
+      "patternNumber": "GA4049",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4049?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 50,
+      "patternNumber": "GA4050",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4050?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 51,
+      "patternNumber": "GA4051",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4051?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 52,
+      "patternNumber": "GA4052",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4052?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 53,
+      "patternNumber": "GA4053",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4053?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 54,
+      "patternNumber": "GA4054",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4054?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 55,
+      "patternNumber": "GA4055",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4055?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 56,
+      "patternNumber": "GA4056",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4056?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 57,
+      "patternNumber": "GA4057",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4057?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 58,
+      "patternNumber": "GA4058",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4058?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 59,
+      "patternNumber": "GA4059",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4059?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 60,
+      "patternNumber": "GA4060",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4060?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 61,
+      "patternNumber": "GA4061",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4061?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 62,
+      "patternNumber": "GA4062",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4062?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 63,
+      "patternNumber": "GA4063",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4063?_a=BAMAROiu0"
+    },
+    {
+      "sequenceNumber": 64,
+      "patternNumber": "GA4064",
+      "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/ALPHA/pattern_GA4064?_a=BAMAROiu0"
+    }
   ]
 }
 

@@ -96,6 +96,12 @@ const DEFAULT_CATALOGUES = [
     description: 'Iconic Premium Roll Collection',
     isActive: true,
   },
+  {
+    name: 'ALPHA',
+    slug: 'ALPHA',
+    description: 'Alpha Premium Roll Collection',
+    isActive: true,
+  },
 ]
 
 // Parse filename like "soho1.1.png", "ew1.1 - Copy.png", "rt1.png", "1.jpg" into patternNumber & sequenceNumber
