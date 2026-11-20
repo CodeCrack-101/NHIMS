@@ -2,70 +2,124 @@
   position: relative;
   background-color: #ffffff;
   border: 1.5px solid #cbd5e1;
-  border-radius: 14px;
+  border-radius: 18px;
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s ease, box-shadow 0.25s ease;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
 }
 
 .catalogue-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
   border-color: #0f172a;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.15);
 }
 
 .catalogue-card-selected {
   border-color: #0f172a;
-  box-shadow: 0 0 0 2px #0f172a, 0 10px 25px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 0 0 2px #0f172a, 0 16px 36px rgba(15, 23, 42, 0.16);
 }
 
-/* Background full image with smooth transparency / glass overlay */
-.catalogue-card-bg-wrap {
-  position: absolute;
-  inset: 0;
+/* ========================================================
+   Vertical Full Image Poster Style (as per user mockup)
+   ======================================================== */
+.catalogue-card-has-cover {
+  background-color: #0b0f17;
+  border-color: #e2e8f0;
+}
+
+.catalogue-card-cover-media {
+  position: relative;
   width: 100%;
-  height: 100%;
-  z-index: 0;
+  aspect-ratio: 3 / 4;
+  min-height: 380px;
   overflow: hidden;
-  pointer-events: none;
+  background-color: #0f172a;
 }
 
-.catalogue-card-bg-img {
+.catalogue-card-poster-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
-  transition: transform 0.45s ease;
+  object-position: center top;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: block;
 }
 
-.catalogue-card:hover .catalogue-card-bg-img {
+.catalogue-card:hover .catalogue-card-poster-img {
   transform: scale(1.05);
 }
 
-/* Translucent overlay so background image is clearly visible, while keeping text readable */
-.catalogue-card-bg-overlay {
+.catalogue-card-badge-floating {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.72) 0%,
-    rgba(255, 255, 255, 0.58) 45%,
-    rgba(255, 255, 255, 0.82) 100%
-  );
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  top: 14px;
+  left: 14px;
+  z-index: 2;
 }
 
-/* Foreground content positioned over the background */
-.catalogue-card-content {
+/* Elegant bottom vignette so image seamlessly transitions into bottom details */
+.catalogue-card-image-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 90px;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0) 0%,
+    rgba(15, 23, 42, 0.45) 50%,
+    rgba(15, 23, 42, 0.95) 100%
+  );
+  pointer-events: none;
+}
+
+/* Bottom details card */
+.catalogue-card-details {
   position: relative;
-  z-index: 1;
-  padding: 22px;
+  background: #ffffff;
+  padding: 18px 20px 20px 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  height: 100%;
+  flex: 1;
+  border-top: 1px solid #f1f5f9;
+}
+
+.catalogue-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.catalogue-card-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.catalogue-status-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #10b981;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+}
+
+.catalogue-card-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: -6px;
+  line-height: 1.45;
 }
 
 .catalogue-card-header {
