@@ -38,7 +38,12 @@ const inventoryLogSchema = new mongoose.Schema(
     },
     reason: {
       type: String,
-      enum: ['MANUAL', 'BILLING_DEDUCTION'],
+      enum: [
+        'MANUAL',
+        'BILLING_DEDUCTION',
+        'BILLING_CANCELLATION_RESTORE',
+        'BILLING_EDIT_ADJUSTMENT',
+      ],
       default: 'MANUAL',
     },
     updatedBy: {
