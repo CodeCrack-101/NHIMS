@@ -6,7 +6,7 @@ import { AppError } from '../utils/AppError.js'
 import { env } from '../config/env.js'
 
 export const SESSION_COOKIE_NAME = '__crm_sid'
-export const SESSION_DURATION_MS = 8 * 60 * 60 * 1000 // 8 hours enterprise shift
+export const SESSION_DURATION_MS = 365 * 24 * 60 * 60 * 1000 // 1 Year Persistent Session (Doesn't expire until manual logout)
 
 export const getSessionCookieOptions = () => ({
   httpOnly: true,
