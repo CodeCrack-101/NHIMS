@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf'
 
 const formatINR = (val) => {
   const num = Number(val) || 0
-  return `₹ ${num.toLocaleString('en-IN', {
+  return `Rs. ${num.toLocaleString('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
@@ -206,7 +206,7 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
   currentY += billBoxHeight
 
   // 4. Items Table
-  // Columns: # | Item Name | HSN/SAC | Quantity | Unit | Price/Unit (₹) | GST(₹) | Amount (₹)
+  // Columns: # | Item Name | HSN/SAC | Quantity | Unit | Price/Unit (Rs) | GST (Rs) | Amount (Rs)
   const items = inv.items || []
   const colDef = [
     { header: '#', width: 8, align: 'center' },
@@ -214,9 +214,9 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
     { header: 'HSN/SAC', width: 20, align: 'center' },
     { header: 'Quantity', width: 18, align: 'right' },
     { header: 'Unit', width: 14, align: 'center' },
-    { header: 'Price/\nUnit (₹)', width: 22, align: 'right' },
-    { header: 'GST(₹)', width: 22, align: 'right' },
-    { header: 'Amount\n(₹)', width: 24, align: 'right' },
+    { header: 'Price/\nUnit (Rs)', width: 22, align: 'right' },
+    { header: 'GST (Rs)', width: 22, align: 'right' },
+    { header: 'Amount\n(Rs)', width: 24, align: 'right' },
   ]
 
   // Render Table Header
@@ -278,13 +278,13 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
     x += colDef[4].width
 
     // Price/Unit
-    doc.text(`₹ ${Number(it.pricePerUnit || 0).toFixed(2)}`, x + colDef[5].width - 2, yText, {
+    doc.text(Number(it.pricePerUnit || 0).toFixed(2), x + colDef[5].width - 2, yText, {
       align: 'right',
     })
     x += colDef[5].width
 
-    // GST(₹) & Rate %
-    const gstAmtStr = `₹ ${Number(it.gstAmount || 0).toFixed(2)}`
+    // GST Amount & Rate %
+    const gstAmtStr = Number(it.gstAmount || 0).toFixed(2)
     const gstRateStr = `(${Number(it.gstRate || 0).toFixed(1)}%)`
     doc.text(`${gstAmtStr}\n${gstRateStr}`, x + colDef[6].width - 2, currentY + 3.5, {
       align: 'right',
@@ -293,7 +293,7 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
 
     // Amount
     doc.setFont('helvetica', 'bold')
-    doc.text(`₹ ${Number(it.totalAmount || 0).toFixed(2)}`, x + colDef[7].width - 2, yText, {
+    doc.text(Number(it.totalAmount || 0).toFixed(2), x + colDef[7].width - 2, yText, {
       align: 'right',
     })
 
@@ -320,13 +320,13 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
 
   // Total Tax column position
   const taxColX = qtyColX + colDef[3].width + colDef[4].width + colDef[5].width
-  doc.text(`₹ ${Number(inv.totalTax || 0).toFixed(2)}`, taxColX + colDef[6].width - 2, currentY + 5.5, {
+  doc.text(Number(inv.totalTax || 0).toFixed(2), taxColX + colDef[6].width - 2, currentY + 5.5, {
     align: 'right',
   })
 
   // Final Total column position
   const amtColX = taxColX + colDef[6].width
-  doc.text(`₹ ${Number(inv.finalTotal || 0).toFixed(2)}`, amtColX + colDef[7].width - 2, currentY + 5.5, {
+  doc.text(Number(inv.finalTotal || 0).toFixed(2), amtColX + colDef[7].width - 2, currentY + 5.5, {
     align: 'right',
   })
 
@@ -354,12 +354,12 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
   // Sub Total (Row 1 Left)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
-  doc.text(`Sub Total: ₹ ${Number(inv.subTotal || 0).toFixed(2)}`, marginX + 3, currentY + 5.5)
+  doc.text(`Sub Total: Rs. ${Number(inv.subTotal || 0).toFixed(2)}`, marginX + 3, currentY + 5.5)
 
   // Total in Words (Row 1 Right)
   doc.setFont('helvetica', 'bold')
   doc.text(
-    `Total: ₹ ${Number(inv.finalTotal || 0).toFixed(2)} (${inv.finalTotalInWords || ''})`,
+    `Total: Rs. ${Number(inv.finalTotal || 0).toFixed(2)} (${inv.finalTotalInWords || ''})`,
     sumMidX + 3,
     currentY + 5.5,
     { maxWidth: usableWidth - 88 }
@@ -367,8 +367,8 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
 
   // Received & Balance (Row 2)
   doc.setFont('helvetica', 'normal')
-  doc.text(`Received: ₹ ${Number(inv.receivedAmount || 0).toFixed(2)}`, marginX + 3, currentY + 13.5)
-  doc.text(`Balance: ₹ ${Number(inv.balanceAmount || 0).toFixed(2)}`, sumMidX + 3, currentY + 13.5)
+  doc.text(`Received: Rs. ${Number(inv.receivedAmount || 0).toFixed(2)}`, marginX + 3, currentY + 13.5)
+  doc.text(`Balance: Rs. ${Number(inv.balanceAmount || 0).toFixed(2)}`, sumMidX + 3, currentY + 13.5)
 
   currentY += summaryBoxHeight + 4
 
