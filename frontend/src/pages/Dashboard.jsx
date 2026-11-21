@@ -625,17 +625,27 @@ export function Dashboard() {
               ))}
             </div>
             <div className="modal-footer">
-              <button
-                type="button"
-                className="dashboard-primary-btn"
-                onClick={() => {
-                  const targetSlug = stockAlertModal.slug
-                  setStockAlertModal(null)
-                  navigate(`/roll-details/${targetSlug}`)
-                }}
-              >
-                Open Catalogue to Restock
-              </button>
+              {!isEmployee ? (
+                <button
+                  type="button"
+                  className="dashboard-primary-btn"
+                  onClick={() => {
+                    const targetSlug = stockAlertModal.slug
+                    setStockAlertModal(null)
+                    navigate(`/roll-details/${targetSlug}`)
+                  }}
+                >
+                  Open Catalogue to Restock
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="dashboard-secondary-btn"
+                  onClick={() => setStockAlertModal(null)}
+                >
+                  Close
+                </button>
+              )}
             </div>
           </div>
         </div>
