@@ -224,6 +224,44 @@
   margin-right: 4px;
 }
 
+.staff-toggle-btn {
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 95px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.staff-toggle-btn.on {
+  background: #16a34a;
+  color: #ffffff;
+  border-color: #15803d;
+  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.3);
+}
+
+.staff-toggle-btn.on:hover {
+  background: #15803d;
+}
+
+.staff-toggle-btn.off {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
+}
+
+.staff-toggle-btn.off:hover {
+  background: #dc2626;
+}
+
 .staff-status-badge {
   border: none;
   cursor: pointer;

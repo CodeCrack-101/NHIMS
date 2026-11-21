@@ -346,7 +346,7 @@ export function StaffAccess() {
                   <th>Staff Name</th>
                   <th>Login Email</th>
                   <th>Allowed Access</th>
-                  <th>Status</th>
+                  <th>Access Permission</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
@@ -358,20 +358,18 @@ export function StaffAccess() {
                     </td>
                     <td>{st.email}</td>
                     <td>
-                      <span className="staff-tag-allowed">Search Roll</span>
                       <span className="staff-tag-allowed">Dashboard</span>
+                      <span className="staff-tag-allowed">Search Roll</span>
                       <span className="staff-tag-allowed">Billing</span>
-                      <span className="staff-tag-locked">GST Locked</span>
-                      <span className="staff-tag-locked">Reports Locked</span>
                     </td>
                     <td>
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(st)}
-                        className={`staff-status-badge ${st.status === 'active' ? 'active' : 'inactive'}`}
-                        title="Click to toggle Active / Inactive"
+                        className={`staff-toggle-btn ${st.status === 'active' ? 'on' : 'off'}`}
+                        title={st.status === 'active' ? 'Click to Turn OFF Access' : 'Click to Turn ON Access'}
                       >
-                        {st.status === 'active' ? '● Active' : '○ Inactive'}
+                        {st.status === 'active' ? 'Access ON' : 'Access OFF'}
                       </button>
                     </td>
                     <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
@@ -382,17 +380,17 @@ export function StaffAccess() {
                           setUserToEdit(st)
                           setEditPassword('')
                         }}
-                        style={{ marginRight: '8px', padding: '5px 12px', fontSize: '12px' }}
+                        style={{ marginRight: '8px', padding: '6px 14px', fontSize: '12px' }}
                       >
-                        🔑 Change Pass
+                        Change Pass
                       </button>
                       <button
                         type="button"
                         className="staff-btn-danger"
                         onClick={() => setUserToDelete(st)}
-                        style={{ padding: '5px 12px', fontSize: '12px' }}
+                        style={{ padding: '6px 14px', fontSize: '12px' }}
                       >
-                        🗑️ Remove
+                        Remove
                       </button>
                     </td>
                   </tr>
