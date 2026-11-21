@@ -10,7 +10,7 @@ const authenticationChallengeSchema = new mongoose.Schema(
     },
     purpose: {
       type: String,
-      enum: ['LOGIN_OTP', 'PASSWORD_RESET'],
+      enum: ['LOGIN_OTP', 'PASSWORD_RESET', 'STAFF_ACCESS_OTP'],
       default: 'LOGIN_OTP',
       required: true,
     },
