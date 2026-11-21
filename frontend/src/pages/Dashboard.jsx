@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 import { Sidebar } from '../components/Sidebar.jsx'
 import { LottieIcon } from '../components/LottieIcon.jsx'
 import { RollDetails } from './RollDetails.jsx'
@@ -21,8 +22,10 @@ import { getStreamUrl } from '../utils/getStreamUrl.js'
 import '../styles/Dashboard.css'
 
 export function Dashboard() {
+  const { user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const isEmployee = user?.role === 'employee'
   const [pageLoading, setPageLoading] = useState(true)
   const [catalogues, setCatalogues] = useState([])
   const [stockAlertModal, setStockAlertModal] = useState(null)
@@ -216,13 +219,15 @@ export function Dashboard() {
             >
               + Create New Bill
             </button>
-            <button
-              type="button"
-              className="dashboard-secondary-btn"
-              onClick={() => navigate('/add-products')}
-            >
-              Manage Catalogues
-            </button>
+            {!isEmployee && (
+              <button
+                type="button"
+                className="dashboard-secondary-btn"
+                onClick={() => navigate('/add-products')}
+              >
+                Manage Catalogues
+              </button>
+            )}
           </div>
         </div>
 
@@ -231,7 +236,8 @@ export function Dashboard() {
           {/* 1. Catalogues */}
           <div
             className="dashboard-kpi-card"
-            onClick={() => navigate('/roll-details')}
+            onClick={() => !isEmployee && navigate('/roll-details')}
+            style={isEmployee ? { cursor: 'default' } : {}}
           >
             <div className="dashboard-kpi-top">
               <span className="dashboard-kpi-label">Catalogues</span>
@@ -258,25 +264,28 @@ export function Dashboard() {
               </div>
               <span className="dashboard-kpi-subtext">Active Catalogue Series</span>
             </div>
-            <button
-              type="button"
-              className="dashboard-kpi-btn"
-              onClick={(e) => {
-                e.stopPropagation()
-                navigate('/roll-details')
-              }}
-            >
-              <span>Explore Catalogues</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
+            {!isEmployee && (
+              <button
+                type="button"
+                className="dashboard-kpi-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate('/roll-details')
+                }}
+              >
+                <span>Explore Catalogues</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            )}
           </div>
 
           {/* 2. Total Patterns */}
           <div
             className="dashboard-kpi-card"
-            onClick={() => navigate('/roll-details')}
+            onClick={() => !isEmployee && navigate('/roll-details')}
+            style={isEmployee ? { cursor: 'default' } : {}}
           >
             <div className="dashboard-kpi-top">
               <span className="dashboard-kpi-label">Total Patterns</span>
@@ -304,19 +313,21 @@ export function Dashboard() {
               </div>
               <span className="dashboard-kpi-subtext">Unique Design Skus</span>
             </div>
-            <button
-              type="button"
-              className="dashboard-kpi-btn"
-              onClick={(e) => {
-                e.stopPropagation()
-                navigate('/roll-details')
-              }}
-            >
-              <span>View All Designs</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
+            {!isEmployee && (
+              <button
+                type="button"
+                className="dashboard-kpi-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate('/roll-details')
+                }}
+              >
+                <span>View All Designs</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            )}
           </div>
 
           {/* 3. Total Rolls in Stock */}
@@ -474,8 +485,8 @@ export function Dashboard() {
                   return (
                     <tr
                       key={cat.slug}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => navigate(`/roll-details/${cat.slug}`)}
+                      style={!isEmployee ? { cursor: 'pointer' } : {}}
+                      onClick={() => !isEmployee && navigate(`/roll-details/${cat.slug}`)}
                     >
                       <td>
                         <div className="dash-cat-cell">
@@ -523,16 +534,20 @@ export function Dashboard() {
                         </span>
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <button
-                          type="button"
-                          className="dash-row-view-btn"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/roll-details/${cat.slug}`)
-                          }}
-                        >
-                          View Rolls →
-                        </button>
+                        {!isEmployee ? (
+                          <button
+                            type="button"
+                            className="dash-row-view-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/roll-details/${cat.slug}`)
+                            }}
+                          >
+                            View Rolls →
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>View Only</span>
+                        )}
                       </td>
                     </tr>
                   )

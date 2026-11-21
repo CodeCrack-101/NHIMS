@@ -32,7 +32,7 @@ function App() {
           <Route
             path="/roll-details"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -40,7 +40,7 @@ function App() {
           <Route
             path="/roll-details/:slug"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -48,7 +48,7 @@ function App() {
           <Route
             path="/add-products"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -56,7 +56,7 @@ function App() {
           <Route
             path="/add-products/:slug"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -72,7 +72,7 @@ function App() {
           <Route
             path="/gst-billing"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -80,7 +80,7 @@ function App() {
           <Route
             path="/invoice-history"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -88,7 +88,7 @@ function App() {
           <Route
             path="/reports"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -96,7 +96,7 @@ function App() {
           <Route
             path="/customers"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -104,7 +104,7 @@ function App() {
           <Route
             path="/unpaid-users"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -112,7 +112,7 @@ function App() {
           <Route
             path="/customers/:mobileNumber"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <Dashboard />
               </ProtectedRoute>
             }
