@@ -37,6 +37,26 @@ const loadLogoAsDataUrl = (src = '/Logo.png') =>
     img.src = src
   })
 
+const loadSignatureAsDataUrl = (src = '/signature.png') =>
+  new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.naturalWidth || 300
+        canvas.height = img.naturalHeight || 150
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/png'))
+      } catch {
+        resolve(null)
+      }
+    }
+    img.onerror = () => resolve(null)
+    img.src = src
+  })
+
 /**
  * 1. PDF DOWNLOAD & PRINT ENGINE: 4 x 10 Inches Auto-Fitting Single Page Engine
  */
@@ -99,6 +119,7 @@ const generateInvoicePdfDoc = async (invoice) => {
   })
 
   const logoDataUrl = await loadLogoAsDataUrl('/Logo.png')
+  const signatureDataUrl = await loadSignatureAsDataUrl('/signature.png')
   const pageWidth = 101.6
   const pageHeight = 254
   const marginX = 4.0
@@ -131,7 +152,7 @@ const generateInvoicePdfDoc = async (invoice) => {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(5.4 * scale)
   doc.setTextColor(226, 232, 240)
-  doc.text('Mob: +91 8828251111, 9930317192', titleX, topY + 12.5 * scale)
+  doc.text('Mob: +91 9594666567, 9930317192', titleX, topY + 12.5 * scale)
 
   doc.setFontSize(4.6 * scale)
   doc.setTextColor(203, 213, 225)
@@ -450,10 +471,23 @@ const generateInvoicePdfDoc = async (invoice) => {
   doc.setTextColor(15, 23, 42)
   doc.text('For NH Wallpaper', pageWidth - marginX - 2.5, sigY + 2.5 * scale, { align: 'right' })
 
+  if (signatureDataUrl) {
+    const sigImgW = 28 * scale
+    const sigImgH = 11 * scale
+    doc.addImage(
+      signatureDataUrl,
+      'PNG',
+      pageWidth - marginX - sigImgW - 1,
+      sigY + 3.5 * scale,
+      sigImgW,
+      sigImgH
+    )
+  }
+
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(5.8 * scale)
   doc.setTextColor(100, 116, 139)
-  doc.text('Authorised Signatory', pageWidth - marginX - 2.5, sigY + 7.5 * scale, { align: 'right' })
+  doc.text('Authorised Signatory', pageWidth - marginX - 2.5, sigY + (signatureDataUrl ? 15.5 : 7.5) * scale, { align: 'right' })
 
   // 5. Terms & Conditions (Strictly at bottom of single 4x10 page)
   const bottomTermsY = pageHeight - (scale < 0.8 ? 16 : 20)

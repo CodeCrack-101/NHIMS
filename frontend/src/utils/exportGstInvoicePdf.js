@@ -28,6 +28,26 @@ const loadLogoAsDataUrl = (src = '/Logo.png') =>
     img.src = src
   })
 
+const loadSignatureAsDataUrl = (src = '/signature.png') =>
+  new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.naturalWidth || 300
+        canvas.height = img.naturalHeight || 150
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/png'))
+      } catch {
+        resolve(null)
+      }
+    }
+    img.onerror = () => resolve(null)
+    img.src = src
+  })
+
 /**
  * Standard A4 GST Tax Invoice Generator
  * Follows the EXACT structure and typography shown in the user's reference image
@@ -42,6 +62,7 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
   })
 
   const logoDataUrl = await loadLogoAsDataUrl('/Logo.png')
+  const signatureDataUrl = await loadSignatureAsDataUrl('/signature.png')
   const pageWidth = 210
   const marginX = 10
   const usableWidth = pageWidth - marginX * 2 // 190 mm
@@ -85,8 +106,8 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
     { maxWidth: 95 }
   )
 
-  doc.text('Phone: 8828251111', compTextX, currentY + 20)
-  doc.text('Email: wallpaper9511@gmail.com', compTextX + 45, currentY + 20)
+  doc.text('Phone: 9594666567', compTextX, currentY + 20)
+  doc.text('Email: nationalwallpaper51@gmail.com', compTextX + 45, currentY + 20)
 
   doc.setFont('helvetica', 'bold')
   doc.text('GSTIN: 27DXLPR9950M1ZB', compTextX, currentY + 25)
@@ -352,105 +373,172 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
   currentY += summaryBoxHeight + 4
 
   // 6. Tax Breakdown Table (HSN/SAC wise) + Payment Mode Box
-  const taxTableW = 120
+  // 6 columns matching reference: HSN/SAC | Taxable Amount (Rs) | IGST (Rate%, Amt) | CGST (Rate%, Amt) | SGST (Rate%, Amt) | Total Tax (Rs)
+  const taxTableW = 142
   const taxBoxX = marginX
-  const taxThH = 7
+  const taxThH = 9
+  const taxBoxH = 26
 
-  // Tax breakdown Table
   doc.setDrawColor(51, 65, 85)
-  doc.rect(taxBoxX, currentY, taxTableW, 24)
+  doc.setLineWidth(0.35)
+  doc.rect(taxBoxX, currentY, taxTableW, taxBoxH)
 
-  // Header of Tax breakdown
+  // Header Background
   doc.setFillColor(248, 250, 252)
   doc.rect(taxBoxX, currentY, taxTableW, taxThH, 'FD')
 
+  // Column definitions for tax table:
+  // HSN (20) | Taxable (24) | IGST (24) | CGST (24) | SGST (24) | Total Tax (26) = 142mm
+  const tCol = {
+    hsn: { x: taxBoxX, w: 20 },
+    taxable: { x: taxBoxX + 20, w: 24 },
+    igst: { x: taxBoxX + 44, w: 26 },
+    cgst: { x: taxBoxX + 70, w: 24 },
+    sgst: { x: taxBoxX + 94, w: 24 },
+    total: { x: taxBoxX + 118, w: 24 },
+  }
+
+  // Header Texts
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7)
+  doc.setFontSize(6.5)
   doc.setTextColor(15, 23, 42)
 
-  // Columns for tax table: HSN/SAC (25mm) | Taxable Amount (30mm) | IGST / CGST+SGST (35mm) | Total Tax (30mm)
-  doc.text('HSN/\nSAC', taxBoxX + 12.5, currentY + 3.2, { align: 'center' })
-  doc.text('Taxable\nAmount (₹)', taxBoxX + 40, currentY + 3.2, { align: 'center' })
-  doc.text(inv.isInterState ? 'IGST' : 'CGST + SGST', taxBoxX + 72.5, currentY + 4.5, { align: 'center' })
-  doc.text('Total Tax(₹)', taxBoxX + 105, currentY + 4.5, { align: 'center' })
+  doc.text('HSN/ SAC', tCol.hsn.x + tCol.hsn.w / 2, currentY + 5.5, { align: 'center' })
+  doc.text('Taxable Amount\n(Rs)', tCol.taxable.x + tCol.taxable.w / 2, currentY + 3.5, { align: 'center' })
 
-  doc.line(taxBoxX + 25, currentY, taxBoxX + 25, currentY + 24)
-  doc.line(taxBoxX + 55, currentY, taxBoxX + 55, currentY + 24)
-  doc.line(taxBoxX + 90, currentY, taxBoxX + 90, currentY + 24)
+  // Sub headers for IGST / CGST / SGST
+  doc.text('IGST', tCol.igst.x + tCol.igst.w / 2, currentY + 3.2, { align: 'center' })
+  doc.setFontSize(5.5)
+  doc.text('Rate%    Amt(Rs)', tCol.igst.x + tCol.igst.w / 2, currentY + 7.2, { align: 'center' })
+
+  doc.setFontSize(6.5)
+  doc.text('CGST', tCol.cgst.x + tCol.cgst.w / 2, currentY + 3.2, { align: 'center' })
+  doc.setFontSize(5.5)
+  doc.text('Rate%    Amt(Rs)', tCol.cgst.x + tCol.cgst.w / 2, currentY + 7.2, { align: 'center' })
+
+  doc.setFontSize(6.5)
+  doc.text('SGST', tCol.sgst.x + tCol.sgst.w / 2, currentY + 3.2, { align: 'center' })
+  doc.setFontSize(5.5)
+  doc.text('Rate%    Amt(Rs)', tCol.sgst.x + tCol.sgst.w / 2, currentY + 7.2, { align: 'center' })
+
+  doc.setFontSize(6.5)
+  doc.text('Total Tax\n(Rs)', tCol.total.x + tCol.total.w / 2, currentY + 3.5, { align: 'center' })
+
+  // Header horizontal line & column vertical lines
   doc.line(taxBoxX, currentY + taxThH, taxBoxX + taxTableW, currentY + taxThH)
+  doc.line(tCol.taxable.x, currentY, tCol.taxable.x, currentY + taxBoxH)
+  doc.line(tCol.igst.x, currentY, tCol.igst.x, currentY + taxBoxH)
+  doc.line(tCol.cgst.x, currentY, tCol.cgst.x, currentY + taxBoxH)
+  doc.line(tCol.sgst.x, currentY, tCol.sgst.x, currentY + taxBoxH)
+  doc.line(tCol.total.x, currentY, tCol.total.x, currentY + taxBoxH)
 
   // Data row for Tax breakdown
-  const taxRowY = currentY + taxThH + 5
+  const taxRowY = currentY + taxThH + 5.5
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5)
-  doc.text(String(items[0]?.hsnCode || '39219099'), taxBoxX + 12.5, taxRowY, { align: 'center' })
-  doc.text(Number(inv.subTotal || 0).toFixed(2), taxBoxX + 52, taxRowY, { align: 'right' })
+  doc.setFontSize(7)
+
+  const sampleHsn = items[0]?.hsnCode || '39219099'
+  doc.text(String(sampleHsn), tCol.hsn.x + tCol.hsn.w / 2, taxRowY, { align: 'center' })
+  doc.text(Number(inv.subTotal || 0).toFixed(2), tCol.taxable.x + tCol.taxable.w - 1.5, taxRowY, {
+    align: 'right',
+  })
 
   if (inv.isInterState) {
-    doc.text(`18.0% | ${Number(inv.igstAmount || inv.totalTax || 0).toFixed(2)}`, taxBoxX + 88, taxRowY, {
+    doc.text('18.0%', tCol.igst.x + 6, taxRowY, { align: 'center' })
+    doc.text(Number(inv.igstAmount || inv.totalTax || 0).toFixed(2), tCol.igst.x + tCol.igst.w - 1.5, taxRowY, {
       align: 'right',
     })
+    doc.text('-', tCol.cgst.x + tCol.cgst.w / 2, taxRowY, { align: 'center' })
+    doc.text('-', tCol.sgst.x + tCol.sgst.w / 2, taxRowY, { align: 'center' })
   } else {
-    doc.text(
-      `C: ${Number(inv.cgstAmount || 0).toFixed(2)} | S: ${Number(inv.sgstAmount || 0).toFixed(2)}`,
-      taxBoxX + 88,
-      taxRowY,
-      { align: 'right' }
-    )
+    doc.text('-', tCol.igst.x + tCol.igst.w / 2, taxRowY, { align: 'center' })
+
+    doc.text('9.0%', tCol.cgst.x + 5.5, taxRowY, { align: 'center' })
+    doc.text(Number(inv.cgstAmount || 0).toFixed(2), tCol.cgst.x + tCol.cgst.w - 1.5, taxRowY, {
+      align: 'right',
+    })
+
+    doc.text('9.0%', tCol.sgst.x + 5.5, taxRowY, { align: 'center' })
+    doc.text(Number(inv.sgstAmount || 0).toFixed(2), tCol.sgst.x + tCol.sgst.w - 1.5, taxRowY, {
+      align: 'right',
+    })
   }
-  doc.text(Number(inv.totalTax || 0).toFixed(2), taxBoxX + taxTableW - 3, taxRowY, { align: 'right' })
+
+  doc.text(Number(inv.totalTax || 0).toFixed(2), tCol.total.x + tCol.total.w - 1.5, taxRowY, {
+    align: 'right',
+  })
 
   // Total row for Tax breakdown
-  const taxTotalY = currentY + 16
+  const taxTotalY = currentY + 18
   doc.line(taxBoxX, taxTotalY, taxBoxX + taxTableW, taxTotalY)
   doc.setFont('helvetica', 'bold')
-  doc.text('TOTAL', taxBoxX + 12.5, taxTotalY + 5, { align: 'center' })
-  doc.text(Number(inv.subTotal || 0).toFixed(2), taxBoxX + 52, taxTotalY + 5, { align: 'right' })
-  doc.text(Number(inv.totalTax || 0).toFixed(2), taxBoxX + 88, taxTotalY + 5, { align: 'right' })
-  doc.text(Number(inv.totalTax || 0).toFixed(2), taxBoxX + taxTableW - 3, taxTotalY + 5, {
+  doc.setFontSize(7)
+  doc.text('TOTAL', tCol.hsn.x + tCol.hsn.w / 2, taxTotalY + 5.5, { align: 'center' })
+  doc.text(Number(inv.subTotal || 0).toFixed(2), tCol.taxable.x + tCol.taxable.w - 1.5, taxTotalY + 5.5, {
+    align: 'right',
+  })
+
+  if (inv.isInterState) {
+    doc.text(Number(inv.igstAmount || inv.totalTax || 0).toFixed(2), tCol.igst.x + tCol.igst.w - 1.5, taxTotalY + 5.5, {
+      align: 'right',
+    })
+    doc.text('-', tCol.cgst.x + tCol.cgst.w / 2, taxTotalY + 5.5, { align: 'center' })
+    doc.text('-', tCol.sgst.x + tCol.sgst.w / 2, taxTotalY + 5.5, { align: 'center' })
+  } else {
+    doc.text('-', tCol.igst.x + tCol.igst.w / 2, taxTotalY + 5.5, { align: 'center' })
+    doc.text(Number(inv.cgstAmount || 0).toFixed(2), tCol.cgst.x + tCol.cgst.w - 1.5, taxTotalY + 5.5, {
+      align: 'right',
+    })
+    doc.text(Number(inv.sgstAmount || 0).toFixed(2), tCol.sgst.x + tCol.sgst.w - 1.5, taxTotalY + 5.5, {
+      align: 'right',
+    })
+  }
+
+  doc.text(Number(inv.totalTax || 0).toFixed(2), tCol.total.x + tCol.total.w - 1.5, taxTotalY + 5.5, {
     align: 'right',
   })
 
   // Payment Mode Box (Right of tax table)
-  const payBoxX = taxBoxX + taxTableW + 6
-  const payBoxW = usableWidth - taxTableW - 6
-  doc.rect(payBoxX, currentY, payBoxW, 10)
+  const payBoxX = taxBoxX + taxTableW + 4
+  const payBoxW = usableWidth - taxTableW - 4
+  doc.rect(payBoxX, currentY, payBoxW, 11)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  doc.text('Payment Mode: ', payBoxX + 4, currentY + 6.5)
+  doc.setFontSize(7.5)
+  doc.text('Payment Mode:', payBoxX + 3, currentY + 4.5)
   doc.setFont('helvetica', 'bold')
-  doc.text(String(inv.paymentMode || 'Gpay'), payBoxX + 27, currentY + 6.5)
+  doc.setFontSize(8)
+  doc.text(String(inv.paymentMode || 'Gpay'), payBoxX + 3, currentY + 8.8)
 
   // Payment Status Stamp (PAID or UNPAID)
-  const statusStampY = currentY + 12
+  const statusStampY = currentY + 13
   const isPaid = (inv.paymentStatus || 'PAID') === 'PAID'
   if (isPaid) {
     doc.setFillColor(240, 253, 244)
     doc.setDrawColor(34, 197, 94)
     doc.setLineWidth(0.5)
-    doc.roundedRect(payBoxX, statusStampY, payBoxW, 12, 1.5, 1.5, 'FD')
+    doc.roundedRect(payBoxX, statusStampY, payBoxW, 13, 1.5, 1.5, 'FD')
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
     doc.setTextColor(22, 163, 74)
-    doc.text('PAID', payBoxX + payBoxW / 2, statusStampY + 5.5, { align: 'center' })
+    doc.text('PAID', payBoxX + payBoxW / 2, statusStampY + 6, { align: 'center' })
     doc.setFontSize(5.5)
-    doc.text('AMOUNT RECEIVED', payBoxX + payBoxW / 2, statusStampY + 9.5, { align: 'center' })
+    doc.text('AMOUNT RECEIVED', payBoxX + payBoxW / 2, statusStampY + 10, { align: 'center' })
   } else {
     doc.setFillColor(254, 242, 242)
     doc.setDrawColor(239, 68, 68)
     doc.setLineWidth(0.5)
-    doc.roundedRect(payBoxX, statusStampY, payBoxW, 12, 1.5, 1.5, 'FD')
+    doc.roundedRect(payBoxX, statusStampY, payBoxW, 13, 1.5, 1.5, 'FD')
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
     doc.setTextColor(220, 38, 38)
-    doc.text('UNPAID', payBoxX + payBoxW / 2, statusStampY + 5.5, { align: 'center' })
+    doc.text('UNPAID', payBoxX + payBoxW / 2, statusStampY + 6, { align: 'center' })
     doc.setFontSize(5.5)
-    doc.text('PAYMENT DUE', payBoxX + payBoxW / 2, statusStampY + 9.5, { align: 'center' })
+    doc.text('PAYMENT DUE', payBoxX + payBoxW / 2, statusStampY + 10, { align: 'center' })
   }
 
-  currentY += 28
+  currentY += taxBoxH + 4
 
-  // 7. Signature Box (Exact match with photo: "For NH WALLPAPER:" + Signature + "Authorized Signatory")
+  // Signature Box (Exact match with photo: "For NH WALLPAPER:" + Signature + "Authorized Signatory")
   const sigBoxW = 95
   const sigBoxH = 34
   const sigBoxX = pageWidth - marginX - sigBoxW
@@ -463,25 +551,30 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
   doc.setTextColor(15, 23, 42)
   doc.text('For NH WALLPAPER:', sigBoxX + 4, currentY + 6)
 
-  // Artistic Signatory Line (vector signature placeholder matching photo)
-  doc.setDrawColor(30, 41, 59)
-  doc.setLineWidth(0.4)
-  const signBaseX = sigBoxX + sigBoxW / 2 - 15
-  const signBaseY = currentY + 18
-  doc.lines(
-    [
-      [4, -8],
-      [3, 7],
-      [4, -10],
-      [5, 9],
-      [6, -6],
-      [8, 5],
-      [15, -2],
-      [-25, 4],
-    ],
-    signBaseX,
-    signBaseY
-  )
+  // Real Signature Image or fallback vector
+  if (signatureDataUrl) {
+    doc.addImage(signatureDataUrl, 'PNG', sigBoxX + 15, currentY + 7, 65, 21)
+  } else {
+    // Artistic Signatory Line (fallback)
+    doc.setDrawColor(30, 41, 59)
+    doc.setLineWidth(0.4)
+    const signBaseX = sigBoxX + sigBoxW / 2 - 15
+    const signBaseY = currentY + 18
+    doc.lines(
+      [
+        [4, -8],
+        [3, 7],
+        [4, -10],
+        [5, 9],
+        [6, -6],
+        [8, 5],
+        [15, -2],
+        [-25, 4],
+      ],
+      signBaseX,
+      signBaseY
+    )
+  }
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7.5)
