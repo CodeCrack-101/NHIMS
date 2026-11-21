@@ -363,14 +363,19 @@ export function StaffAccess() {
                       <span className="staff-tag-allowed">Billing</span>
                     </td>
                     <td>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(st)}
-                        className={`staff-toggle-btn ${st.status === 'active' ? 'on' : 'off'}`}
-                        title={st.status === 'active' ? 'Click to Turn OFF Access' : 'Click to Turn ON Access'}
-                      >
-                        {st.status === 'active' ? 'Access ON' : 'Access OFF'}
-                      </button>
+                      <div className="staff-switch-container">
+                        <label className="staff-switch" title={st.status === 'active' ? 'Click to Turn OFF Access' : 'Click to Turn ON Access'}>
+                          <input
+                            type="checkbox"
+                            checked={st.status === 'active'}
+                            onChange={() => handleToggleStatus(st)}
+                          />
+                          <span className="staff-slider"></span>
+                        </label>
+                        <span className={`staff-switch-label ${st.status === 'active' ? 'active' : 'inactive'}`}>
+                          {st.status === 'active' ? 'ON' : 'OFF'}
+                        </span>
+                      </div>
                     </td>
                     <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                       <button
