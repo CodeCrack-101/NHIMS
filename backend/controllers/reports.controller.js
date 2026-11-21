@@ -60,7 +60,7 @@ export const getFilteredInvoicesController = async (req, res, next) => {
 export const prepareQuarterlyArchiveController = async (req, res, next) => {
   try {
     const { startDate, endDate, quarterLabel } = req.body
-    const userId = req.user._id
+    const userId = req.user?._id || req.user?.id
 
     const archivePackage = await prepareQuarterlyArchiveData({
       startDate,
@@ -82,7 +82,7 @@ export const prepareQuarterlyArchiveController = async (req, res, next) => {
 export const verifyArchiveController = async (req, res, next) => {
   try {
     const { archiveId, manifest } = req.body
-    const userId = req.user._id
+    const userId = req.user?._id || req.user?.id
 
     const result = await verifyArchiveIntegrity({
       archiveId,
@@ -102,7 +102,7 @@ export const verifyArchiveController = async (req, res, next) => {
 export const cleanupActiveDatabaseController = async (req, res, next) => {
   try {
     const { archiveId, adminConfirmation } = req.body
-    const userId = req.user._id
+    const userId = req.user?._id || req.user?.id
 
     const result = await performManualActiveCleanup({
       archiveId,
@@ -140,7 +140,7 @@ export const searchArchivedInvoicesController = async (req, res, next) => {
 export const restoreArchiveController = async (req, res, next) => {
   try {
     const { archiveId } = req.body
-    const userId = req.user._id
+    const userId = req.user?._id || req.user?.id
 
     const result = await restoreArchivedInvoices({
       archiveId,

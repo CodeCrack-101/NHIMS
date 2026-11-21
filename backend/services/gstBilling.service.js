@@ -110,6 +110,11 @@ export const generateNextGstInvoiceNumber = async (session = null) => {
  * Supports Catalogue live stock deduction if itemType === 'CATALOGUE'
  */
 export const createGstInvoice = async (payload, userId, req = null) => {
+  const effectiveUserId = userId || payload?.createdBy
+  if (!effectiveUserId) {
+    throw new AppError('Created By user ID is required to create a GST invoice.', 401)
+  }
+
   const {
     invoiceDate = new Date(),
     placeOfSupply = '33-Tamil Nadu',
@@ -260,7 +265,7 @@ export const createGstInvoice = async (payload, userId, req = null) => {
             previousQuantity: prevQty,
             newQuantity: invRecord.quantity,
             reason: `GST Tax Invoice sale (${d.quantity} rolls)`,
-            userId,
+            userId: effectiveUserId,
           },
         ],
         { session }
@@ -298,7 +303,7 @@ export const createGstInvoice = async (payload, userId, req = null) => {
           paymentMode,
           notes,
           billerName,
-          createdBy: userId,
+          createdBy: effectiveUserId,
         },
       ],
       { session }
@@ -316,7 +321,7 @@ export const createGstInvoice = async (payload, userId, req = null) => {
 
     if (req) {
       recordAuditLog({
-        userId,
+        userId: effectiveUserId,
         action: 'GST_INVOICE_CREATED',
         ipAddress: req.ip,
         userAgent: req.headers?.['user-agent'],

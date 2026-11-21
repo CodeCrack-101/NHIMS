@@ -8,7 +8,8 @@ import {
 
 export const createGstInvoiceController = async (req, res, next) => {
   try {
-    const invoice = await createGstInvoice(req.body, req.user._id, req)
+    const userId = req.user?._id || req.user?.id
+    const invoice = await createGstInvoice(req.body, userId, req)
     res.status(201).json({
       success: true,
       message: 'GST Tax Invoice created successfully.',
