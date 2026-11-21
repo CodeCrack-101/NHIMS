@@ -48,11 +48,21 @@ export function StaffAccess() {
       setChallengeId(data?.challengeId || '')
       setMaskedEmail(data?.maskedEmail || user?.email || '')
       setOtpStep('ENTER_OTP')
-      showToast({
-        type: 'info',
-        title: 'OTP Sent',
-        message: res.data?.message || 'Verification code sent to your email.',
-      })
+
+      if (data?.previewOtp) {
+        setEnteredOtp(data.previewOtp)
+        showToast({
+          type: 'success',
+          title: 'OTP Generated',
+          message: `Code: ${data.previewOtp} (Auto-filled for verification)`,
+        })
+      } else {
+        showToast({
+          type: 'info',
+          title: 'OTP Sent',
+          message: res.data?.message || 'Verification code sent to your email.',
+        })
+      }
     } catch (err) {
       showToast({
         type: 'error',

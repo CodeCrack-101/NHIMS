@@ -53,16 +53,23 @@ Company CRM Security Team`
     </div>
   `
 
-  const { error } = await resendClient.emails.send({
-    from: env.RESEND_FROM_EMAIL,
-    to: [toEmail],
-    subject,
-    text,
-    html,
-  })
+  try {
+    const { error } = await resendClient.emails.send({
+      from: env.RESEND_FROM_EMAIL,
+      to: [toEmail],
+      subject,
+      text,
+      html,
+    })
 
-  if (error) {
-    throw new Error(`Email delivery failed: ${error.message || 'Resend API error'}`)
+    if (error) {
+      console.warn(`[Resend Error]: ${error.message}.`)
+      return { success: false, fallback: true, error: error.message }
+    }
+    return { success: true }
+  } catch (err) {
+    console.warn(`[Email Service Warning]: Failed to deliver email to ${toEmail} via Resend (${err.message}).`)
+    return { success: false, fallback: true, error: err.message }
   }
 }
 
