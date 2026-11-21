@@ -153,6 +153,7 @@ export const initiateLogin = async ({ email, password, req }) => {
     await Session.create({
       userId: user._id,
       sessionIdHash,
+      role: user.role,
       expiresAt: sessionExpiresAt,
       ipAddress,
       userAgent,
