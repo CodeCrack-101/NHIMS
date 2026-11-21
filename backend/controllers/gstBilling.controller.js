@@ -4,6 +4,8 @@ import {
   getGstInvoiceById,
   updateGstPaymentStatus,
   generateNextGstInvoiceNumber,
+  deleteGstInvoiceAndRestoreStock,
+  updateGstInvoiceAndAdjustStock,
 } from '../services/gstBilling.service.js'
 
 export const createGstInvoiceController = async (req, res, next) => {
@@ -62,6 +64,35 @@ export const updateGstPaymentStatusController = async (req, res, next) => {
       success: true,
       message: 'Payment status updated successfully.',
       data: { invoice },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const updateGstInvoiceController = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const userId = req.user?._id || req.user?.id
+    const invoice = await updateGstInvoiceAndAdjustStock(id, req.body, userId, req)
+    res.status(200).json({
+      success: true,
+      message: 'GST Tax Invoice updated and stock adjusted successfully.',
+      data: { invoice },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const deleteGstInvoiceController = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const userId = req.user?._id || req.user?.id
+    const result = await deleteGstInvoiceAndRestoreStock(id, userId, req)
+    res.status(200).json({
+      success: true,
+      message: result.message,
     })
   } catch (err) {
     next(err)

@@ -438,3 +438,351 @@ export const updateGstPaymentStatus = async (invoiceId, paymentStatus) => {
   await invoice.save()
   return invoice
 }
+
+/**
+ * Delete GST Invoice and restore catalogue inventory stock
+ */
+export const deleteGstInvoiceAndRestoreStock = async (invoiceId, userId, req = null) => {
+  const invoice = await GstInvoice.findById(invoiceId)
+  if (!invoice) {
+    throw new AppError('GST Invoice not found.', 404)
+  }
+
+  const items = invoice.items || []
+  const session = await mongoose.startSession()
+  session.startTransaction()
+
+  try {
+    const sseUpdates = []
+
+    for (const it of items) {
+      // Restore ONLY catalogue items
+      if (it.itemType === 'CATALOGUE' && (it.patternId || (it.catalogueId && it.patternNumber))) {
+        let invDoc = null
+        if (it.patternId) {
+          invDoc = await Inventory.findById(it.patternId).session(session)
+        }
+        if (!invDoc && it.catalogueId && it.patternNumber) {
+          invDoc = await Inventory.findOne({
+            catalogueId: it.catalogueId,
+            patternNumber: it.patternNumber,
+          }).session(session)
+        }
+
+        if (invDoc) {
+          const prevQty = invDoc.quantity
+          const restoredQty = Number(it.quantity) || 0
+          invDoc.quantity += restoredQty
+          await invDoc.save({ session })
+
+          await InventoryLog.create(
+            [
+              {
+                catalogueId: invDoc.catalogueId,
+                patternId: invDoc._id,
+                patternNumber: invDoc.patternNumber,
+                changeType: 'INVOICE_RESTORE',
+                quantityChange: restoredQty,
+                previousQuantity: prevQty,
+                newQuantity: invDoc.quantity,
+                reason: `GST Invoice #${invoice.invoiceNumber} deleted - stock restored`,
+                userId,
+              },
+            ],
+            { session }
+          )
+
+          sseUpdates.push({
+            catalogueId: invDoc.catalogueId,
+            patternId: invDoc._id,
+          })
+        }
+      }
+    }
+
+    await GstInvoice.findByIdAndDelete(invoiceId).session(session)
+    await session.commitTransaction()
+
+    // Broadcast SSE updates after transaction commit
+    for (const u of sseUpdates) {
+      broadcastInventoryEvent('STOCK_UPDATED', u)
+    }
+
+    if (req) {
+      recordAuditLog({
+        userId,
+        action: 'GST_INVOICE_DELETED',
+        ipAddress: req.ip,
+        userAgent: req.headers?.['user-agent'],
+        metadata: {
+          invoiceNumber: invoice.invoiceNumber,
+          customer: invoice.billTo?.firmName,
+        },
+      }).catch(() => {})
+    }
+
+    return { success: true, message: `GST Invoice #${invoice.invoiceNumber} deleted and catalogue stock restored.` }
+  } catch (err) {
+    await session.abortTransaction()
+    throw err
+  } finally {
+    session.endSession()
+  }
+}
+
+/**
+ * Update GST Invoice & Synchronously Adjust Catalogue Inventory Stock
+ * Only items marked itemType === 'CATALOGUE' impact stock.
+ * Custom items (itemType === 'CUSTOM') are saved without deducting stock.
+ */
+export const updateGstInvoiceAndAdjustStock = async (invoiceId, payload, userId, req = null) => {
+  const existingInvoice = await GstInvoice.findById(invoiceId)
+  if (!existingInvoice) {
+    throw new AppError('GST Invoice not found.', 404)
+  }
+
+  const {
+    invoiceDate = existingInvoice.invoiceDate,
+    placeOfSupply = existingInvoice.placeOfSupply || '27-Maharashtra',
+    billTo = existingInvoice.billTo,
+    shipTo = existingInvoice.shipTo,
+    items = existingInvoice.items,
+    paymentStatus = existingInvoice.paymentStatus || 'PAID',
+    paymentMode = existingInvoice.paymentMode || 'Gpay',
+    receivedAmount,
+    billerName = existingInvoice.billerName || 'Shifa',
+    notes = existingInvoice.notes || '',
+  } = payload
+
+  if (!billTo || !billTo.firmName || !billTo.contactNumber) {
+    throw new AppError('Bill To firm name and contact number are required.', 400)
+  }
+
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new AppError('At least one item is required in GST invoice.', 400)
+  }
+
+  const posCode = String(placeOfSupply).split('-')[0].trim()
+  const isInterState = posCode !== '27'
+
+  // Process & calculate items
+  let subTotal = 0
+  let totalTax = 0
+  let totalQuantity = 0
+  const processedItems = []
+
+  for (let idx = 0; idx < items.length; idx++) {
+    const it = items[idx]
+    const qty = Number(it.quantity) || 0
+    const price = Number(it.pricePerUnit) || 0
+    const gstRate = Number(it.gstRate ?? 18) || 0
+
+    if (qty <= 0) {
+      throw new AppError(`Item #${idx + 1} must have a quantity greater than zero.`, 400)
+    }
+
+    const taxable = Math.round(qty * price * 100) / 100
+    const gstAmt = Math.round(taxable * (gstRate / 100) * 100) / 100
+    const lineTotal = Math.round((taxable + gstAmt) * 100) / 100
+
+    subTotal += taxable
+    totalTax += gstAmt
+    totalQuantity += qty
+
+    processedItems.push({
+      itemType: it.itemType || 'CUSTOM',
+      catalogueId: it.catalogueId || null,
+      catalogueName: it.catalogueName || '',
+      patternId: it.patternId || null,
+      patternNumber: it.patternNumber || '',
+      itemName: it.itemName || `Item ${idx + 1}`,
+      hsnCode: it.hsnCode || '39219099',
+      quantity: qty,
+      unit: it.unit || 'Rol',
+      pricePerUnit: price,
+      gstRate,
+      taxableAmount: taxable,
+      gstAmount: gstAmt,
+      totalAmount: lineTotal,
+    })
+  }
+
+  subTotal = Math.round(subTotal * 100) / 100
+  totalTax = Math.round(totalTax * 100) / 100
+  const finalTotal = Math.round((subTotal + totalTax) * 100) / 100
+
+  let cgstAmount = 0
+  let sgstAmount = 0
+  let igstAmount = 0
+
+  if (isInterState) {
+    igstAmount = totalTax
+  } else {
+    cgstAmount = Math.round((totalTax / 2) * 100) / 100
+    sgstAmount = Math.round((totalTax - cgstAmount) * 100) / 100
+  }
+
+  const recAmt =
+    paymentStatus === 'PAID'
+      ? finalTotal
+      : paymentStatus === 'UNPAID'
+      ? 0
+      : Number(receivedAmount) || 0
+  const balAmt = Math.max(0, Math.round((finalTotal - recAmt) * 100) / 100)
+  const finalWords = convertNumberToWords(finalTotal)
+
+  // Calculate delta stock adjustments ONLY for itemType === 'CATALOGUE'
+  // Old items map
+  const oldCatalogMap = new Map()
+  for (const oldIt of existingInvoice.items || []) {
+    if (oldIt.itemType === 'CATALOGUE' && (oldIt.patternId || oldIt.patternNumber)) {
+      const key = oldIt.patternId ? String(oldIt.patternId) : `${oldIt.catalogueId}_${oldIt.patternNumber}`
+      oldCatalogMap.set(key, (oldCatalogMap.get(key) || 0) + Number(oldIt.quantity))
+    }
+  }
+
+  // New items map
+  const newCatalogMap = new Map()
+  const keyToPatternInfo = new Map()
+  for (const newIt of processedItems) {
+    if (newIt.itemType === 'CATALOGUE' && (newIt.patternId || newIt.patternNumber)) {
+      const key = newIt.patternId ? String(newIt.patternId) : `${newIt.catalogueId}_${newIt.patternNumber}`
+      newCatalogMap.set(key, (newCatalogMap.get(key) || 0) + Number(newIt.quantity))
+      if (!keyToPatternInfo.has(key)) {
+        keyToPatternInfo.set(key, {
+          patternId: newIt.patternId,
+          catalogueId: newIt.catalogueId,
+          patternNumber: newIt.patternNumber,
+        })
+      }
+    }
+  }
+
+  // Merge all keys to compute net changes: netChange = oldQty - newQty
+  // If netChange > 0: quantity was reduced in bill => restore to inventory
+  // If netChange < 0: quantity was increased in bill => deduct from inventory
+  const allKeys = new Set([...oldCatalogMap.keys(), ...newCatalogMap.keys()])
+
+  const session = await mongoose.startSession()
+  session.startTransaction()
+
+  try {
+    const sseUpdates = []
+
+    for (const key of allKeys) {
+      const oldQty = oldCatalogMap.get(key) || 0
+      const newQty = newCatalogMap.get(key) || 0
+      const netRestoreQty = oldQty - newQty // positive means restore, negative means deduct
+
+      if (netRestoreQty !== 0) {
+        let invDoc = null
+        const info = keyToPatternInfo.get(key) || {}
+        if (info.patternId || (key.length === 24 && mongoose.Types.ObjectId.isValid(key))) {
+          invDoc = await Inventory.findById(info.patternId || key).session(session)
+        }
+        if (!invDoc && info.catalogueId && info.patternNumber) {
+          invDoc = await Inventory.findOne({
+            catalogueId: info.catalogueId,
+            patternNumber: info.patternNumber,
+          }).session(session)
+        }
+
+        if (!invDoc) {
+          // If trying to deduct from non-existent inventory
+          if (netRestoreQty < 0) {
+            throw new AppError(`Catalogue pattern in bill not found in inventory.`, 404)
+          }
+          continue
+        }
+
+        // If deducting more than available
+        if (netRestoreQty < 0 && invDoc.quantity < Math.abs(netRestoreQty)) {
+          throw new AppError(
+            `Insufficient stock for pattern "${invDoc.patternNumber}". Available: ${invDoc.quantity}, needed additional: ${Math.abs(netRestoreQty)}`,
+            400
+          )
+        }
+
+        const prevQty = invDoc.quantity
+        invDoc.quantity += netRestoreQty
+        await invDoc.save({ session })
+
+        await InventoryLog.create(
+          [
+            {
+              catalogueId: invDoc.catalogueId,
+              patternId: invDoc._id,
+              patternNumber: invDoc.patternNumber,
+              changeType: netRestoreQty > 0 ? 'INVOICE_RESTORE' : 'SALE_DEDUCTION',
+              quantityChange: netRestoreQty,
+              previousQuantity: prevQty,
+              newQuantity: invDoc.quantity,
+              reason: `GST Invoice #${existingInvoice.invoiceNumber} edited (${netRestoreQty > 0 ? `+${netRestoreQty}` : netRestoreQty} rolls)`,
+              userId,
+            },
+          ],
+          { session }
+        )
+
+        sseUpdates.push({
+          catalogueId: invDoc.catalogueId,
+          patternId: invDoc._id,
+        })
+      }
+    }
+
+    // Update the invoice document
+    existingInvoice.invoiceDate = invoiceDate
+    existingInvoice.placeOfSupply = placeOfSupply
+    existingInvoice.supplyStateCode = posCode
+    existingInvoice.supplyStateName = String(placeOfSupply).split('-')[1]?.trim() || ''
+    existingInvoice.billTo = billTo
+    existingInvoice.shipTo = shipTo || billTo
+    existingInvoice.items = processedItems
+    existingInvoice.totalItems = processedItems.length
+    existingInvoice.totalQuantity = totalQuantity
+    existingInvoice.subTotal = subTotal
+    existingInvoice.isInterState = isInterState
+    existingInvoice.cgstAmount = cgstAmount
+    existingInvoice.sgstAmount = sgstAmount
+    existingInvoice.igstAmount = igstAmount
+    existingInvoice.totalTax = totalTax
+    existingInvoice.finalTotal = finalTotal
+    existingInvoice.finalTotalInWords = finalWords
+    existingInvoice.receivedAmount = recAmt
+    existingInvoice.balanceAmount = balAmt
+    existingInvoice.paymentStatus = paymentStatus
+    existingInvoice.paymentMode = paymentMode
+    existingInvoice.billerName = billerName
+    existingInvoice.notes = notes
+
+    await existingInvoice.save({ session })
+    await session.commitTransaction()
+
+    // Broadcast live SSE stock updates
+    for (const u of sseUpdates) {
+      broadcastInventoryEvent('STOCK_UPDATED', u)
+    }
+
+    if (req) {
+      recordAuditLog({
+        userId,
+        action: 'GST_INVOICE_UPDATED',
+        ipAddress: req.ip,
+        userAgent: req.headers?.['user-agent'],
+        metadata: {
+          invoiceNumber: existingInvoice.invoiceNumber,
+          finalTotal: existingInvoice.finalTotal,
+          customer: billTo.firmName,
+        },
+      }).catch(() => {})
+    }
+
+    return existingInvoice
+  } catch (err) {
+    await session.abortTransaction()
+    throw err
+  } finally {
+    session.endSession()
+  }
+}

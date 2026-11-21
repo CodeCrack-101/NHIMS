@@ -9,4 +9,8 @@ export const gstBillingService = {
     api.patch(`/gst-billing/invoices/${encodeURIComponent(id)}/payment-status`, {
       paymentStatus,
     }),
+  updateGstInvoice: (id, payload) =>
+    api.put(`/gst-billing/invoices/${encodeURIComponent(id)}`, payload),
+  deleteGstInvoice: (id) =>
+    api.delete(`/gst-billing/invoices/${encodeURIComponent(id)}`),
 }

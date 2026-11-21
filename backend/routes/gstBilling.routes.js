@@ -10,6 +10,8 @@ import {
   getGstInvoiceByIdController,
   updateGstPaymentStatusController,
   getNextGstInvoiceNumberController,
+  updateGstInvoiceController,
+  deleteGstInvoiceController,
 } from '../controllers/gstBilling.controller.js'
 
 const router = Router()
@@ -31,5 +33,11 @@ router.get('/invoices/:id', getGstInvoiceByIdController)
 
 // Update Payment status
 router.patch('/invoices/:id/payment-status', updateGstPaymentStatusController)
+
+// Edit GST Invoice & live stock adjustment
+router.put('/invoices/:id', updateGstInvoiceController)
+
+// Delete GST Invoice & live stock restore
+router.delete('/invoices/:id', deleteGstInvoiceController)
 
 export default router

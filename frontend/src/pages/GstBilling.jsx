@@ -100,6 +100,14 @@ export function GstBilling() {
   const [paymentMode, setPaymentMode] = useState('Gpay')
   const [submitting, setSubmitting] = useState(false)
 
+  // Edit Mode state
+  const [editingInvoiceId, setEditingInvoiceId] = useState(null)
+  const [editingInvoiceNumber, setEditingInvoiceNumber] = useState('')
+
+  // Delete Confirm Modal state
+  const [invoiceToDelete, setInvoiceToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+
   // Recent GST Invoices
   const [recentInvoices, setRecentInvoices] = useState([])
   const [loadingHistory, setLoadingHistory] = useState(false)
@@ -386,14 +394,27 @@ export function GstBilling() {
         paymentMode,
       }
 
-      const res = await gstBillingService.createGstBill(payload)
-      const created = res.data?.data?.invoice
+      let created = null
 
-      showToast({
-        type: 'success',
-        title: 'GST Invoice Generated!',
-        message: `Invoice #${created.invoiceNumber} created successfully.`,
-      })
+      if (editingInvoiceId) {
+        const res = await gstBillingService.updateGstInvoice(editingInvoiceId, payload)
+        created = res.data?.data?.invoice
+        showToast({
+          type: 'success',
+          title: 'GST Invoice Updated!',
+          message: `Invoice #${created.invoiceNumber} updated & stock synchronized.`,
+        })
+        setEditingInvoiceId(null)
+        setEditingInvoiceNumber('')
+      } else {
+        const res = await gstBillingService.createGstBill(payload)
+        created = res.data?.data?.invoice
+        showToast({
+          type: 'success',
+          title: 'GST Invoice Generated!',
+          message: `Invoice #${created.invoiceNumber} created successfully.`,
+        })
+      }
 
       // Print or Download
       if (andPrint) {
@@ -419,11 +440,129 @@ export function GstBilling() {
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Generation Failed',
+        title: editingInvoiceId ? 'Update Failed' : 'Generation Failed',
         message: err.response?.data?.message || err.message,
       })
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  // Handle Edit Action
+  const handleStartEdit = (inv) => {
+    setEditingInvoiceId(inv._id)
+    setEditingInvoiceNumber(inv.invoiceNumber)
+
+    // Fill metadata
+    setInvoiceDate(inv.invoiceDate ? new Date(inv.invoiceDate).toISOString().split('T')[0] : '')
+    setPlaceOfSupply(inv.placeOfSupply || '27-Maharashtra')
+    setBillerName(inv.billerName || 'Shifa')
+
+    // Fill Bill To
+    setBillToFirm(inv.billTo?.firmName || '')
+    setBillToAddress(inv.billTo?.address || '')
+    setBillToContact(inv.billTo?.contactNumber || '')
+    setBillToGstin(inv.billTo?.gstin || '')
+    setBillToState(
+      inv.billTo?.state
+        ? `${inv.billTo.stateCode ? `${inv.billTo.stateCode}-` : ''}${inv.billTo.state}`
+        : inv.placeOfSupply || '27-Maharashtra'
+    )
+
+    // Fill Ship To
+    if (inv.shipTo && inv.shipTo.firmName && inv.shipTo.firmName !== inv.billTo?.firmName) {
+      setSameAsBillTo(false)
+      setShipToFirm(inv.shipTo.firmName || '')
+      setShipToAddress(inv.shipTo.address || '')
+      setShipToContact(inv.shipTo.contactNumber || '')
+      setShipToGstin(inv.shipTo.gstin || '')
+      setShipToState(inv.shipTo.state || inv.placeOfSupply || '27-Maharashtra')
+    } else {
+      setSameAsBillTo(true)
+      setShipToFirm('')
+      setShipToAddress('')
+      setShipToContact('')
+      setShipToGstin('')
+      setShipToState(inv.placeOfSupply || '27-Maharashtra')
+    }
+
+    // Fill Rows
+    if (Array.isArray(inv.items) && inv.items.length > 0) {
+      const mappedRows = inv.items.map((it) => {
+        if (it.itemType === 'CATALOGUE' && it.catalogueId) {
+          loadPatterns(it.catalogueId)
+        }
+        return {
+          id: `row_edit_${Date.now()}_${Math.random()}`,
+          itemType: it.itemType || 'CUSTOM',
+          catalogueId: it.catalogueId || '',
+          catalogueName: it.catalogueName || '',
+          patternId: it.patternId || '',
+          patternNumber: it.patternNumber || '',
+          availableStock: it.quantity || 0,
+          itemName: it.itemName || '',
+          hsnCode: it.hsnCode || '39219099',
+          quantity: it.quantity || 1,
+          unit: it.unit || 'Rol',
+          pricePerUnit: it.pricePerUnit || 0,
+          gstRate: it.gstRate || 18,
+        }
+      })
+      setRows(mappedRows)
+    }
+
+    // Payment
+    setPaymentStatus(inv.paymentStatus || 'PAID')
+    setPaymentMode(inv.paymentMode || 'Gpay')
+
+    // Scroll to top of billing form smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    showToast({
+      type: 'info',
+      title: 'Editing Mode Active',
+      message: `Loaded Invoice #${inv.invoiceNumber}. Modify details and click Update.`,
+    })
+  }
+
+  const handleCancelEdit = () => {
+    setEditingInvoiceId(null)
+    setEditingInvoiceNumber('')
+    setBillToFirm('')
+    setBillToAddress('')
+    setBillToContact('')
+    setBillToGstin('')
+    setRows([createDefaultRow('CUSTOM')])
+    gstBillingService.getNextInvoiceNumber().then((r) => {
+      if (r.data?.data?.nextInvoiceNumber) {
+        setInvoiceNumberPreview(r.data.data.nextInvoiceNumber)
+      }
+    })
+  }
+
+  // Handle Delete Action
+  const handleDeleteInvoice = async () => {
+    if (!invoiceToDelete) return
+    try {
+      setDeleting(true)
+      const res = await gstBillingService.deleteGstInvoice(invoiceToDelete._id)
+      showToast({
+        type: 'success',
+        title: 'GST Invoice Deleted',
+        message: res.data?.message || `Invoice #${invoiceToDelete.invoiceNumber} deleted and stock restored.`,
+      })
+      setInvoiceToDelete(null)
+      if (editingInvoiceId === invoiceToDelete._id) {
+        handleCancelEdit()
+      }
+      fetchRecentInvoices()
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: err.response?.data?.message || err.message,
+      })
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -441,16 +580,20 @@ export function GstBilling() {
       {/* 2. Top Header with Invoice No & Date Pills matching Billing page */}
       <div className="gst-topbar">
         <div>
-          <h1 className="gst-heading">GST Tax Invoice Billing</h1>
+          <h1 className="gst-heading">
+            {editingInvoiceId ? `Edit GST Invoice #${editingInvoiceNumber}` : 'GST Tax Invoice Billing'}
+          </h1>
           <p className="gst-subtext">
-            Generate standard GST compliant tax invoices with live catalogue stock deduction and custom products
+            {editingInvoiceId
+              ? 'Modifying saved GST tax invoice. Changes will automatically synchronize catalogue inventory.'
+              : 'Generate standard GST compliant tax invoices with live catalogue stock deduction and custom products'}
           </p>
         </div>
 
         <div className="gst-meta-pills">
           <div className="gst-meta-pill">
-            <span className="gst-meta-label">INVOICE NO:</span>
-            <strong className="gst-meta-value">{invoiceNumberPreview}</strong>
+            <span className="gst-meta-label">{editingInvoiceId ? 'EDITING NO:' : 'INVOICE NO:'}</span>
+            <strong className="gst-meta-value">{editingInvoiceId ? editingInvoiceNumber : invoiceNumberPreview}</strong>
           </div>
           <div className="gst-meta-pill">
             <span className="gst-meta-label">DATE:</span>
@@ -464,6 +607,25 @@ export function GstBilling() {
           </div>
         </div>
       </div>
+
+      {editingInvoiceId && (
+        <div className="gst-edit-banner">
+          <div>
+            <strong>You are currently editing GST Invoice #{editingInvoiceNumber}</strong>
+            <div style={{ fontSize: '12.5px', marginTop: '2px' }}>
+              Update items, customer firm, GSTIN, or shipping details below and click &quot;Update Invoice&quot;.
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={handleCancelEdit}
+            style={{ padding: '6px 14px', fontSize: '12px' }}
+          >
+            Cancel Edit
+          </button>
+        </div>
+      )}
 
       {/* 3. Invoice Meta Section inside main card */}
       <div className="gst-main-card">
@@ -929,7 +1091,11 @@ export function GstBilling() {
               disabled={submitting}
               onClick={() => handleGenerateBill(true)}
             >
-              {submitting ? 'Generating...' : '🖨️ Print GST Tax Invoice'}
+              {submitting
+                ? 'Processing...'
+                : editingInvoiceId
+                ? '💾 Update & Print Invoice'
+                : '🖨️ Print GST Tax Invoice'}
             </button>
             <button
               type="button"
@@ -937,8 +1103,23 @@ export function GstBilling() {
               disabled={submitting}
               onClick={() => handleGenerateBill(false)}
             >
-              {submitting ? 'Generating...' : '⬇️ Download PDF'}
+              {submitting
+                ? 'Processing...'
+                : editingInvoiceId
+                ? '💾 Update & Download PDF'
+                : '⬇️ Download PDF'}
             </button>
+            {editingInvoiceId && (
+              <button
+                type="button"
+                className="gst-btn btn-secondary"
+                disabled={submitting}
+                onClick={handleCancelEdit}
+                style={{ backgroundColor: '#f1f5f9', color: '#475569' }}
+              >
+                Cancel Edit
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1007,7 +1188,16 @@ export function GstBilling() {
                       {inv.paymentStatus}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <button
+                      type="button"
+                      className="gst-btn-sm gst-btn-edit"
+                      onClick={() => handleStartEdit(inv)}
+                      style={{ marginRight: '6px' }}
+                      title="Edit this invoice"
+                    >
+                      ✏️ Edit
+                    </button>
                     <button
                       type="button"
                       className="gst-btn-sm gst-btn-secondary"
@@ -1020,8 +1210,17 @@ export function GstBilling() {
                       type="button"
                       className="gst-btn-sm gst-btn-secondary"
                       onClick={() => downloadGstInvoicePdf(inv)}
+                      style={{ marginRight: '6px' }}
                     >
                       PDF
+                    </button>
+                    <button
+                      type="button"
+                      className="gst-btn-sm gst-btn-danger"
+                      onClick={() => setInvoiceToDelete(inv)}
+                      title="Delete invoice and restore inventory stock"
+                    >
+                      🗑️ Delete
                     </button>
                   </td>
                 </tr>
@@ -1030,6 +1229,62 @@ export function GstBilling() {
           </table>
         )}
       </div>
+      {/* Delete Confirmation Modal */}
+      {invoiceToDelete && (
+        <div className="gst-modal-overlay" onClick={() => !deleting && setInvoiceToDelete(null)}>
+          <div className="gst-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="gst-modal-header">
+              <h3>Confirm Delete GST Invoice</h3>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => !deleting && setInvoiceToDelete(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="gst-modal-body">
+              <p style={{ margin: '0 0 12px 0' }}>
+                Are you sure you want to delete <strong>GST Invoice #{invoiceToDelete.invoiceNumber}</strong> for{' '}
+                <strong>{invoiceToDelete.billTo?.firmName}</strong>?
+              </p>
+              <div
+                style={{
+                  padding: '10px 14px',
+                  backgroundColor: '#f0fdf4',
+                  borderRadius: '6px',
+                  border: '1px solid #bbf7d0',
+                  color: '#166534',
+                  fontSize: '12.5px',
+                }}
+              >
+                <strong>Stock Restore Guarantee:</strong> Any catalogue wallpaper items billed in this invoice will be
+                automatically restored back to live stock inventory immediately.
+              </div>
+            </div>
+            <div className="gst-modal-footer">
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={deleting}
+                onClick={() => setInvoiceToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="gst-btn gst-btn-danger"
+                disabled={deleting}
+                onClick={handleDeleteInvoice}
+                style={{ padding: '8px 18px', fontWeight: '700' }}
+              >
+                {deleting ? 'Deleting & Restoring...' : 'Confirm Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
