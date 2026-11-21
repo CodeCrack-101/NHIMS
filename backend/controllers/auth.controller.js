@@ -17,6 +17,15 @@ export const loginController = async (req, res, next) => {
     const { email, password } = req.body
     const challengeData = await initiateLogin({ email, password, req })
 
+    if (challengeData.directLogin && challengeData.sessionToken) {
+      res.cookie(SESSION_COOKIE_NAME, challengeData.sessionToken, getSessionCookieOptions())
+      return res.status(200).json({
+        success: true,
+        message: 'Sign in successful.',
+        data: challengeData,
+      })
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Verification code sent to your registered email address.',

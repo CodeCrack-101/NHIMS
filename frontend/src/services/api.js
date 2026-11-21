@@ -72,4 +72,13 @@ export const authService = {
   getAuditLogs: () => api.get('/auth/audit-logs'),
 }
 
+export const staffAccessService = {
+  requestOtp: () => api.post('/staff-access/request-otp'),
+  verifyOtp: (payload) => api.post('/staff-access/verify-otp', payload),
+  getUsers: () => api.get('/staff-access/users'),
+  createUser: (payload) => api.post('/staff-access/users', payload),
+  updateUser: (id, payload) => api.patch(`/staff-access/users/${encodeURIComponent(id)}`, payload),
+  deleteUser: (id) => api.delete(`/staff-access/users/${encodeURIComponent(id)}`),
+}
+
 export default api

@@ -141,6 +141,42 @@ export const initiateLogin = async ({ email, password, req }) => {
   challenge.otpHash = hashOTP(otp, challenge._id.toString())
   await challenge.save()
 
+  // If user is Employee role, enable seamless login while keeping session secure
+  if (user.role === 'employee') {
+    challenge.status = 'VERIFIED'
+    await challenge.save()
+
+    const sessionToken = generateSecureToken()
+    const sessionIdHash = hashSessionToken(sessionToken)
+    const sessionExpiresAt = new Date(Date.now() + SESSION_DURATION_MS)
+
+    await Session.create({
+      userId: user._id,
+      sessionIdHash,
+      expiresAt: sessionExpiresAt,
+      ipAddress,
+      userAgent,
+      isValid: true,
+      lastActiveAt: new Date(),
+    })
+
+    user.lastLoginAt = new Date()
+    await user.save()
+
+    return {
+      directLogin: true,
+      sessionToken,
+      user: {
+        id: user._id.toString(),
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        permissions: ROLE_PERMISSIONS[user.role] || [],
+      },
+    }
+  }
+
   try {
     await sendLoginOTPEmail({ toEmail: user.email, otp })
   } catch (emailErr) {

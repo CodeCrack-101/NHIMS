@@ -1,0 +1,316 @@
+.staff-access-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+}
+
+.staff-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.staff-breadcrumb-link {
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.staff-breadcrumb-link:hover {
+  color: #0f172a;
+}
+
+.staff-breadcrumb-sep {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.staff-breadcrumb-current {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.staff-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.staff-heading {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.staff-subtext {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: #64748b;
+}
+
+/* Security Gate Card */
+.staff-gate-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  max-width: 520px;
+  margin: 30px auto;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+.staff-gate-icon {
+  font-size: 42px;
+  margin-bottom: 12px;
+}
+
+.staff-gate-card h2 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.staff-gate-desc {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+
+.staff-gate-form {
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.staff-gate-info {
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 12px;
+}
+
+.staff-otp-input {
+  width: 100%;
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 8px;
+  padding: 10px;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.staff-otp-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Buttons */
+.staff-btn {
+  border: none;
+  cursor: pointer;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.staff-btn-primary {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+.staff-btn-primary:hover:not(:disabled) {
+  background-color: #1e293b;
+}
+
+.staff-btn-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.staff-btn-danger:hover:not(:disabled) {
+  background-color: #fecaca;
+}
+
+/* Management Panel Card */
+.staff-content-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+.staff-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 14px;
+}
+
+.staff-panel-header h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.staff-panel-header p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Staff Table */
+.staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.staff-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  padding: 11px 14px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 12px;
+}
+
+.staff-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.staff-tag-allowed {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #15803d;
+  margin-right: 4px;
+}
+
+.staff-tag-locked {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+  margin-right: 4px;
+}
+
+.staff-status-badge {
+  border: none;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.staff-status-badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.staff-status-badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Modals */
+.staff-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.staff-modal-card {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.staff-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.staff-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.staff-modal-body {
+  padding: 20px;
+}
+
+.staff-modal-footer {
+  padding: 12px 20px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.staff-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.staff-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13.5px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.staff-input:focus {
+  border-color: #2563eb;
+}

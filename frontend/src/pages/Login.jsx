@@ -59,6 +59,22 @@ export function Login() {
       })
 
       const challengeData = response.data?.data
+
+      if (challengeData?.directLogin && challengeData?.user) {
+        if (challengeData.sessionToken) {
+          localStorage.setItem('__crm_sid_token', challengeData.sessionToken)
+        }
+        localStorage.setItem('__crm_user', JSON.stringify(challengeData.user))
+        showToast({
+          type: 'success',
+          title: 'Welcome Back!',
+          message: `Logged in as ${challengeData.user.fullName}.`,
+        })
+        navigate('/dashboard', { replace: true })
+        window.location.reload()
+        return
+      }
+
       sessionStorage.setItem('crm_otp_challenge', JSON.stringify(challengeData))
       showToast({
         type: 'info',

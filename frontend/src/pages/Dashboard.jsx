@@ -10,6 +10,7 @@ import { Reports } from './Reports.jsx'
 import { Customers } from './Customers.jsx'
 import { InvoiceHistory } from './InvoiceHistory.jsx'
 import { SearchRoll } from './SearchRoll.jsx'
+import { StaffAccess } from './StaffAccess.jsx'
 import {
   catalogueService,
   formatCatalogueLabel,
@@ -36,6 +37,7 @@ export function Dashboard() {
   const isCustomersRoute = location.pathname.startsWith('/customers')
   const isUnpaidUsersRoute = location.pathname.startsWith('/unpaid-users')
   const isSearchRollRoute = location.pathname.startsWith('/search-roll')
+  const isStaffAccessRoute = location.pathname.startsWith('/staff-access')
 
   const loadDashboardCatalogues = useCallback(async () => {
     try {
@@ -171,6 +173,9 @@ export function Dashboard() {
     }
     if (isSearchRollRoute) {
       return <SearchRoll />
+    }
+    if (isStaffAccessRoute) {
+      return <StaffAccess />
     }
     if (pageLoading) {
       return (

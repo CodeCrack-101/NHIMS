@@ -10,6 +10,7 @@ import billingRoutes from './routes/billing.routes.js'
 import gstBillingRoutes from './routes/gstBilling.routes.js'
 import reportsRoutes from './routes/reports.routes.js'
 import customerRoutes from './routes/customer.routes.js'
+import staffRoutes from './routes/staff.routes.js'
 import { generalApiRateLimiter } from './middleware/rateLimit.middleware.js'
 import { errorHandler } from './middleware/error.middleware.js'
 import { AppError } from './utils/AppError.js'
@@ -104,6 +105,7 @@ app.use('/api/billing', billingRoutes)
 app.use('/api/gst-billing', gstBillingRoutes)
 app.use('/api/reports', reportsRoutes)
 app.use('/api/customers', customerRoutes)
+app.use('/api/staff-access', staffRoutes)
 
 app.use((_req, _res, next) => {
   next(new AppError('Requested API endpoint does not exist.', 404, 'NOT_FOUND'))

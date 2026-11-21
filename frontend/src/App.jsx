@@ -125,6 +125,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/staff-access"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
             <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </AuthProvider>
