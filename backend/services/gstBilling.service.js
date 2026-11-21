@@ -92,7 +92,7 @@ export const generateNextGstInvoiceNumber = async (session = null) => {
 
   const latest = await latestQuery
   if (!latest?.invoiceNumber) {
-    return '314' // Matches user image start or next
+    return '1'
   }
 
   // Parse trailing numeric
@@ -102,7 +102,7 @@ export const generateNextGstInvoiceNumber = async (session = null) => {
     return String(nextVal)
   }
 
-  return '315'
+  return '1'
 }
 
 /**

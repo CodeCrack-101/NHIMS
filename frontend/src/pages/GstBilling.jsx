@@ -52,7 +52,7 @@ export function GstBilling() {
   const { trackDownload } = useDownloadProgress()
 
   // Top Meta
-  const [invoiceNumberPreview, setInvoiceNumberPreview] = useState('314')
+  const [invoiceNumberPreview, setInvoiceNumberPreview] = useState('1')
   const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().split('T')[0])
   const [placeOfSupply, setPlaceOfSupply] = useState('33-Tamil Nadu')
   const [billerName, setBillerName] = useState('Shifa')
