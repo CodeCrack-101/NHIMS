@@ -69,7 +69,7 @@ router.post('/verify-otp', async (req, res, next) => {
       throw new AppError('Challenge ID and OTP are required.', 400)
     }
 
-    const challenge = await AuthenticationChallenge.findById(challengeId)
+    const challenge = await AuthenticationChallenge.findById(challengeId).select('+otpHash')
     if (!challenge || challenge.purpose !== 'STAFF_ACCESS_OTP' || challenge.status !== 'PENDING') {
       throw new AppError('Invalid or expired OTP session.', 400)
     }
