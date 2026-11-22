@@ -77,7 +77,10 @@ export const resendOtpController = async (req, res, next) => {
 
 export const logoutController = async (req, res, next) => {
   try {
-    const sessionToken = req.cookies?.[SESSION_COOKIE_NAME]
+    const headerToken = req.headers['authorization']?.startsWith('Bearer ')
+      ? req.headers['authorization'].slice(7).trim()
+      : req.headers['x-session-token']
+    const sessionToken = req.cookies?.[SESSION_COOKIE_NAME] || headerToken
     await terminateSession({ sessionToken, req })
 
     res.clearCookie(SESSION_COOKIE_NAME, { path: '/' })

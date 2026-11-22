@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkSession = useCallback(async () => {
     try {
-      await fetchCsrfToken()
+      await fetchCsrfToken().catch(() => {})
       const response = await authService.getMe()
       const userData = response.data?.data?.user || null
       setUser(userData)
@@ -26,12 +26,24 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('__crm_user')
         localStorage.removeItem('__crm_sid_token')
       }
-    } catch {
-      // If error occurs, check if token exists before clearing to prevent flickers on transient network errors
-      const hasToken = localStorage.getItem('__crm_sid_token')
-      if (!hasToken) {
+    } catch (err) {
+      // Only clear user if server explicitly replied 401 or 403 (unauthenticated)
+      // Never logout employee on network drop, CORS glitch, slow connection or refresh
+      const status = err.response?.status
+      if (status === 401 || status === 403) {
         setUser(null)
         localStorage.removeItem('__crm_user')
+        localStorage.removeItem('__crm_sid_token')
+      } else {
+        // Retain saved user session from localStorage
+        const saved = localStorage.getItem('__crm_user')
+        if (saved) {
+          try {
+            setUser(JSON.parse(saved))
+          } catch {
+            // Keep existing user state
+          }
+        }
       }
     } finally {
       setLoading(false)

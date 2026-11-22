@@ -30,7 +30,7 @@ api.interceptors.request.use(
     const method = (config.method || 'get').toLowerCase()
     if (['post', 'put', 'patch', 'delete'].includes(method)) {
       if (!csrfTokenCache) {
-        await fetchCsrfToken()
+        await fetchCsrfToken().catch(() => {})
       }
       if (csrfTokenCache) {
         config.headers['X-CSRF-Token'] = csrfTokenCache
