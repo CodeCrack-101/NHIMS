@@ -295,6 +295,8 @@
 @media (max-width: 900px) {
   .gst-table-wrapper {
     overflow-x: auto;
+    padding-bottom: 220px;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

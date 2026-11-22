@@ -149,11 +149,14 @@
   overflow: visible;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
+  min-height: 240px;
 }
 
 @media (max-width: 900px) {
   .billing-table-wrapper {
     overflow-x: auto;
+    padding-bottom: 220px;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
