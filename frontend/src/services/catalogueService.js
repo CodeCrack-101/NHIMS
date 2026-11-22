@@ -10,6 +10,8 @@ export const getCatalogueCoverImage = (raw = '') => {
   if (clean === 'SELFIE_POINT' || clean === 'SP') return '/selfiepoint.png'
   if (clean === 'ROYAL_TEXTURE' || clean === 'RT') return '/rt.png'
   if (clean === 'SOHO') return '/soho.png'
+  if (clean === 'ALPHA') return '/alpha.png'
+  if (clean === 'ICONIC') return '/iconic.png'
   return null
 }
 
