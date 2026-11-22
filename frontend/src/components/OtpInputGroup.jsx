@@ -14,7 +14,22 @@ export function OtpInputGroup({ value = '', onChange, disabled = false, length =
   }
 
   const handleDigitChange = (index, rawVal) => {
-    const cleanDigit = rawVal.replace(/\D/g, '').slice(-1)
+    const cleanDigits = rawVal.replace(/\D/g, '')
+
+    // Handle mobile keyboard autofill or paste where entire code or multiple digits land in onChange
+    if (cleanDigits.length > 1) {
+      const nextDigits = [...digits]
+      for (let i = 0; i < cleanDigits.length && index + i < length; i++) {
+        nextDigits[index + i] = cleanDigits[i]
+      }
+      const joined = nextDigits.join('')
+      onChange(joined)
+      const nextFocusIndex = Math.min(index + cleanDigits.length, length - 1)
+      focusInput(nextFocusIndex)
+      return
+    }
+
+    const cleanDigit = cleanDigits.slice(-1)
     const nextDigits = [...digits]
     nextDigits[index] = cleanDigit
     const joined = nextDigits.join('')
@@ -49,12 +64,20 @@ export function OtpInputGroup({ value = '', onChange, disabled = false, length =
 
   const handlePaste = (e) => {
     e.preventDefault()
-    const pasted = (e.clipboardData.getData('text') || '')
+    const pasted = (e.clipboardData?.getData('text') || '')
       .replace(/\D/g, '')
-      .slice(0, length)
     if (!pasted) return
-    onChange(pasted)
-    const nextFocusIndex = Math.min(pasted.length, length - 1)
+
+    // If pasted starts from current focused box or whole input
+    const nextDigits = [...digits]
+    // Find first empty or focus target, or fill from index 0 if full paste
+    const startIndex = pasted.length >= length ? 0 : digits.findIndex((d) => !d) === -1 ? 0 : Math.max(0, digits.findIndex((d) => !d))
+    for (let i = 0; i < pasted.length && startIndex + i < length; i++) {
+      nextDigits[startIndex + i] = pasted[i]
+    }
+    const joined = nextDigits.join('')
+    onChange(joined)
+    const nextFocusIndex = Math.min(startIndex + pasted.length, length - 1)
     focusInput(nextFocusIndex)
   }
 
@@ -69,7 +92,7 @@ export function OtpInputGroup({ value = '', onChange, disabled = false, length =
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
-          maxLength={1}
+          autoComplete={index === 0 ? 'one-time-code' : 'off'}
           value={digit}
           disabled={disabled}
           autoFocus={index === 0}
