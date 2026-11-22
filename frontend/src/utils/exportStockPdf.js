@@ -134,9 +134,12 @@ export const downloadStockOrderPdf = async ({
     doc.setFontSize(11.5)
     doc.text(String(item.patternNumber), marginX + 52, currentY + 13)
 
-    // 4. Stock Quantity & 5. Status (High / Medium / Low)
+    // 4. Stock Quantity & 5. Status (Out of Stock / Low / Medium / High)
     let statusLabel = 'High'
-    if (item.quantity < 10) {
+    if (item.quantity === 0) {
+      statusLabel = 'Out of Stock'
+      doc.setTextColor(220, 38, 38)
+    } else if (item.quantity < 10) {
       statusLabel = 'Low'
       doc.setTextColor(185, 28, 28)
     } else if (item.quantity < 60) {

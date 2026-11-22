@@ -375,7 +375,7 @@ export function CatalogueInventoryView({
   const lowStockItems = useMemo(
     () =>
       items.filter(
-        (item) => item.quantity > 0 && item.quantity < lowStockThreshold
+        (item) => item.quantity < lowStockThreshold
       ),
     [items, lowStockThreshold]
   )
@@ -458,7 +458,7 @@ export function CatalogueInventoryView({
               }`}
               onClick={() => handleStockFilterChange('BOTH')}
             >
-              All Alerts ({outOfStockItems.length + lowStockItems.length})
+              All Alerts ({new Set([...outOfStockItems, ...lowStockItems]).size})
             </button>
             <button
               type="button"
