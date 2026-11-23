@@ -397,6 +397,14 @@ export function CatalogueInventoryView({
             items: filteredItems,
             fileName: `${slug}_Full_Inventory_Report.pdf`,
           })
+        } else if (type === 'DEDUCTION_SHEET') {
+          await downloadStockOrderPdf({
+            catalogueSlug: displayName,
+            reportTitle: `${displayName} – Employee Physical Stock Deduction Sheet (${filteredItems.length} Patterns)`,
+            items: filteredItems,
+            fileName: `${slug}_Deduction_Sheet.pdf`,
+            isManualDeductionMode: true,
+          })
         } else if (type === 'OUT_OF_STOCK') {
           await downloadStockOrderPdf({
             catalogueSlug: displayName,
@@ -616,6 +624,17 @@ export function CatalogueInventoryView({
             <strong>{items.length}</strong> patterns
           </span>
           <ProgressButton
+            id="inventory-download-pdf-DEDUCTION_SHEET"
+            type="button"
+            className="catalogue-download-all-btn"
+            style={{ backgroundColor: '#1e293b' }}
+            disabled={filteredItems.length === 0}
+            onClick={() => handleDownloadPdf('DEDUCTION_SHEET')}
+            loadingText="Downloading"
+          >
+            {`Deduction Sheet PDF`}
+          </ProgressButton>
+          <ProgressButton
             id="inventory-download-pdf-FULL"
             type="button"
             className="catalogue-download-all-btn"
@@ -623,7 +642,7 @@ export function CatalogueInventoryView({
             onClick={() => handleDownloadPdf('FULL')}
             loadingText="Downloading"
           >
-            {`Download ${displayName} PDF`}
+            {`Report PDF`}
           </ProgressButton>
         </div>
       </div>

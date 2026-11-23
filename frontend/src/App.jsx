@@ -126,6 +126,14 @@ function App() {
             }
           />
           <Route
+            path="/generate-pdf"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/staff-access"
             element={
               <ProtectedRoute allowedRoles={['admin']}>

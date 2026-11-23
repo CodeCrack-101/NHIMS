@@ -12,6 +12,7 @@ import { Customers } from './Customers.jsx'
 import { InvoiceHistory } from './InvoiceHistory.jsx'
 import { SearchRoll } from './SearchRoll.jsx'
 import { StaffAccess } from './StaffAccess.jsx'
+import { GenerateStockPdf } from './GenerateStockPdf.jsx'
 import {
   catalogueService,
   formatCatalogueLabel,
@@ -41,6 +42,7 @@ export function Dashboard() {
   const isUnpaidUsersRoute = location.pathname.startsWith('/unpaid-users')
   const isSearchRollRoute = location.pathname.startsWith('/search-roll')
   const isStaffAccessRoute = location.pathname.startsWith('/staff-access')
+  const isGeneratePdfRoute = location.pathname.startsWith('/generate-pdf')
 
   const loadDashboardCatalogues = useCallback(async () => {
     try {
@@ -63,7 +65,8 @@ export function Dashboard() {
       !isReportsRoute &&
       !isCustomersRoute &&
       !isUnpaidUsersRoute &&
-      !isSearchRollRoute
+      !isSearchRollRoute &&
+      !isGeneratePdfRoute
     ) {
       loadDashboardCatalogues()
     } else {
@@ -79,6 +82,7 @@ export function Dashboard() {
     isCustomersRoute,
     isUnpaidUsersRoute,
     isSearchRollRoute,
+    isGeneratePdfRoute,
     loadDashboardCatalogues,
   ])
 
@@ -179,6 +183,9 @@ export function Dashboard() {
     }
     if (isStaffAccessRoute) {
       return <StaffAccess />
+    }
+    if (isGeneratePdfRoute) {
+      return <GenerateStockPdf />
     }
     if (pageLoading) {
       return (
