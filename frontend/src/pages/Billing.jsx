@@ -2397,11 +2397,11 @@ export function Billing() {
           onClick={() => !savingEdit && setEditingInvoice(null)}
         >
           <div
-            className="billing-modal-card"
-            style={{ maxWidth: '680px', width: '95%' }}
+            className="billing-modal-card edit-invoice-modal"
+            style={{ maxWidth: '680px', width: '95%', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', flexShrink: 0 }}>
               <div>
                 <h3 className="billing-modal-title" style={{ margin: 0 }}>
                   Edit Invoice: {editingInvoice.invoiceNumber}
@@ -2419,236 +2419,252 @@ export function Billing() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditInvoice}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '14px' }}>
-                <div className="discount-type-field">
-                  <label>Customer Name</label>
-                  <input
-                    type="text"
-                    className="billing-text-input"
-                    value={editFormData.customerName}
-                    onChange={(e) => setEditFormData({ ...editFormData, customerName: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="discount-type-field">
-                  <label>Mobile Number</label>
-                  <input
-                    type="text"
-                    className="billing-text-input"
-                    value={editFormData.mobileNumber}
-                    onChange={(e) => setEditFormData({ ...editFormData, mobileNumber: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="discount-type-field">
-                  <label>Billed By</label>
-                  <input
-                    type="text"
-                    className="billing-text-input"
-                    value={editFormData.billerName}
-                    onChange={(e) => setEditFormData({ ...editFormData, billerName: e.target.value })}
-                  />
-                </div>
-                <div className="discount-type-field">
-                  <label>Invoice Date</label>
-                  <input
-                    type="date"
-                    className="billing-text-input"
-                    value={editFormData.invoiceDate}
-                    onChange={(e) => setEditFormData({ ...editFormData, invoiceDate: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '16px' }}>
-                <div className="discount-type-field">
-                  <label>Payment Method</label>
-                  <select
-                    className="billing-select"
-                    value={editFormData.paymentMode}
-                    onChange={(e) => setEditFormData({ ...editFormData, paymentMode: e.target.value })}
-                  >
-                    <option value="Cash">Cash</option>
-                    <option value="COD">COD (Cash on Delivery)</option>
-                    <option value="GPay">GPay (Google Pay)</option>
-                    <option value="Card">Credit / Debit Card</option>
-                    <option value="UPI">UPI</option>
-                    <option value="Cheque">Cheque</option>
-                    <option value="Bank Transfer (NEFT/RTGS)">Bank Transfer</option>
-                  </select>
-                </div>
-                <div className="discount-type-field">
-                  <label>Payment Status</label>
-                  <select
-                    className="billing-select"
-                    value={editFormData.paymentStatus}
-                    onChange={(e) => setEditFormData({ ...editFormData, paymentStatus: e.target.value })}
-                  >
-                    <option value="PAID">Amount Paid (Full)</option>
-                    <option value="UNPAID">Amount Unpaid (Due)</option>
-                  </select>
-                </div>
-                <div className="discount-type-field">
-                  <label>GST Tax (%)</label>
-                  <select
-                    className="billing-select"
-                    value={editFormData.taxRate}
-                    onChange={(e) => setEditFormData({ ...editFormData, taxRate: Number(e.target.value) || 0 })}
-                  >
-                    <option value={0}>No GST (0%)</option>
-                    <option value={18}>GST 18%</option>
-                    <option value={5}>GST 5%</option>
-                    <option value={12}>GST 12%</option>
-                    <option value={28}>GST 28%</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Items Table for Editing */}
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', display: 'block', marginBottom: '6px' }}>
-                  Bill Items (Roll Quantity &amp; Price):
-                </label>
-                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-                  <table className="invoice-history-table" style={{ margin: 0 }}>
-                    <thead>
-                      <tr>
-                        <th>Catalogue</th>
-                        <th>Pattern</th>
-                        <th style={{ width: '90px' }}>Qty (Rolls)</th>
-                        <th style={{ width: '110px' }}>Rate (₹)</th>
-                        <th style={{ textAlign: 'right', width: '100px' }}>Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {editFormData.items.map((it, idx) => {
-                        const itemSub = (Number(it.quantity) || 0) * (Number(it.rate) || 0)
-                        return (
-                          <tr key={idx}>
-                            <td>
-                              <strong>{formatCatalogueLabel(it.catalogueName || it.catalogueSlug)}</strong>
-                            </td>
-                            <td>
-                              <span style={{ fontWeight: '700', color: '#2563eb' }}>{it.patternNumber}</span>
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                min={1}
-                                className="billing-num-input"
-                                style={{ width: '100%', padding: '4px 6px' }}
-                                value={it.quantity}
-                                onChange={(e) => {
-                                  const val = e.target.value
-                                  const updatedItems = [...editFormData.items]
-                                  updatedItems[idx] = { ...updatedItems[idx], quantity: val }
-                                  setEditFormData({ ...editFormData, items: updatedItems })
-                                }}
-                                required
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                min={1}
-                                step="0.01"
-                                className="billing-num-input"
-                                style={{ width: '100%', padding: '4px 6px' }}
-                                value={it.rate}
-                                onChange={(e) => {
-                                  const val = e.target.value
-                                  const updatedItems = [...editFormData.items]
-                                  updatedItems[idx] = { ...updatedItems[idx], rate: val }
-                                  setEditFormData({ ...editFormData, items: updatedItems })
-                                }}
-                                required
-                              />
-                            </td>
-                            <td style={{ textAlign: 'right', fontWeight: '700' }}>
-                              {formatINR(itemSub)}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Discount Controls */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                <div className="discount-type-field">
-                  <label>Discount Type</label>
-                  <select
-                    className="billing-select"
-                    value={editFormData.discountType}
-                    onChange={(e) => setEditFormData({ ...editFormData, discountType: e.target.value })}
-                  >
-                    <option value="PERCENTAGE">Percentage (%)</option>
-                    <option value="FIXED">Fixed Amount (₹)</option>
-                  </select>
-                </div>
-                <div className="discount-type-field">
-                  <label>Discount Value</label>
-                  <input
-                    type="number"
-                    min={0}
-                    className="billing-num-input"
-                    value={editFormData.discountValue}
-                    onChange={(e) => setEditFormData({ ...editFormData, discountValue: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* Live Preview of Recalculated Total */}
-              {(() => {
-                let sub = 0
-                let totalQ = 0
-                editFormData.items.forEach((it) => {
-                  const q = Number(it.quantity) || 0
-                  const r = Number(it.rate) || 0
-                  totalQ += q
-                  sub += q * r
-                })
-                const discVal = Number(editFormData.discountValue) || 0
-                const discAmt = editFormData.discountType === 'PERCENTAGE' ? (sub * discVal) / 100 : discVal
-                const taxable = Math.max(0, sub - discAmt)
-                const tax = editFormData.taxRate > 0 ? (taxable * editFormData.taxRate) / 100 : 0
-                const finalAmt = taxable + tax
-
-                return (
-                  <div className="confirm-summary-box" style={{ marginBottom: '16px' }}>
-                    <div className="confirm-row">
-                      <span>Total Quantity:</span>
-                      <strong>{totalQ} Rolls</strong>
-                    </div>
-                    <div className="confirm-row">
-                      <span>Subtotal:</span>
-                      <strong>{formatINR(sub)}</strong>
-                    </div>
-                    {discAmt > 0 && (
-                      <div className="confirm-row" style={{ color: '#b91c1c' }}>
-                        <span>Discount:</span>
-                        <strong>- {formatINR(discAmt)}</strong>
-                      </div>
-                    )}
-                    {tax > 0 && (
-                      <div className="confirm-row">
-                        <span>GST ({editFormData.taxRate}%):</span>
-                        <strong>+ {formatINR(tax)}</strong>
-                      </div>
-                    )}
-                    <div className="confirm-row confirm-row-final">
-                      <span>Updated Final Payable:</span>
-                      <strong style={{ color: '#16a34a', fontSize: '15px' }}>{formatINR(finalAmt)}</strong>
-                    </div>
+            <form
+              onSubmit={handleSaveEditInvoice}
+              style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}
+            >
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px', marginBottom: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '14px' }}>
+                  <div className="discount-type-field">
+                    <label>Customer Name</label>
+                    <input
+                      type="text"
+                      className="billing-text-input"
+                      value={editFormData.customerName}
+                      onChange={(e) => setEditFormData({ ...editFormData, customerName: e.target.value })}
+                      required
+                    />
                   </div>
-                )
-              })()}
+                  <div className="discount-type-field">
+                    <label>Mobile Number</label>
+                    <input
+                      type="text"
+                      className="billing-text-input"
+                      value={editFormData.mobileNumber}
+                      onChange={(e) => setEditFormData({ ...editFormData, mobileNumber: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="discount-type-field">
+                    <label>Billed By</label>
+                    <input
+                      type="text"
+                      className="billing-text-input"
+                      value={editFormData.billerName}
+                      onChange={(e) => setEditFormData({ ...editFormData, billerName: e.target.value })}
+                    />
+                  </div>
+                  <div className="discount-type-field">
+                    <label>Invoice Date</label>
+                    <input
+                      type="date"
+                      className="billing-text-input"
+                      value={editFormData.invoiceDate}
+                      onChange={(e) => setEditFormData({ ...editFormData, invoiceDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
 
-              <div className="billing-modal-actions">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+                  <div className="discount-type-field">
+                    <label>Payment Method</label>
+                    <select
+                      className="billing-select"
+                      value={editFormData.paymentMode}
+                      onChange={(e) => setEditFormData({ ...editFormData, paymentMode: e.target.value })}
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="COD">COD (Cash on Delivery)</option>
+                      <option value="GPay">GPay (Google Pay)</option>
+                      <option value="Card">Credit / Debit Card</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Cheque">Cheque</option>
+                      <option value="Bank Transfer (NEFT/RTGS)">Bank Transfer</option>
+                    </select>
+                  </div>
+                  <div className="discount-type-field">
+                    <label>Payment Status</label>
+                    <select
+                      className="billing-select"
+                      value={editFormData.paymentStatus}
+                      onChange={(e) => setEditFormData({ ...editFormData, paymentStatus: e.target.value })}
+                    >
+                      <option value="PAID">Amount Paid (Full)</option>
+                      <option value="UNPAID">Amount Unpaid (Due)</option>
+                    </select>
+                  </div>
+                  <div className="discount-type-field">
+                    <label>GST Tax (%)</label>
+                    <select
+                      className="billing-select"
+                      value={editFormData.taxRate}
+                      onChange={(e) => setEditFormData({ ...editFormData, taxRate: Number(e.target.value) || 0 })}
+                    >
+                      <option value={0}>No GST (0%)</option>
+                      <option value={18}>GST 18%</option>
+                      <option value={5}>GST 5%</option>
+                      <option value={12}>GST 12%</option>
+                      <option value={28}>GST 28%</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Items Table for Editing */}
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+                    Bill Items (Roll Quantity &amp; Price):
+                  </label>
+                  <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                    <table className="invoice-history-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>Catalogue</th>
+                          <th>Pattern</th>
+                          <th style={{ width: '90px' }}>Qty (Rolls)</th>
+                          <th style={{ width: '110px' }}>Rate (₹)</th>
+                          <th style={{ textAlign: 'right', width: '100px' }}>Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editFormData.items.map((it, idx) => {
+                          const itemSub = (Number(it.quantity) || 0) * (Number(it.rate) || 0)
+                          return (
+                            <tr key={idx}>
+                              <td>
+                                <strong>{formatCatalogueLabel(it.catalogueName || it.catalogueSlug)}</strong>
+                              </td>
+                              <td>
+                                <span style={{ fontWeight: '700', color: '#2563eb' }}>{it.patternNumber}</span>
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  className="billing-num-input"
+                                  style={{ width: '100%', padding: '4px 6px' }}
+                                  value={it.quantity}
+                                  onChange={(e) => {
+                                    const val = e.target.value
+                                    const updatedItems = [...editFormData.items]
+                                    updatedItems[idx] = { ...updatedItems[idx], quantity: val }
+                                    setEditFormData({ ...editFormData, items: updatedItems })
+                                  }}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  step="0.01"
+                                  className="billing-num-input"
+                                  style={{ width: '100%', padding: '4px 6px' }}
+                                  value={it.rate}
+                                  onChange={(e) => {
+                                    const val = e.target.value
+                                    const updatedItems = [...editFormData.items]
+                                    updatedItems[idx] = { ...updatedItems[idx], rate: val }
+                                    setEditFormData({ ...editFormData, items: updatedItems })
+                                  }}
+                                  required
+                                />
+                              </td>
+                              <td style={{ textAlign: 'right', fontWeight: '700' }}>
+                                {formatINR(itemSub)}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Discount Controls */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                  <div className="discount-type-field">
+                    <label>Discount Type</label>
+                    <select
+                      className="billing-select"
+                      value={editFormData.discountType}
+                      onChange={(e) => setEditFormData({ ...editFormData, discountType: e.target.value })}
+                    >
+                      <option value="PERCENTAGE">Percentage (%)</option>
+                      <option value="FIXED">Fixed Amount (₹)</option>
+                    </select>
+                  </div>
+                  <div className="discount-type-field">
+                    <label>Discount Value</label>
+                    <input
+                      type="number"
+                      min={0}
+                      className="billing-num-input"
+                      value={editFormData.discountValue}
+                      onChange={(e) => setEditFormData({ ...editFormData, discountValue: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Live Preview of Recalculated Total */}
+                {(() => {
+                  let sub = 0
+                  let totalQ = 0
+                  editFormData.items.forEach((it) => {
+                    const q = Number(it.quantity) || 0
+                    const r = Number(it.rate) || 0
+                    totalQ += q
+                    sub += q * r
+                  })
+                  const discVal = Number(editFormData.discountValue) || 0
+                  const discAmt = editFormData.discountType === 'PERCENTAGE' ? (sub * discVal) / 100 : discVal
+                  const taxable = Math.max(0, sub - discAmt)
+                  const tax = editFormData.taxRate > 0 ? (taxable * editFormData.taxRate) / 100 : 0
+                  const finalAmt = taxable + tax
+
+                  return (
+                    <div className="confirm-summary-box" style={{ marginBottom: '16px' }}>
+                      <div className="confirm-row">
+                        <span>Total Quantity:</span>
+                        <strong>{totalQ} Rolls</strong>
+                      </div>
+                      <div className="confirm-row">
+                        <span>Subtotal:</span>
+                        <strong>{formatINR(sub)}</strong>
+                      </div>
+                      {discAmt > 0 && (
+                        <div className="confirm-row" style={{ color: '#b91c1c' }}>
+                          <span>Discount:</span>
+                          <strong>- {formatINR(discAmt)}</strong>
+                        </div>
+                      )}
+                      {tax > 0 && (
+                        <div className="confirm-row">
+                          <span>GST ({editFormData.taxRate}%):</span>
+                          <strong>+ {formatINR(tax)}</strong>
+                        </div>
+                      )}
+                      <div className="confirm-row confirm-row-final">
+                        <span>Updated Final Payable:</span>
+                        <strong style={{ color: '#16a34a', fontSize: '15px' }}>{formatINR(finalAmt)}</strong>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+
+              <div
+                className="billing-modal-actions edit-invoice-actions"
+                style={{
+                  flexShrink: 0,
+                  paddingTop: '12px',
+                  borderTop: '1px solid #e2e8f0',
+                  marginTop: 'auto',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '10px'
+                }}
+              >
                 <button
                   type="button"
                   className="billing-glass-btn"
