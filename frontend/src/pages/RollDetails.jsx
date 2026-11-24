@@ -9,6 +9,7 @@ import { SelfiePoint } from '../catalogues/SelfiePoint.jsx'
 import { RoyalTexture } from '../catalogues/RoyalTexture.jsx'
 import { Iconic } from '../catalogues/Iconic.jsx'
 import { Alpha } from '../catalogues/Alpha.jsx'
+import { WallTexture } from '../catalogues/WallTexture.jsx'
 import { CatalogueInventoryView } from '../catalogues/CatalogueInventoryView.jsx'
 import {
   catalogueService,
@@ -127,6 +128,19 @@ export function RollDetails() {
     if (selectedSlug === 'ALPHA') {
       return (
         <Alpha
+          externalSearch={searchQuery}
+          onSearchChange={setSearchQuery}
+          onStatsUpdated={() => loadCatalogues(true)}
+        />
+      )
+    }
+    if (
+      selectedSlug === 'WALL_TEXTURE' ||
+      selectedSlug === 'WALL TEXTURE' ||
+      selectedSlug === 'WALLTEXTURE'
+    ) {
+      return (
+        <WallTexture
           externalSearch={searchQuery}
           onSearchChange={setSearchQuery}
           onStatsUpdated={() => loadCatalogues(true)}

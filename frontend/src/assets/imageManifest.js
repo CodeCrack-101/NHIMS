@@ -1,3 +1,15 @@
+// Auto-generated Cloudinary Optimized Image Manifest
+export const PLACEHOLDER_IMAGE =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
+      <rect width="120" height="120" rx="10" fill="#F1F5F9"/>
+      <rect x="28" y="32" width="64" height="56" rx="6" stroke="#94A3B8" stroke-width="2.5"/>
+      <circle cx="46" cy="50" r="5" fill="#94A3B8"/>
+      <path d="M34 78L52 60L64 72L74 62L86 78" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`
+  )
+
 export const IMAGE_MANIFEST = {
   "SOHO": [
     {

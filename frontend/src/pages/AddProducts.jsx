@@ -7,6 +7,7 @@ import { EW } from '../catalogues/EW.jsx'
 import { SelfiePoint } from '../catalogues/SelfiePoint.jsx'
 import { RoyalTexture } from '../catalogues/RoyalTexture.jsx'
 import { Iconic } from '../catalogues/Iconic.jsx'
+import { WallTexture } from '../catalogues/WallTexture.jsx'
 import { CatalogueInventoryView } from '../catalogues/CatalogueInventoryView.jsx'
 import {
   catalogueService,
@@ -127,6 +128,17 @@ export function AddProducts() {
     if (selectedSlug === 'ICONIC') {
       return (
         <Iconic
+          onStatsUpdated={() => loadCatalogues(true)}
+        />
+      )
+    }
+    if (
+      selectedSlug === 'WALL_TEXTURE' ||
+      selectedSlug === 'WALL TEXTURE' ||
+      selectedSlug === 'WALLTEXTURE'
+    ) {
+      return (
+        <WallTexture
           onStatsUpdated={() => loadCatalogues(true)}
         />
       )

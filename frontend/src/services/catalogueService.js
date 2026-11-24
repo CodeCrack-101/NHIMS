@@ -12,6 +12,7 @@ export const getCatalogueCoverImage = (raw = '') => {
   if (clean === 'SOHO') return '/soho.png'
   if (clean === 'ALPHA') return '/alpha.png'
   if (clean === 'ICONIC') return '/iconic.png'
+  if (clean === 'WALL_TEXTURE' || clean === 'WALLTEXTURE' || clean === 'WALL_TEXTURES') return '/walltexture.png'
   return null
 }
 
