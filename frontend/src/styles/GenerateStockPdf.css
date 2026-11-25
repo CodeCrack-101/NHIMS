@@ -179,22 +179,30 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
-  color: #ffffff;
-  border: none;
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  border: 1.5px solid rgba(37, 99, 235, 0.35);
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
-  transition: all 0.15s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-download-deduction:hover:not(:disabled) {
-  background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+  background: rgba(37, 99, 235, 0.16);
+  border-color: #2563eb;
+  color: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.2);
+}
+
+.btn-download-deduction:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn-download-deduction:disabled {
