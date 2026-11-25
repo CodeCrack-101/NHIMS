@@ -234,9 +234,6 @@ export function GenerateStockPdf() {
 
                 <div className="card-details">
                   <h3 className="card-title">{displayName}</h3>
-                  <p className="card-desc">
-                    Includes Images, Pattern No, Current Stock with physical minus &amp; balance boxes.
-                  </p>
                 </div>
 
                 <div className="card-actions">
