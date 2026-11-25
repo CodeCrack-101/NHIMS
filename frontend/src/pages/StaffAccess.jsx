@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { staffAccessService } from '../services/api.js'
 import { TableSkeleton } from '../components/Skeleton.jsx'
+import { LottieIcon } from '../components/LottieIcon.jsx'
 import '../styles/StaffAccess.css'
 
 export function StaffAccess() {
@@ -265,7 +266,9 @@ export function StaffAccess() {
       {/* Security Gate (If Locked) */}
       {!isUnlocked ? (
         <div className="staff-gate-card">
-          <div className="staff-gate-icon">🔐</div>
+          <div className="staff-gate-icon">
+            <LottieIcon src="/Security.lottie" size={72} />
+          </div>
           <h2>Admin Master Security Verification</h2>
           <p className="staff-gate-desc">
             To view passwords, configure staff accounts, and grant permissions, please verify yourself using a 6-digit OTP.

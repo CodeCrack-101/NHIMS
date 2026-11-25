@@ -42,9 +42,10 @@ const loadDotLottieJson = async (src) => {
   return promise
 }
 
-// Preload both animations immediately on module load
+// Preload animations immediately on module load
 loadDotLottieJson('/loading.lottie').catch(() => {})
 loadDotLottieJson('/logout.lottie').catch(() => {})
+loadDotLottieJson('/Security.lottie').catch(() => {})
 
 export function LottieIcon({
   src,
