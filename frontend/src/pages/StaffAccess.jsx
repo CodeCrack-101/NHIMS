@@ -267,7 +267,7 @@ export function StaffAccess() {
       {!isUnlocked ? (
         <div className="staff-gate-card">
           <div className="staff-gate-icon">
-            <LottieIcon src="/Security.lottie" size={72} />
+            <LottieIcon src="/Security.lottie" size={130} />
           </div>
           <h2>Admin Master Security Verification</h2>
           <p className="staff-gate-desc">
