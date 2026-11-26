@@ -26,6 +26,21 @@ const createEmptyBillingRow = () => ({
   quantity: 1,
   rate: 1250,
   imagePath: '',
+  isCustom: false,
+})
+
+const createCustomBillingRow = () => ({
+  rowId: `row_${Date.now()}_${rowIdSeq++}`,
+  catalogueId: 'CUSTOM',
+  catalogueName: 'Custom Item',
+  catalogueSlug: 'CUSTOM',
+  patternId: '',
+  patternNumber: '',
+  availableStock: 999999,
+  quantity: 1,
+  rate: 0,
+  imagePath: '',
+  isCustom: true,
 })
 
 const round2 = (num) => {
@@ -690,6 +705,34 @@ export function Billing() {
 
   // Handle Catalogue Selection in a Row
   const handleCatalogueChange = async (rowId, selectedCatId) => {
+    if (selectedCatId === 'CUSTOM') {
+      setRows((prev) =>
+        prev.map((r) =>
+          r.rowId === rowId
+            ? {
+                ...r,
+                catalogueId: 'CUSTOM',
+                catalogueName: 'Custom Item',
+                catalogueSlug: 'CUSTOM',
+                patternId: '',
+                patternNumber: r.patternNumber || '',
+                availableStock: 999999,
+                quantity: r.quantity || 1,
+                rate: r.rate > 0 ? r.rate : 0,
+                imagePath: '',
+                isCustom: true,
+              }
+            : r
+        )
+      )
+      setRowErrors((prev) => {
+        const next = { ...prev }
+        delete next[rowId]
+        return next
+      })
+      return
+    }
+
     const catObj = catalogues.find((c) => c._id === selectedCatId)
     setRows((prev) =>
       prev.map((r) =>
@@ -703,8 +746,9 @@ export function Billing() {
               patternNumber: '',
               availableStock: 0,
               quantity: 1,
-              rate: catObj?.defaultRate ?? 500,
+              rate: catObj?.defaultRate ?? 1250,
               imagePath: '',
+              isCustom: false,
             }
           : r
       )
@@ -724,6 +768,28 @@ export function Billing() {
   const handlePatternChange = async (rowId, selectedPatNumber) => {
     const targetRow = rows.find((r) => r.rowId === rowId)
     if (!targetRow || !targetRow.catalogueId) return
+
+    if (targetRow.isCustom || targetRow.catalogueId === 'CUSTOM') {
+      setRows((prev) =>
+        prev.map((r) =>
+          r.rowId === rowId
+            ? {
+                ...r,
+                patternNumber: selectedPatNumber,
+              }
+            : r
+        )
+      )
+      setRowErrors((prev) => {
+        const next = { ...prev }
+        if (next[rowId]) {
+          delete next[rowId].pattern
+          if (Object.keys(next[rowId]).length === 0) delete next[rowId]
+        }
+        return next
+      })
+      return
+    }
 
     const cataloguePatterns =
       patternsByCatalogue[targetRow.catalogueId] || []
@@ -864,6 +930,11 @@ export function Billing() {
     setRows((prev) => [...prev, createEmptyBillingRow()])
   }
 
+  // Add Custom / UV Extra Row (No stock deduction)
+  const handleAddCustomRow = () => {
+    setRows((prev) => [...prev, createCustomBillingRow()])
+  }
+
   // Remove Row
   const handleRemoveRow = (rowId) => {
     if (rows.length <= 1) {
@@ -968,22 +1039,23 @@ export function Billing() {
 
     rows.forEach((r) => {
       const err = {}
-      if (!r.catalogueId) {
+      const isCustom = Boolean(r.isCustom || r.catalogueId === 'CUSTOM')
+      if (!isCustom && !r.catalogueId) {
         err.catalogue = 'Select a catalogue'
       }
-      if (!r.patternNumber) {
-        err.pattern = 'Select a pattern'
+      if (!r.patternNumber || !r.patternNumber.trim()) {
+        err.pattern = isCustom ? 'Enter item name or description' : 'Select a pattern'
       }
       const q = Number(r.quantity)
       if (!Number.isInteger(q) || q <= 0) {
         err.quantity = 'Enter valid qty (> 0)'
-      } else if (r.patternNumber && q > r.availableStock) {
+      } else if (!isCustom && r.patternNumber && q > r.availableStock) {
         err.quantity = `Max available is ${r.availableStock} rolls`
       }
 
       const rate = Number(r.rate)
-      if (!Number.isFinite(rate) || rate <= 0) {
-        err.rate = 'Rate must be > ₹0'
+      if (!Number.isFinite(rate) || rate < 0) {
+        err.rate = 'Rate must be >= ₹0'
       }
 
       if (Object.keys(err).length > 0) {
@@ -1049,10 +1121,12 @@ export function Billing() {
         billerName: billerName.trim(),
         invoiceDate,
         items: rows.map((r) => ({
-          catalogueId: r.catalogueId,
-          patternNumber: r.patternNumber,
+          catalogueId: r.isCustom || r.catalogueId === 'CUSTOM' ? 'CUSTOM' : r.catalogueId,
+          catalogueName: r.isCustom || r.catalogueId === 'CUSTOM' ? (r.catalogueName || 'Custom Item') : r.catalogueName,
+          patternNumber: String(r.patternNumber || '').trim(),
           quantity: Number(r.quantity),
           rate: Number(r.rate),
+          isCustom: Boolean(r.isCustom || r.catalogueId === 'CUSTOM'),
         })),
         discountType,
         discountValue: Number(discountValue) || 0,
@@ -1079,7 +1153,11 @@ export function Billing() {
 
       // Refresh cached patterns for affected catalogues
       const usedCatalogueIds = [
-        ...new Set(rows.map((r) => r.catalogueId).filter(Boolean)),
+        ...new Set(
+          rows
+            .map((r) => r.catalogueId)
+            .filter((id) => id && id !== 'CUSTOM')
+        ),
       ]
       await Promise.all(
         usedCatalogueIds.map((catId) => fetchPatternsForCatalogue(catId, true))
@@ -1352,7 +1430,10 @@ export function Billing() {
                 const rowSubtotal =
                   rowQty > 0 && rowRate > 0 ? round2(rowQty * rowRate) : 0
                 const exceedsStock =
-                  Boolean(row.patternNumber) && rowQty > row.availableStock
+                  !row.isCustom &&
+                  row.catalogueId !== 'CUSTOM' &&
+                  Boolean(row.patternNumber) &&
+                  rowQty > row.availableStock
 
                 return (
                   <tr key={row.rowId} className="billing-item-row">
@@ -1368,57 +1449,94 @@ export function Billing() {
                         placeholder="Type or select catalogue..."
                         hasError={Boolean(rErr.catalogue)}
                         emptyText="No matching catalogue"
-                        options={catalogues.map((cat) => ({
-                          value: cat._id,
-                          label: formatCatalogueLabel(cat.name),
-                          searchKeywords: `${cat.name} ${cat.slug}`,
-                          badgeText: `Stock: ${cat.totalStock ?? 0}`,
-                          badgeTone:
-                            (cat.totalStock ?? 0) > 0 ? 'success' : 'danger',
-                        }))}
+                        options={[
+                          {
+                            value: 'CUSTOM',
+                            label: '✨ Custom / UV / Extra (No Deduction)',
+                            searchKeywords: 'custom extra uv marble others no deduction non stock',
+                            badgeText: 'No Deduction',
+                            badgeTone: 'info',
+                          },
+                          ...catalogues.map((cat) => ({
+                            value: cat._id,
+                            label: formatCatalogueLabel(cat.name),
+                            searchKeywords: `${cat.name} ${cat.slug}`,
+                            badgeText: `Stock: ${cat.totalStock ?? 0}`,
+                            badgeTone:
+                              (cat.totalStock ?? 0) > 0 ? 'success' : 'danger',
+                          })),
+                        ]}
                       />
                       {rErr.catalogue && (
                         <span className="cell-err-text">{rErr.catalogue}</span>
                       )}
                     </td>
 
-                    {/* 2. Pattern Number Searchable Select (Type or Select) */}
+                    {/* 2. Pattern Number or Custom Item Name Input */}
                     <td>
-                      <SearchableSelect
-                        value={row.patternNumber}
-                        disabled={!row.catalogueId || isLoadingPatterns}
-                        onChange={(val) =>
-                          handlePatternChange(row.rowId, val)
-                        }
-                        placeholder={
-                          !row.catalogueId
-                            ? 'Select catalogue first'
-                            : isLoadingPatterns
-                            ? 'Loading patterns...'
-                            : 'Type or select pattern...'
-                        }
-                        hasError={Boolean(rErr.pattern)}
-                        emptyText="No pattern found"
-                        options={catPatterns.map((pat) => {
-                          const outOfStock = pat.quantity <= 0
-                          return {
-                            value: pat.patternNumber,
-                            label: String(pat.patternNumber),
-                            searchKeywords: String(pat.patternNumber),
-                            disabled: outOfStock,
-                            badgeText: outOfStock
-                              ? 'Out of Stock (0)'
-                              : `Avail: ${pat.quantity}`,
-                            badgeTone: outOfStock
-                              ? 'danger'
-                              : pat.quantity < 10
-                              ? 'warning'
-                              : 'success',
-                          }
-                        })}
-                      />
-                      {rErr.pattern && (
-                        <span className="cell-err-text">{rErr.pattern}</span>
+                      {row.isCustom || row.catalogueId === 'CUSTOM' ? (
+                        <div>
+                          <input
+                            type="text"
+                            value={row.patternNumber}
+                            placeholder="e.g. UV Marble Sheet, Custom Roll..."
+                            onChange={(e) =>
+                              handlePatternChange(row.rowId, e.target.value)
+                            }
+                            className={`billing-num-input ${
+                              rErr.pattern ? 'input-err' : ''
+                            }`}
+                            style={{
+                              textAlign: 'left',
+                              width: '100%',
+                              padding: '10px 14px',
+                              fontWeight: '600',
+                              color: '#0f172a',
+                            }}
+                          />
+                          {rErr.pattern && (
+                            <span className="cell-err-text">{rErr.pattern}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          <SearchableSelect
+                            value={row.patternNumber}
+                            disabled={!row.catalogueId || isLoadingPatterns}
+                            onChange={(val) =>
+                              handlePatternChange(row.rowId, val)
+                            }
+                            placeholder={
+                              !row.catalogueId
+                                ? 'Select catalogue first'
+                                : isLoadingPatterns
+                                ? 'Loading patterns...'
+                                : 'Type or select pattern...'
+                            }
+                            hasError={Boolean(rErr.pattern)}
+                            emptyText="No pattern found"
+                            options={catPatterns.map((pat) => {
+                              const outOfStock = pat.quantity <= 0
+                              return {
+                                value: pat.patternNumber,
+                                label: String(pat.patternNumber),
+                                searchKeywords: String(pat.patternNumber),
+                                disabled: outOfStock,
+                                badgeText: outOfStock
+                                  ? 'Out of Stock (0)'
+                                  : `Avail: ${pat.quantity}`,
+                                badgeTone: outOfStock
+                                  ? 'danger'
+                                  : pat.quantity < 10
+                                  ? 'warning'
+                                  : 'success',
+                              }
+                            })}
+                          />
+                          {rErr.pattern && (
+                            <span className="cell-err-text">{rErr.pattern}</span>
+                          )}
+                        </>
                       )}
                     </td>
 
@@ -1429,7 +1547,11 @@ export function Billing() {
                           <input
                             type="number"
                             min={1}
-                            max={row.availableStock || 9999}
+                            max={
+                              row.isCustom || row.catalogueId === 'CUSTOM'
+                                ? 99999
+                                : row.availableStock || 9999
+                            }
                             value={row.quantity}
                             placeholder="Qty"
                             onChange={(e) =>
@@ -1439,16 +1561,29 @@ export function Billing() {
                               rErr.quantity || exceedsStock ? 'input-err' : ''
                             }`}
                           />
-                          {row.patternNumber && (
+                          {row.isCustom || row.catalogueId === 'CUSTOM' ? (
                             <span
-                              className={`avail-stock-tag ${
-                                row.availableStock < 10
-                                  ? 'avail-low'
-                                  : 'avail-ok'
-                              }`}
+                              className="avail-stock-tag"
+                              style={{
+                                background: '#f1f5f9',
+                                color: '#475569',
+                                borderColor: '#cbd5e1',
+                              }}
                             >
-                              Avail: {row.availableStock}
+                              No Deduction
                             </span>
+                          ) : (
+                            row.patternNumber && (
+                              <span
+                                className={`avail-stock-tag ${
+                                  row.availableStock < 10
+                                    ? 'avail-low'
+                                    : 'avail-ok'
+                                }`}
+                              >
+                                Avail: {row.availableStock}
+                              </span>
+                            )
                           )}
                         </div>
                         {(exceedsStock || rErr.quantity) && (
@@ -1508,14 +1643,25 @@ export function Billing() {
           </table>
         </div>
 
-        {/* BELOW TABLE: Add More Button */}
-        <div className="billing-add-more-row">
+        {/* BELOW TABLE: Add More / Add Custom Buttons */}
+        <div className="billing-add-more-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <button
             type="button"
             className="billing-glass-btn add-more-btn"
             onClick={handleAddRow}
           >
-            + Add More
+            + Add Catalogue Item
+          </button>
+          <button
+            type="button"
+            className="billing-glass-btn add-more-btn"
+            onClick={handleAddCustomRow}
+            style={{
+              borderColor: '#64748b',
+              color: '#0f172a',
+            }}
+          >
+            ✨ + Add Custom / UV Extra (No Stock Deduction)
           </button>
         </div>
 

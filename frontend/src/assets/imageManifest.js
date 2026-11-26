@@ -2764,7 +2764,7 @@ export const IMAGE_MANIFEST = {
       "imagePath": "https://res.cloudinary.com/yzb1n8by/image/upload/c_limit,f_auto,q_auto,w_800/v1/NH_CRM/WALL_TEXTURE/pattern_6012?_a=BAMAROiu0"
     }
   ]
-}
+ }
 
 export const getManifestForCatalogue = (slug) => {
   const key = String(slug || '').toUpperCase()

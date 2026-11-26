@@ -88,6 +88,118 @@
   color: #0f172a;
 }
 
+/* Filters row */
+.search-roll-filter-row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.search-roll-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search-roll-filter-group.catalogue-group {
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
+.search-roll-filter-group.range-group {
+  flex: 1 1 260px;
+  min-width: 240px;
+}
+
+.search-roll-filter-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.search-roll-filter-label svg {
+  color: #64748b;
+}
+
+.search-roll-select {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  outline: none;
+  background-color: #f8fafc;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.search-roll-select:focus {
+  border-color: #0f172a;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+
+.search-roll-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-roll-num-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  outline: none;
+  background-color: #f8fafc;
+  color: #0f172a;
+  transition: all 0.15s ease;
+}
+
+.search-roll-num-input:focus {
+  border-color: #0f172a;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+
+.search-roll-range-sep {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: lowercase;
+}
+
+.search-roll-reset-btn {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ef4444;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  height: 40px;
+  white-space: nowrap;
+}
+
+.search-roll-reset-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
 /* Results grid */
 .search-roll-results-grid {
   display: grid;

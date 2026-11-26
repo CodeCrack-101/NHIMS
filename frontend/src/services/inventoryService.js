@@ -9,8 +9,10 @@ export const inventoryService = {
     api.get(
       `/inventory/${encodeURIComponent(catalogueIdOrSlug)}/${encodeURIComponent(patternNumber)}`
     ),
-  searchRolls: (query) =>
-    api.get(`/inventory/search`, { params: { q: query } }),
+  searchRolls: (paramsOrQuery) => {
+    const params = typeof paramsOrQuery === 'string' ? { q: paramsOrQuery } : paramsOrQuery
+    return api.get(`/inventory/search`, { params })
+  },
   updatePatternQuantity: (catalogueIdOrSlug, patternNumber, actionType, amount = 1) =>
     api.patch(
       `/inventory/${encodeURIComponent(catalogueIdOrSlug)}/${encodeURIComponent(

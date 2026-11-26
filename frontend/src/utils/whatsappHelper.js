@@ -99,8 +99,14 @@ export const sendInvoiceToWhatsApp = (invoice) => {
   // Format line items
   const itemsText = (invoice.items || [])
     .map((item, idx) => {
-      const cat = formatCatalogueLabel(item.catalogueName || item.catalogueSlug)
-      return `${idx + 1}. *${cat}* | Pattern: *#${item.patternNumber}*\n   Qty: ${item.quantity} Rolls × ₹${item.rate} = *₹${item.subtotal}*`
+      const isCustom = Boolean(item.isCustom || !item.catalogueId || item.catalogueSlug === 'CUSTOM')
+      const cat = isCustom
+        ? (item.catalogueName || 'Custom Item')
+        : formatCatalogueLabel(item.catalogueName || item.catalogueSlug)
+      const patLabel = isCustom
+        ? `Item: *${item.patternNumber || 'Custom Product'}*`
+        : `Pattern: *#${item.patternNumber}*`
+      return `${idx + 1}. *${cat}* | ${patLabel}\n   Qty: ${item.quantity} × ₹${item.rate} = *₹${item.subtotal}*`
     })
     .join('\n\n')
 

@@ -5,7 +5,8 @@ const invoiceItemSchema = new mongoose.Schema(
     catalogueId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Catalogue',
-      required: true,
+      required: false,
+      default: null,
     },
     catalogueName: {
       type: String,
@@ -45,6 +46,10 @@ const invoiceItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+    },
+    isCustom: {
+      type: Boolean,
+      default: false,
     },
   },
   { _id: false }

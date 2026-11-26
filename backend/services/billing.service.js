@@ -233,12 +233,19 @@ export const createBillTransaction = async ({
   for (let i = 0; i < items.length; i++) {
     const row = items[i]
     const rowNum = i + 1
-    const rawCatId = String(row.catalogueId || '').trim()
+    const isCustom = Boolean(
+      row.isCustom ||
+      row.catalogueId === 'CUSTOM' ||
+      !row.catalogueId ||
+      String(row.catalogueName || '').toLowerCase().includes('custom')
+    )
+    const rawCatId = isCustom ? 'CUSTOM' : String(row.catalogueId || '').trim()
+    const rawCatName = String(row.catalogueName || (isCustom ? 'Custom Item' : '')).trim()
     const rawPatNum = String(row.patternNumber || '').trim()
     const qty = Number(row.quantity)
     const rate = Number(row.rate)
 
-    if (!rawCatId) {
+    if (!isCustom && !rawCatId) {
       throw new AppError(
         `Row ${rowNum}: Please select a catalogue.`,
         400,
@@ -247,27 +254,27 @@ export const createBillTransaction = async ({
     }
     if (!rawPatNum) {
       throw new AppError(
-        `Row ${rowNum}: Please select a pattern number.`,
+        `Row ${rowNum}: Please ${isCustom ? 'enter an item name or description' : 'select a pattern number'}.`,
         400,
-        'MISSING_PATTERN'
+        isCustom ? 'MISSING_ITEM_NAME' : 'MISSING_PATTERN'
       )
     }
     if (!Number.isInteger(qty) || qty <= 0) {
       throw new AppError(
-        `Row ${rowNum} (Pattern ${rawPatNum}): Quantity must be a whole number greater than 0.`,
+        `Row ${rowNum} (${rawPatNum}): Quantity must be a whole number greater than 0.`,
         400,
         'INVALID_QUANTITY'
       )
     }
-    if (!Number.isFinite(rate) || rate <= 0) {
+    if (!Number.isFinite(rate) || rate < 0) {
       throw new AppError(
-        `Row ${rowNum} (Pattern ${rawPatNum}): Selling rate must be greater than ₹0.`,
+        `Row ${rowNum} (${rawPatNum}): Selling rate must be greater than or equal to ₹0.`,
         400,
         'INVALID_RATE'
       )
     }
 
-    const key = `${rawCatId}::${rawPatNum}`
+    const key = isCustom ? `CUSTOM_${i}_${rawPatNum}` : `${rawCatId}::${rawPatNum}`
     if (consolidatedMap.has(key)) {
       const prev = consolidatedMap.get(key)
       prev.quantity += qty
@@ -275,9 +282,11 @@ export const createBillTransaction = async ({
     } else {
       consolidatedMap.set(key, {
         catalogueId: rawCatId,
+        catalogueName: rawCatName,
         patternNumber: rawPatNum,
         quantity: qty,
         rate: roundCurrency(rate),
+        isCustom,
       })
     }
   }
@@ -320,6 +329,26 @@ export const createBillTransaction = async ({
 
     try {
       for (const reqItem of consolidatedItems) {
+        if (reqItem.isCustom || reqItem.catalogueId === 'CUSTOM') {
+          const itemSubtotal = roundCurrency(reqItem.quantity * reqItem.rate)
+          runningSubtotal = roundCurrency(runningSubtotal + itemSubtotal)
+          runningTotalQty += reqItem.quantity
+
+          invoiceItems.push({
+            catalogueId: null,
+            catalogueName: reqItem.catalogueName || 'Custom Item',
+            catalogueSlug: 'CUSTOM',
+            patternId: null,
+            patternNumber: reqItem.patternNumber,
+            imagePath: '',
+            quantity: reqItem.quantity,
+            rate: reqItem.rate,
+            subtotal: itemSubtotal,
+            isCustom: true,
+          })
+          continue
+        }
+
         let catalogue = null
         if (mongoose.Types.ObjectId.isValid(reqItem.catalogueId)) {
           const q = Catalogue.findById(reqItem.catalogueId).lean()
@@ -785,6 +814,7 @@ export const deleteInvoiceAndRestoreStock = async (invoiceId, userId, req) => {
   const executeDeleteOperations = async (session) => {
     // 1. Revert each item's stock
     for (const item of items) {
+      if (item.isCustom || !item.catalogueId) continue
       const invQuery = Inventory.findOne({
         catalogueId: item.catalogueId,
         patternNumber: item.patternNumber,
@@ -917,6 +947,7 @@ export const updateInvoiceAndAdjustStock = async (
   // Map of old items: key -> item
   const oldItemMap = new Map()
   for (const oi of oldItems) {
+    if (oi.isCustom || !oi.catalogueId) continue
     const key = `${oi.catalogueId.toString()}_${oi.patternNumber}`
     oldItemMap.set(key, (oldItemMap.get(key) || 0) + Number(oi.quantity))
   }
@@ -924,6 +955,7 @@ export const updateInvoiceAndAdjustStock = async (
   // Map of new items: key -> total new qty
   const newItemMap = new Map()
   for (const ni of newItemsReq) {
+    if (ni.isCustom || !ni.catalogueId || ni.catalogueId === 'CUSTOM') continue
     const key = `${ni.catalogueId.toString()}_${ni.patternNumber}`
     newItemMap.set(key, (newItemMap.get(key) || 0) + Number(ni.quantity))
   }
@@ -1025,6 +1057,21 @@ export const updateInvoiceAndAdjustStock = async (
       const itemSubtotal = roundCurrency(q * r)
       runningTotalQty += q
       runningSubtotal = roundCurrency(runningSubtotal + itemSubtotal)
+
+      if (it.isCustom || !it.catalogueId || it.catalogueId === 'CUSTOM') {
+        processedInvoiceItems.push({
+          catalogueId: null,
+          catalogueName: it.catalogueName || 'Custom Item',
+          catalogueSlug: 'CUSTOM',
+          patternNumber: it.patternNumber,
+          imagePath: it.imagePath || '',
+          quantity: q,
+          rate: r,
+          subtotal: itemSubtotal,
+          isCustom: true,
+        })
+        continue
+      }
 
       // Fetch catalogue name/slug
       const catQuery = Catalogue.findById(it.catalogueId)

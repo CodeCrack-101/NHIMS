@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { inventoryService } from '../services/inventoryService.js'
-import { formatCatalogueLabel } from '../services/catalogueService.js'
+import { catalogueService, formatCatalogueLabel } from '../services/catalogueService.js'
 import { PLACEHOLDER_IMAGE } from '../assets/imageManifest.js'
 import { Skeleton } from '../components/Skeleton.jsx'
 import { getStreamUrl } from '../utils/getStreamUrl.js'
@@ -10,13 +10,38 @@ import '../styles/SearchRoll.css'
 export function SearchRoll() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
+  const [selectedCatalogue, setSelectedCatalogue] = useState('')
+  const [minRoll, setMinRoll] = useState('')
+  const [maxRoll, setMaxRoll] = useState('')
+  const [catalogues, setCatalogues] = useState([])
+
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
 
-  const handleSearch = useCallback(async (q) => {
+  // Load catalogues list for filter dropdown
+  useEffect(() => {
+    let mounted = true
+    catalogueService
+      .getAllCatalogues()
+      .then((res) => {
+        if (mounted) {
+          setCatalogues(res.data?.data?.catalogues || [])
+        }
+      })
+      .catch(() => {})
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const handleSearch = useCallback(async (q, cat, min, max) => {
     const trimmed = q.trim()
-    if (!trimmed) {
+    const hasCat = Boolean(cat && cat !== 'ALL')
+    const hasMin = min !== '' && !isNaN(Number(min))
+    const hasMax = max !== '' && !isNaN(Number(max))
+
+    if (!trimmed && !hasCat && !hasMin && !hasMax) {
       setItems([])
       setLoading(false)
       setHasSearched(false)
@@ -26,7 +51,13 @@ export function SearchRoll() {
     setLoading(true)
     setHasSearched(true)
     try {
-      const res = await inventoryService.searchRolls(trimmed)
+      const params = {}
+      if (trimmed) params.q = trimmed
+      if (hasCat) params.catalogue = cat
+      if (hasMin) params.minRoll = Number(min)
+      if (hasMax) params.maxRoll = Number(max)
+
+      const res = await inventoryService.searchRolls(params)
       setItems(res.data?.data?.items || [])
     } catch {
       setItems([])
@@ -37,10 +68,21 @@ export function SearchRoll() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      handleSearch(query)
+      handleSearch(query, selectedCatalogue, minRoll, maxRoll)
     }, 280)
     return () => clearTimeout(timer)
-  }, [query, handleSearch])
+  }, [query, selectedCatalogue, minRoll, maxRoll, handleSearch])
+
+  const handleResetFilters = () => {
+    setQuery('')
+    setSelectedCatalogue('')
+    setMinRoll('')
+    setMaxRoll('')
+  }
+
+  const hasActiveFilters = Boolean(
+    query.trim() || selectedCatalogue || minRoll !== '' || maxRoll !== ''
+  )
 
   // Real-time Server-Sent Events (SSE) subscription: keep search results synced instantly on any billing deduction
   useEffect(() => {
@@ -113,7 +155,7 @@ export function SearchRoll() {
         </div>
       </div>
 
-      {/* 3. Search Bar Card */}
+      {/* 3. Search Bar & Filters Card */}
       <div className="search-roll-box-card">
         <div className="search-roll-input-wrap">
           <svg
@@ -149,6 +191,79 @@ export function SearchRoll() {
             </button>
           )}
         </div>
+
+        {/* Filter Row: Catalogue & Min to Max Roll */}
+        <div className="search-roll-filter-row">
+          <div className="search-roll-filter-group catalogue-group">
+            <label className="search-roll-filter-label" htmlFor="catalogue-filter">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              Filter Catalogue
+            </label>
+            <select
+              id="catalogue-filter"
+              className="search-roll-select"
+              value={selectedCatalogue}
+              onChange={(e) => setSelectedCatalogue(e.target.value)}
+            >
+              <option value="">All Catalogues</option>
+              {catalogues.map((cat) => (
+                <option key={cat._id || cat.slug} value={cat.slug || cat._id}>
+                  {formatCatalogueLabel(cat.name || cat.slug)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="search-roll-filter-group range-group">
+            <label className="search-roll-filter-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="4" y1="21" x2="4" y2="14" />
+                <line x1="4" y1="10" x2="4" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12" y2="3" />
+                <line x1="20" y1="21" x2="20" y2="16" />
+                <line x1="20" y1="12" x2="20" y2="3" />
+                <line x1="1" y1="14" x2="7" y2="14" />
+                <line x1="9" y1="8" x2="15" y2="8" />
+                <line x1="17" y1="16" x2="23" y2="16" />
+              </svg>
+              Roll Quantity Range
+            </label>
+            <div className="search-roll-range-inputs">
+              <input
+                type="number"
+                min="0"
+                className="search-roll-num-input"
+                placeholder="Min Rolls"
+                value={minRoll}
+                onChange={(e) => setMinRoll(e.target.value)}
+              />
+              <span className="search-roll-range-sep">to</span>
+              <input
+                type="number"
+                min="0"
+                className="search-roll-num-input"
+                placeholder="Max Rolls"
+                value={maxRoll}
+                onChange={(e) => setMaxRoll(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="search-roll-reset-btn"
+              onClick={handleResetFilters}
+              title="Reset all filters"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 4. Results Section */}
@@ -170,10 +285,10 @@ export function SearchRoll() {
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <p>
-            No pattern found matching <strong>&ldquo;{query}&rdquo;</strong>.
+            No rolls found matching your search &amp; filter criteria.
           </p>
           <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
-            Check if the pattern number was mistyped or try searching with partial digits.
+            Try widening your min/max roll range or selecting &ldquo;All Catalogues&rdquo;.
           </span>
         </div>
       ) : (

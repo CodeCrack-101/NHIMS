@@ -88,20 +88,57 @@ export const getSinglePatternController = async (req, res, next) => {
 export const searchGlobalRollsController = async (req, res, next) => {
   try {
     const query = String(req.query.q || req.query.query || '').trim()
-    if (!query) {
+    const catalogueFilter = String(req.query.catalogue || '').trim()
+    const minRoll = req.query.minRoll !== undefined && req.query.minRoll !== '' ? Number(req.query.minRoll) : null
+    const maxRoll = req.query.maxRoll !== undefined && req.query.maxRoll !== '' ? Number(req.query.maxRoll) : null
+
+    // If query, catalogue, minRoll or maxRoll is provided, we can search.
+    // If none are provided, return empty array.
+    if (!query && !catalogueFilter && minRoll === null && maxRoll === null) {
       return res.status(200).json({
         success: true,
         data: { items: [] },
       })
     }
 
-    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const patternRegex = new RegExp(escaped, 'i')
+    const filter = {}
 
-    const items = await Inventory.find({ patternNumber: patternRegex })
+    if (query) {
+      const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      filter.patternNumber = new RegExp(escaped, 'i')
+    }
+
+    if (catalogueFilter && catalogueFilter !== 'ALL') {
+      if (mongoose.Types.ObjectId.isValid(catalogueFilter)) {
+        filter.catalogueId = catalogueFilter
+      } else {
+        const cat = await Catalogue.findOne({
+          $or: [
+            { slug: catalogueFilter.toUpperCase() },
+            { slug: catalogueFilter.toUpperCase().replace(/\s+/g, '_') },
+            { name: new RegExp(`^${catalogueFilter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+          ]
+        }).lean()
+        if (cat) {
+          filter.catalogueId = cat._id
+        }
+      }
+    }
+
+    if (minRoll !== null || maxRoll !== null) {
+      filter.quantity = {}
+      if (minRoll !== null && !isNaN(minRoll)) {
+        filter.quantity.$gte = minRoll
+      }
+      if (maxRoll !== null && !isNaN(maxRoll)) {
+        filter.quantity.$lte = maxRoll
+      }
+    }
+
+    const items = await Inventory.find(filter)
       .populate('catalogueId', 'name slug defaultRate')
-      .sort({ quantity: -1 })
-      .limit(30)
+      .sort({ quantity: -1, patternNumber: 1 })
+      .limit(60)
       .lean()
 
     const formatted = items.map((it) => ({

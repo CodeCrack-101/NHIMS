@@ -302,7 +302,10 @@ const generateInvoicePdfDoc = async (invoice) => {
 
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(15, 23, 42)
-    const catLabel = formatCatalogueLabel(item.catalogueName || item.catalogueSlug)
+    const isCustom = Boolean(item.isCustom || !item.catalogueId || item.catalogueSlug === 'CUSTOM')
+    const catLabel = isCustom
+      ? (item.catalogueName || 'Custom Item')
+      : formatCatalogueLabel(item.catalogueName || item.catalogueSlug)
     doc.text(catLabel, colX.cat, textY, { maxWidth: colX.catW })
 
     doc.text(String(item.patternNumber || '—'), colX.pat, textY, { maxWidth: colX.patW })
