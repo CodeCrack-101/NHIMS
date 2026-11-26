@@ -539,13 +539,14 @@ export function Billing() {
       discountValue: inv.discountValue ?? 0,
       taxRate: inv.taxRate ?? 0,
       items: (inv.items || []).map((it) => ({
-        catalogueId: it.catalogueId?._id || it.catalogueId,
-        catalogueName: it.catalogueName,
-        catalogueSlug: it.catalogueSlug,
-        patternNumber: it.patternNumber,
+        catalogueId: it.isCustom || !it.catalogueId || it.catalogueId === 'CUSTOM' ? 'CUSTOM' : (it.catalogueId?._id || it.catalogueId),
+        catalogueName: it.catalogueName || '',
+        catalogueSlug: it.catalogueSlug || '',
+        patternNumber: it.patternNumber || '',
         imagePath: it.imagePath || '',
         quantity: it.quantity,
         rate: it.rate,
+        isCustom: Boolean(it.isCustom || !it.catalogueId || it.catalogueId === 'CUSTOM'),
       })),
     })
   }
@@ -570,12 +571,20 @@ export function Billing() {
       return
     }
     for (const it of editFormData.items) {
+      if (!it.catalogueId && !it.catalogueName) {
+        showToast('error', 'Every item must have a catalogue or item name.')
+        return
+      }
+      if (!it.patternNumber || !String(it.patternNumber).trim()) {
+        showToast('error', 'Every item must have a pattern number or description.')
+        return
+      }
       if (!it.quantity || Number(it.quantity) <= 0) {
-        showToast('error', `Quantity for Pattern ${it.patternNumber} must be > 0.`)
+        showToast('error', `Quantity for Pattern ${it.patternNumber || 'item'} must be > 0.`)
         return
       }
       if (!it.rate || Number(it.rate) <= 0) {
-        showToast('error', `Rate for Pattern ${it.patternNumber} must be > ₹0.`)
+        showToast('error', `Rate for Pattern ${it.patternNumber || 'item'} must be > ₹0.`)
         return
       }
     }
@@ -593,13 +602,14 @@ export function Billing() {
         discountValue: Number(editFormData.discountValue) || 0,
         taxRate: Number(editFormData.taxRate) || 0,
         items: editFormData.items.map((it) => ({
-          catalogueId: it.catalogueId,
+          catalogueId: it.isCustom || it.catalogueId === 'CUSTOM' ? 'CUSTOM' : it.catalogueId,
           catalogueName: it.catalogueName,
           catalogueSlug: it.catalogueSlug,
           patternNumber: it.patternNumber,
           imagePath: it.imagePath || '',
           quantity: Number(it.quantity),
           rate: Number(it.rate),
+          isCustom: Boolean(it.isCustom || it.catalogueId === 'CUSTOM'),
         })),
       })
 
@@ -2716,18 +2726,46 @@ export function Billing() {
 
                 {/* Items Table for Editing */}
                 <div style={{ marginBottom: '14px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', display: 'block', marginBottom: '6px' }}>
-                    Bill Items (Roll Quantity &amp; Price):
-                  </label>
-                  <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                      Bill Items:
+                    </label>
+                    <button
+                      type="button"
+                      className="billing-glass-btn"
+                      style={{ padding: '4px 12px', fontSize: '12px' }}
+                      onClick={() => {
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          items: [
+                            ...prev.items,
+                            {
+                              catalogueId: '',
+                              catalogueName: '',
+                              catalogueSlug: '',
+                              patternNumber: '',
+                              imagePath: '',
+                              quantity: 1,
+                              rate: 1250,
+                              isCustom: false,
+                            },
+                          ],
+                        }))
+                      }}
+                    >
+                      + Add Item
+                    </button>
+                  </div>
+                  <div style={{ maxHeight: '240px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
                     <table className="invoice-history-table" style={{ margin: 0 }}>
                       <thead>
                         <tr>
-                          <th>Catalogue</th>
-                          <th>Pattern</th>
-                          <th style={{ width: '90px' }}>Qty (Rolls)</th>
-                          <th style={{ width: '110px' }}>Rate (₹)</th>
-                          <th style={{ textAlign: 'right', width: '100px' }}>Subtotal</th>
+                          <th style={{ minWidth: '150px' }}>Catalogue / Item</th>
+                          <th style={{ minWidth: '140px' }}>Pattern No</th>
+                          <th style={{ width: '85px' }}>Qty</th>
+                          <th style={{ width: '100px' }}>Rate (₹)</th>
+                          <th style={{ textAlign: 'right', width: '90px' }}>Subtotal</th>
+                          <th style={{ width: '40px', textAlign: 'center' }}></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2736,17 +2774,95 @@ export function Billing() {
                           return (
                             <tr key={idx}>
                               <td>
-                                <strong>{formatCatalogueLabel(it.catalogueName || it.catalogueSlug)}</strong>
+                                <SearchableSelect
+                                  value={it.catalogueId === 'CUSTOM' ? (it.catalogueName || '') : it.catalogueId}
+                                  onChange={(val) => {
+                                    const catObj = catalogues.find((c) => c._id === val)
+                                    const updatedItems = [...editFormData.items]
+                                    if (catObj) {
+                                      updatedItems[idx] = {
+                                        ...updatedItems[idx],
+                                        catalogueId: catObj._id,
+                                        catalogueName: catObj.name,
+                                        catalogueSlug: catObj.slug,
+                                        isCustom: false,
+                                      }
+                                      fetchPatternsForCatalogue(catObj._id)
+                                    } else {
+                                      updatedItems[idx] = {
+                                        ...updatedItems[idx],
+                                        catalogueId: 'CUSTOM',
+                                        catalogueName: val || 'Custom Item',
+                                        catalogueSlug: 'CUSTOM',
+                                        isCustom: true,
+                                      }
+                                    }
+                                    setEditFormData({ ...editFormData, items: updatedItems })
+                                  }}
+                                  allowCustomInput={true}
+                                  customInputPrefix=""
+                                  onCustomInput={(typedText) => {
+                                    const updatedItems = [...editFormData.items]
+                                    updatedItems[idx] = {
+                                      ...updatedItems[idx],
+                                      catalogueId: 'CUSTOM',
+                                      catalogueName: typedText,
+                                      catalogueSlug: 'CUSTOM',
+                                      isCustom: true,
+                                    }
+                                    setEditFormData({ ...editFormData, items: updatedItems })
+                                  }}
+                                  placeholder="Select or type..."
+                                  emptyText="Press Enter to use this name"
+                                  options={catalogues.map((cat) => ({
+                                    value: cat._id,
+                                    label: formatCatalogueLabel(cat.name),
+                                    searchKeywords: `${cat.name} ${cat.slug}`,
+                                    badgeText: `Stock: ${cat.totalStock ?? 0}`,
+                                    badgeTone: (cat.totalStock ?? 0) > 0 ? 'success' : 'danger',
+                                  }))}
+                                />
                               </td>
                               <td>
-                                <span style={{ fontWeight: '700', color: '#2563eb' }}>{it.patternNumber}</span>
+                                {it.isCustom || it.catalogueId === 'CUSTOM' ? (
+                                  <input
+                                    type="text"
+                                    className="billing-text-input"
+                                    style={{ width: '100%', padding: '6px 8px', fontSize: '13px' }}
+                                    placeholder="Description / Code"
+                                    value={it.patternNumber}
+                                    onChange={(e) => {
+                                      const updatedItems = [...editFormData.items]
+                                      updatedItems[idx] = { ...updatedItems[idx], patternNumber: e.target.value }
+                                      setEditFormData({ ...editFormData, items: updatedItems })
+                                    }}
+                                    required
+                                  />
+                                ) : (
+                                  <SearchableSelect
+                                    value={it.patternNumber}
+                                    disabled={!it.catalogueId}
+                                    onChange={(val) => {
+                                      const updatedItems = [...editFormData.items]
+                                      updatedItems[idx] = { ...updatedItems[idx], patternNumber: val }
+                                      setEditFormData({ ...editFormData, items: updatedItems })
+                                    }}
+                                    placeholder={!it.catalogueId ? 'Select catalogue' : 'Select pattern...'}
+                                    emptyText="No pattern found"
+                                    options={(patternsByCatalogue[it.catalogueId] || []).map((pat) => ({
+                                      value: pat.patternNumber,
+                                      label: String(pat.patternNumber),
+                                      searchKeywords: String(pat.patternNumber),
+                                    }))}
+                                  />
+                                )}
                               </td>
                               <td>
                                 <input
                                   type="number"
                                   min={1}
                                   className="billing-num-input"
-                                  style={{ width: '100%', padding: '4px 6px' }}
+                                  style={{ width: '100%', padding: '6px' }}
                                   value={it.quantity}
                                   onChange={(e) => {
                                     const val = e.target.value
@@ -2763,7 +2879,7 @@ export function Billing() {
                                   min={1}
                                   step="0.01"
                                   className="billing-num-input"
-                                  style={{ width: '100%', padding: '4px 6px' }}
+                                  style={{ width: '100%', padding: '6px' }}
                                   value={it.rate}
                                   onChange={(e) => {
                                     const val = e.target.value
@@ -2776,6 +2892,21 @@ export function Billing() {
                               </td>
                               <td style={{ textAlign: 'right', fontWeight: '700' }}>
                                 {formatINR(itemSub)}
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  className="remove-row-btn"
+                                  style={{ width: '22px', height: '22px', fontSize: '11px' }}
+                                  disabled={editFormData.items.length <= 1}
+                                  onClick={() => {
+                                    const updatedItems = editFormData.items.filter((_, i) => i !== idx)
+                                    setEditFormData({ ...editFormData, items: updatedItems })
+                                  }}
+                                  title="Remove item"
+                                >
+                                  ✕
+                                </button>
                               </td>
                             </tr>
                           )
