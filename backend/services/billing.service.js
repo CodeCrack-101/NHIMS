@@ -477,9 +477,17 @@ export const createBillTransaction = async ({
 
       let parsedInvoiceDate = new Date()
       if (invoiceDate) {
-        const customD = new Date(invoiceDate)
-        if (!Number.isNaN(customD.getTime())) {
-          parsedInvoiceDate = customD
+        // If invoiceDate is a date-only string like "YYYY-MM-DD", preserve the current real local time!
+        if (typeof invoiceDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(invoiceDate.trim())) {
+          const [yr, mo, da] = invoiceDate.trim().split('-').map(Number)
+          const now = new Date()
+          // Construct date with exact current real-time hours, minutes, seconds, milliseconds
+          parsedInvoiceDate = new Date(yr, mo - 1, da, now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds())
+        } else {
+          const customD = new Date(invoiceDate)
+          if (!Number.isNaN(customD.getTime())) {
+            parsedInvoiceDate = customD
+          }
         }
       }
 
@@ -1112,9 +1120,15 @@ export const updateInvoiceAndAdjustStock = async (
 
     let parsedUpdateDate = existingInvoice.invoiceDate
     if (invoiceDate) {
-      const customD = new Date(invoiceDate)
-      if (!Number.isNaN(customD.getTime())) {
-        parsedUpdateDate = customD
+      if (typeof invoiceDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(invoiceDate.trim())) {
+        const [yr, mo, da] = invoiceDate.trim().split('-').map(Number)
+        const orig = existingInvoice.invoiceDate ? new Date(existingInvoice.invoiceDate) : new Date()
+        parsedUpdateDate = new Date(yr, mo - 1, da, orig.getHours(), orig.getMinutes(), orig.getSeconds())
+      } else {
+        const customD = new Date(invoiceDate)
+        if (!Number.isNaN(customD.getTime())) {
+          parsedUpdateDate = customD
+        }
       }
     }
 

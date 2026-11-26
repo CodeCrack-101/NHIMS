@@ -116,7 +116,7 @@ export const createGstInvoice = async (payload, userId, req = null) => {
   }
 
   const {
-    invoiceDate = new Date(),
+    invoiceDate = null,
     placeOfSupply = '33-Tamil Nadu',
     billTo,
     shipTo,
@@ -127,6 +127,20 @@ export const createGstInvoice = async (payload, userId, req = null) => {
     billerName = 'Shifa',
     notes = '',
   } = payload
+
+  let parsedInvoiceDate = new Date()
+  if (invoiceDate) {
+    if (typeof invoiceDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(invoiceDate.trim())) {
+      const [yr, mo, da] = invoiceDate.trim().split('-').map(Number)
+      const now = new Date()
+      parsedInvoiceDate = new Date(yr, mo - 1, da, now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds())
+    } else {
+      const customD = new Date(invoiceDate)
+      if (!Number.isNaN(customD.getTime())) {
+        parsedInvoiceDate = customD
+      }
+    }
+  }
 
   if (!billTo || !billTo.firmName || !billTo.contactNumber) {
     throw new AppError('Bill To firm name and contact number are required.', 400)
@@ -280,7 +294,7 @@ export const createGstInvoice = async (payload, userId, req = null) => {
       [
         {
           invoiceNumber,
-          invoiceDate,
+          invoiceDate: parsedInvoiceDate,
           placeOfSupply,
           supplyStateCode: posCode,
           supplyStateName: String(placeOfSupply).split('-')[1]?.trim() || '',
@@ -565,6 +579,20 @@ export const updateGstInvoiceAndAdjustStock = async (invoiceId, payload, userId,
   const posCode = String(placeOfSupply).split('-')[0].trim()
   const isInterState = posCode !== '27'
 
+  let parsedUpdateDate = existingInvoice.invoiceDate
+  if (invoiceDate) {
+    if (typeof invoiceDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(invoiceDate.trim())) {
+      const [yr, mo, da] = invoiceDate.trim().split('-').map(Number)
+      const orig = existingInvoice.invoiceDate ? new Date(existingInvoice.invoiceDate) : new Date()
+      parsedUpdateDate = new Date(yr, mo - 1, da, orig.getHours(), orig.getMinutes(), orig.getSeconds())
+    } else {
+      const customD = new Date(invoiceDate)
+      if (!Number.isNaN(customD.getTime())) {
+        parsedUpdateDate = customD
+      }
+    }
+  }
+
   // Process & calculate items
   let subTotal = 0
   let totalTax = 0
@@ -732,7 +760,7 @@ export const updateGstInvoiceAndAdjustStock = async (invoiceId, payload, userId,
     }
 
     // Update the invoice document
-    existingInvoice.invoiceDate = invoiceDate
+    existingInvoice.invoiceDate = parsedUpdateDate
     existingInvoice.placeOfSupply = placeOfSupply
     existingInvoice.supplyStateCode = posCode
     existingInvoice.supplyStateName = String(placeOfSupply).split('-')[1]?.trim() || ''
