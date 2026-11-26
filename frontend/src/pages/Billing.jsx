@@ -315,17 +315,10 @@ function SearchableSelect({
                 e.preventDefault()
                 handleSelectCustom(query.trim())
               }}
-              style={{
-                background: '#f0fdf4',
-                color: '#166534',
-                fontWeight: '600',
-                borderBottom: '1px solid #dcfce7',
-              }}
             >
               <span className="combo-item-main">
-                {customInputPrefix} &ldquo;{query.trim()}&rdquo;
+                {customInputPrefix ? `${customInputPrefix} ` : ''}&ldquo;{query.trim()}&rdquo;
               </span>
-              <span className="combo-item-badge combo-badge-info">No Deduction</span>
             </li>
           )}
 
@@ -1532,38 +1525,29 @@ export function Billing() {
                   <tr key={row.rowId} className="billing-item-row">
                     <td className="row-index-cell">{index + 1}</td>
 
-                    {/* 1. Catalogue Searchable Select (Type standard catalogue OR custom item like UV, Marble, etc.) */}
+                    {/* 1. Catalogue Searchable Select */}
                     <td>
                       <SearchableSelect
-                        value={row.catalogueId === 'CUSTOM' ? (row.catalogueName || 'CUSTOM') : row.catalogueId}
+                        value={row.catalogueId === 'CUSTOM' ? (row.catalogueName || '') : row.catalogueId}
                         onChange={(val) =>
                           handleCatalogueChange(row.rowId, val)
                         }
                         allowCustomInput={true}
-                        customInputPrefix="✨ Add Custom Item: "
+                        customInputPrefix=""
                         onCustomInput={(typedText) =>
                           handleCatalogueChange(row.rowId, 'CUSTOM', typedText)
                         }
-                        placeholder="Type catalogue (e.g. EW, UV, Royal)..."
+                        placeholder="Select or type catalogue..."
                         hasError={Boolean(rErr.catalogue)}
-                        emptyText="Press Enter to use as custom item"
-                        options={[
-                          {
-                            value: 'CUSTOM',
-                            label: '✨ Custom / UV / Non-Stock Item (No Deduction)',
-                            searchKeywords: 'custom extra uv marble others no deduction non stock',
-                            badgeText: 'No Deduction',
-                            badgeTone: 'info',
-                          },
-                          ...catalogues.map((cat) => ({
-                            value: cat._id,
-                            label: formatCatalogueLabel(cat.name),
-                            searchKeywords: `${cat.name} ${cat.slug}`,
-                            badgeText: `Stock: ${cat.totalStock ?? 0}`,
-                            badgeTone:
-                              (cat.totalStock ?? 0) > 0 ? 'success' : 'danger',
-                          })),
-                        ]}
+                        emptyText="Press Enter to use this name"
+                        options={catalogues.map((cat) => ({
+                          value: cat._id,
+                          label: formatCatalogueLabel(cat.name),
+                          searchKeywords: `${cat.name} ${cat.slug}`,
+                          badgeText: `Stock: ${cat.totalStock ?? 0}`,
+                          badgeTone:
+                            (cat.totalStock ?? 0) > 0 ? 'success' : 'danger',
+                        }))}
                       />
                       {rErr.catalogue && (
                         <span className="cell-err-text">{rErr.catalogue}</span>
@@ -1659,29 +1643,16 @@ export function Billing() {
                               rErr.quantity || exceedsStock ? 'input-err' : ''
                             }`}
                           />
-                          {row.isCustom || row.catalogueId === 'CUSTOM' ? (
+                          {!(row.isCustom || row.catalogueId === 'CUSTOM') && row.patternNumber && (
                             <span
-                              className="avail-stock-tag"
-                              style={{
-                                background: '#f1f5f9',
-                                color: '#475569',
-                                borderColor: '#cbd5e1',
-                              }}
+                              className={`avail-stock-tag ${
+                                row.availableStock < 10
+                                  ? 'avail-low'
+                                  : 'avail-ok'
+                              }`}
                             >
-                              No Deduction
+                              Avail: {row.availableStock}
                             </span>
-                          ) : (
-                            row.patternNumber && (
-                              <span
-                                className={`avail-stock-tag ${
-                                  row.availableStock < 10
-                                    ? 'avail-low'
-                                    : 'avail-ok'
-                                }`}
-                              >
-                                Avail: {row.availableStock}
-                              </span>
-                            )
                           )}
                         </div>
                         {(exceedsStock || rErr.quantity) && (
@@ -1741,25 +1712,14 @@ export function Billing() {
           </table>
         </div>
 
-        {/* BELOW TABLE: Add More / Add Custom Buttons */}
-        <div className="billing-add-more-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        {/* BELOW TABLE: Add More Rows */}
+        <div className="billing-add-more-row">
           <button
             type="button"
             className="billing-glass-btn add-more-btn"
             onClick={handleAddRow}
           >
-            + Add Catalogue Item
-          </button>
-          <button
-            type="button"
-            className="billing-glass-btn add-more-btn"
-            onClick={handleAddCustomRow}
-            style={{
-              borderColor: '#64748b',
-              color: '#0f172a',
-            }}
-          >
-            ✨ + Add Custom / UV Extra (No Stock Deduction)
+            + Add Item Row
           </button>
         </div>
 
