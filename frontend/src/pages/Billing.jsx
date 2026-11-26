@@ -65,6 +65,9 @@ function SearchableSelect({
   disabled = false,
   hasError = false,
   emptyText = 'No matching options',
+  allowCustomInput = false,
+  customInputPrefix = '✨ Use custom: ',
+  onCustomInput = null,
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -76,12 +79,18 @@ function SearchableSelect({
     [options, value]
   )
 
-  // Keep input text synced with selected option when not actively typing
+  // Keep input text synced with selected option or custom value when not actively typing
   useEffect(() => {
     if (!isTyping) {
-      setQuery(selectedOption ? selectedOption.label : '')
+      if (selectedOption) {
+        setQuery(selectedOption.label)
+      } else if (allowCustomInput && value && !String(value).startsWith('CUSTOM_ID_')) {
+        setQuery(String(value))
+      } else if (allowCustomInput && !value) {
+        setQuery('')
+      }
     }
-  }, [selectedOption, isTyping])
+  }, [selectedOption, isTyping, allowCustomInput, value])
 
   const filteredOptions = useMemo(() => {
     if (!isTyping) return options
@@ -96,8 +105,19 @@ function SearchableSelect({
     )
   }, [options, query, isTyping])
 
-  const commitTypedQueryIfNeeded = useCallback(() => {
+  const hasExactOptionMatch = useMemo(() => {
     const q = query.trim().toLowerCase()
+    if (!q) return false
+    return options.some(
+      (o) =>
+        !o.disabled &&
+        (o.label.toLowerCase() === q || String(o.value).toLowerCase() === q)
+    )
+  }, [options, query])
+
+  const commitTypedQueryIfNeeded = useCallback(() => {
+    const q = query.trim()
+    const qLower = q.toLowerCase()
     if (!q) {
       setIsTyping(false)
       setQuery(selectedOption ? selectedOption.label : '')
@@ -106,7 +126,7 @@ function SearchableSelect({
     const exactMatch = options.find(
       (o) =>
         !o.disabled &&
-        (o.label.toLowerCase() === q || String(o.value).toLowerCase() === q)
+        (o.label.toLowerCase() === qLower || String(o.value).toLowerCase() === qLower)
     )
     if (exactMatch) {
       setIsTyping(false)
@@ -123,11 +143,18 @@ function SearchableSelect({
       if (String(firstMatch.value) !== String(value)) {
         onChange(firstMatch.value)
       }
+    } else if (allowCustomInput && q) {
+      setIsTyping(false)
+      if (onCustomInput) {
+        onCustomInput(q)
+      } else {
+        onChange(q)
+      }
     } else {
       setIsTyping(false)
       setQuery(selectedOption ? selectedOption.label : '')
     }
-  }, [query, options, filteredOptions, selectedOption, isTyping, value, onChange])
+  }, [query, options, filteredOptions, selectedOption, isTyping, value, onChange, allowCustomInput, onCustomInput])
 
   // Close dropdown on outside click and commit typed match
   useEffect(() => {
@@ -151,12 +178,25 @@ function SearchableSelect({
     onChange(opt.value)
   }
 
+  const handleSelectCustom = (customText) => {
+    setIsTyping(false)
+    setQuery(customText)
+    setOpen(false)
+    if (onCustomInput) {
+      onCustomInput(customText)
+    } else {
+      onChange(customText)
+    }
+  }
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault()
       const firstAvailable = filteredOptions.find((o) => !o.disabled)
       if (firstAvailable) {
         handleSelectOption(firstAvailable)
+      } else if (allowCustomInput && query.trim()) {
+        handleSelectCustom(query.trim())
       }
     } else if (e.key === 'Escape') {
       setIsTyping(false)
@@ -220,7 +260,7 @@ function SearchableSelect({
           onKeyDown={handleKeyDown}
           className="billing-combo-input"
         />
-        {value && !disabled && (
+        {Boolean(value || query) && !disabled && (
           <button
             type="button"
             className="billing-combo-clear"
@@ -267,7 +307,29 @@ function SearchableSelect({
 
       {open && !disabled && (
         <ul className="billing-combo-menu" role="listbox">
-          {filteredOptions.length === 0 ? (
+          {allowCustomInput && query.trim() && !hasExactOptionMatch && (
+            <li
+              role="option"
+              className="billing-combo-item custom-typed-option"
+              onMouseDown={(e) => {
+                e.preventDefault()
+                handleSelectCustom(query.trim())
+              }}
+              style={{
+                background: '#f0fdf4',
+                color: '#166534',
+                fontWeight: '600',
+                borderBottom: '1px solid #dcfce7',
+              }}
+            >
+              <span className="combo-item-main">
+                {customInputPrefix} &ldquo;{query.trim()}&rdquo;
+              </span>
+              <span className="combo-item-badge combo-badge-info">No Deduction</span>
+            </li>
+          )}
+
+          {filteredOptions.length === 0 && (!allowCustomInput || !query.trim()) ? (
             <li className="billing-combo-empty">{emptyText}</li>
           ) : (
             filteredOptions.map((opt) => {
@@ -703,16 +765,18 @@ export function Billing() {
     }
   }, [loadBillingCatalogues])
 
-  // Handle Catalogue Selection in a Row
-  const handleCatalogueChange = async (rowId, selectedCatId) => {
-    if (selectedCatId === 'CUSTOM') {
+  // Handle Catalogue Selection in a Row (Supports standard catalogues and typed custom item/category e.g. UV, Marble, etc.)
+  const handleCatalogueChange = async (rowId, selectedCatId, customName = null) => {
+    // If selectedCatId is 'CUSTOM' or anything custom typed
+    if (selectedCatId === 'CUSTOM' || customName || selectedCatId.startsWith('CUSTOM:')) {
+      const displayName = customName || (selectedCatId.startsWith('CUSTOM:') ? selectedCatId.replace('CUSTOM:', '') : 'Custom Item')
       setRows((prev) =>
         prev.map((r) =>
           r.rowId === rowId
             ? {
                 ...r,
                 catalogueId: 'CUSTOM',
-                catalogueName: 'Custom Item',
+                catalogueName: displayName,
                 catalogueSlug: 'CUSTOM',
                 patternId: '',
                 patternNumber: r.patternNumber || '',
@@ -734,6 +798,35 @@ export function Billing() {
     }
 
     const catObj = catalogues.find((c) => c._id === selectedCatId)
+    if (!catObj && selectedCatId) {
+      // User typed a non-existent catalogue name directly (e.g. "UV", "Marble Sheet")
+      setRows((prev) =>
+        prev.map((r) =>
+          r.rowId === rowId
+            ? {
+                ...r,
+                catalogueId: 'CUSTOM',
+                catalogueName: selectedCatId,
+                catalogueSlug: 'CUSTOM',
+                patternId: '',
+                patternNumber: r.patternNumber || '',
+                availableStock: 999999,
+                quantity: r.quantity || 1,
+                rate: r.rate > 0 ? r.rate : 0,
+                imagePath: '',
+                isCustom: true,
+              }
+            : r
+        )
+      )
+      setRowErrors((prev) => {
+        const next = { ...prev }
+        delete next[rowId]
+        return next
+      })
+      return
+    }
+
     setRows((prev) =>
       prev.map((r) =>
         r.rowId === rowId
@@ -1439,20 +1532,25 @@ export function Billing() {
                   <tr key={row.rowId} className="billing-item-row">
                     <td className="row-index-cell">{index + 1}</td>
 
-                    {/* 1. Catalogue Searchable Select (Type or Select) */}
+                    {/* 1. Catalogue Searchable Select (Type standard catalogue OR custom item like UV, Marble, etc.) */}
                     <td>
                       <SearchableSelect
-                        value={row.catalogueId}
+                        value={row.catalogueId === 'CUSTOM' ? (row.catalogueName || 'CUSTOM') : row.catalogueId}
                         onChange={(val) =>
                           handleCatalogueChange(row.rowId, val)
                         }
-                        placeholder="Type or select catalogue..."
+                        allowCustomInput={true}
+                        customInputPrefix="✨ Add Custom Item: "
+                        onCustomInput={(typedText) =>
+                          handleCatalogueChange(row.rowId, 'CUSTOM', typedText)
+                        }
+                        placeholder="Type catalogue (e.g. EW, UV, Royal)..."
                         hasError={Boolean(rErr.catalogue)}
-                        emptyText="No matching catalogue"
+                        emptyText="Press Enter to use as custom item"
                         options={[
                           {
                             value: 'CUSTOM',
-                            label: '✨ Custom / UV / Extra (No Deduction)',
+                            label: '✨ Custom / UV / Non-Stock Item (No Deduction)',
                             searchKeywords: 'custom extra uv marble others no deduction non stock',
                             badgeText: 'No Deduction',
                             badgeTone: 'info',
