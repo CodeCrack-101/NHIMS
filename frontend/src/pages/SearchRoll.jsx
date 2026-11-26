@@ -155,53 +155,47 @@ export function SearchRoll() {
         </div>
       </div>
 
-      {/* 3. Search Bar & Filters Card */}
+      {/* 3. Search Bar & Filters Card - Single Line */}
       <div className="search-roll-box-card">
-        <div className="search-roll-input-wrap">
-          <svg
-            className="search-roll-icon"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            className="search-roll-input"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type any pattern number (e.g. 101, EW-05, SH-12, SP-20)..."
-            autoFocus
-          />
-          {query && (
-            <button
-              type="button"
-              className="search-roll-clear-btn"
-              onClick={() => setQuery('')}
-              title="Clear search"
+        <div className="search-roll-bar-row">
+          {/* Pattern Search Input */}
+          <div className="search-roll-input-wrap">
+            <svg
+              className="search-roll-icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              ✕
-            </button>
-          )}
-        </div>
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              className="search-roll-input"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search pattern (e.g. 101, EW-05)..."
+              autoFocus
+            />
+            {query && (
+              <button
+                type="button"
+                className="search-roll-clear-btn"
+                onClick={() => setQuery('')}
+                title="Clear pattern"
+              >
+                ✕
+              </button>
+            )}
+          </div>
 
-        {/* Filter Row: Catalogue & Min to Max Roll */}
-        <div className="search-roll-filter-row">
-          <div className="search-roll-filter-group catalogue-group">
-            <label className="search-roll-filter-label" htmlFor="catalogue-filter">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-              </svg>
-              Filter Catalogue
-            </label>
+          {/* Catalogue Dropdown Filter */}
+          <div className="search-roll-filter-unit cat-unit">
             <select
               id="catalogue-filter"
               className="search-roll-select"
@@ -217,42 +211,28 @@ export function SearchRoll() {
             </select>
           </div>
 
-          <div className="search-roll-filter-group range-group">
-            <label className="search-roll-filter-label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="4" y1="21" x2="4" y2="14" />
-                <line x1="4" y1="10" x2="4" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12" y2="3" />
-                <line x1="20" y1="21" x2="20" y2="16" />
-                <line x1="20" y1="12" x2="20" y2="3" />
-                <line x1="1" y1="14" x2="7" y2="14" />
-                <line x1="9" y1="8" x2="15" y2="8" />
-                <line x1="17" y1="16" x2="23" y2="16" />
-              </svg>
-              Roll Quantity Range
-            </label>
-            <div className="search-roll-range-inputs">
-              <input
-                type="number"
-                min="0"
-                className="search-roll-num-input"
-                placeholder="Min Rolls"
-                value={minRoll}
-                onChange={(e) => setMinRoll(e.target.value)}
-              />
-              <span className="search-roll-range-sep">to</span>
-              <input
-                type="number"
-                min="0"
-                className="search-roll-num-input"
-                placeholder="Max Rolls"
-                value={maxRoll}
-                onChange={(e) => setMaxRoll(e.target.value)}
-              />
-            </div>
+          {/* Min to Max Roll Inputs */}
+          <div className="search-roll-filter-unit range-unit">
+            <input
+              type="number"
+              min="0"
+              className="search-roll-num-input"
+              placeholder="Min Roll"
+              value={minRoll}
+              onChange={(e) => setMinRoll(e.target.value)}
+            />
+            <span className="search-roll-range-sep">to</span>
+            <input
+              type="number"
+              min="0"
+              className="search-roll-num-input"
+              placeholder="Max Roll"
+              value={maxRoll}
+              onChange={(e) => setMaxRoll(e.target.value)}
+            />
           </div>
 
+          {/* Reset Button (only if active filters) */}
           {hasActiveFilters && (
             <button
               type="button"
@@ -260,7 +240,7 @@ export function SearchRoll() {
               onClick={handleResetFilters}
               title="Reset all filters"
             >
-              Reset Filters
+              Reset
             </button>
           )}
         </div>

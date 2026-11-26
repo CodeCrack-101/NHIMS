@@ -30,30 +30,39 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 24px;
+  padding: 16px 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-.search-roll-input-wrap {
+/* Single line search & filter row */
+.search-roll-bar-row {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+}
+
+.search-roll-input-wrap {
+  flex: 1 1 320px;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
   position: relative;
 }
 
 .search-roll-icon {
   position: absolute;
-  left: 16px;
+  left: 14px;
   color: #94a3b8;
   pointer-events: none;
 }
 
 .search-roll-input {
   width: 100%;
-  padding: 14px 18px 14px 48px;
-  font-size: 15px;
+  padding: 11px 16px 11px 42px;
+  font-size: 14px;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: 9px;
   border: 1.5px solid #cbd5e1;
   outline: none;
   background-color: #f8fafc;
@@ -69,16 +78,16 @@
 
 .search-roll-clear-btn {
   position: absolute;
-  right: 14px;
+  right: 12px;
   background: #e2e8f0;
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
   color: #475569;
   cursor: pointer;
 }
@@ -88,52 +97,29 @@
   color: #0f172a;
 }
 
-/* Filters row */
-.search-roll-filter-row {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid #f1f5f9;
-}
-
-.search-roll-filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.search-roll-filter-group.catalogue-group {
-  flex: 1 1 220px;
-  min-width: 200px;
-}
-
-.search-roll-filter-group.range-group {
-  flex: 1 1 260px;
-  min-width: 240px;
-}
-
-.search-roll-filter-label {
+/* Filter units in the single line */
+.search-roll-filter-unit {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #475569;
 }
 
-.search-roll-filter-label svg {
-  color: #64748b;
+.search-roll-filter-unit.cat-unit {
+  flex: 0 1 200px;
+  min-width: 170px;
+}
+
+.search-roll-filter-unit.range-unit {
+  flex: 0 1 210px;
+  min-width: 190px;
+  gap: 6px;
 }
 
 .search-roll-select {
   width: 100%;
-  padding: 10px 14px;
-  font-size: 14px;
+  padding: 11px 12px;
+  font-size: 13.5px;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 9px;
   border: 1.5px solid #cbd5e1;
   outline: none;
   background-color: #f8fafc;
@@ -148,22 +134,17 @@
   box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
 
-.search-roll-range-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .search-roll-num-input {
   width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: 11px 10px;
+  font-size: 13.5px;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 9px;
   border: 1.5px solid #cbd5e1;
   outline: none;
   background-color: #f8fafc;
   color: #0f172a;
+  text-align: center;
   transition: all 0.15s ease;
 }
 
@@ -178,20 +159,24 @@
   font-weight: 600;
   color: #64748b;
   text-transform: lowercase;
+  user-select: none;
 }
 
 .search-roll-reset-btn {
-  padding: 10px 16px;
+  padding: 0 14px;
+  height: 42px;
   font-size: 13px;
   font-weight: 600;
   color: #ef4444;
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 8px;
+  border-radius: 9px;
   cursor: pointer;
   transition: all 0.15s ease;
-  height: 40px;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .search-roll-reset-btn:hover {
@@ -383,8 +368,32 @@
     gap: 12px;
   }
 
+  .search-roll-bar-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
   .search-roll-box-card {
     padding: 16px;
+  }
+
+  .search-roll-input-wrap {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+
+  .search-roll-filter-unit.cat-unit {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 140px;
+  }
+
+  .search-roll-filter-unit.range-unit {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 150px;
+  }
+
+  .search-roll-reset-btn {
+    flex: 1 1 100%;
   }
 
   .search-roll-input {
@@ -401,6 +410,11 @@
 @media (max-width: 600px) {
   .search-roll-heading {
     font-size: 20px;
+  }
+
+  .search-roll-filter-unit.cat-unit,
+  .search-roll-filter-unit.range-unit {
+    flex: 1 1 100%;
   }
 
   .roll-results-grid {
