@@ -375,6 +375,8 @@ export const listGstInvoices = async ({
       { 'billTo.contactNumber': regex },
       { 'billTo.gstin': regex },
       { 'items.itemName': regex },
+      { 'items.patternNumber': regex },
+      { 'items.catalogueName': regex },
     ]
   }
 

@@ -616,6 +616,8 @@ export const searchAndListInvoices = async ({
       { customerName: regex },
       { mobileNumber: regex },
       { billerName: regex },
+      { 'items.patternNumber': regex },
+      { 'items.catalogueName': regex },
     ]
   }
 

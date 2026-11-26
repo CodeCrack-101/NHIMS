@@ -247,7 +247,7 @@ export function InvoiceHistory() {
               className="ih-input"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search Invoice #, Customer Name, Mobile Number..."
+              placeholder="Search Invoice #, Pattern Number, Customer Name, Mobile..."
             />
           </div>
 

@@ -2332,7 +2332,7 @@ export function Billing() {
               type="text"
               value={historySearch}
               onChange={(e) => setHistorySearch(e.target.value)}
-              placeholder="Search Invoice No, Customer, or Mobile..."
+              placeholder="Search Invoice No, Pattern, Customer, or Mobile..."
               className="history-search-input"
             />
             <input
