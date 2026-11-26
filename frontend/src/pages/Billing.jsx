@@ -394,6 +394,19 @@ export function Billing() {
   const [showAddBiller, setShowAddBiller] = useState(false)
   const [customerErrors, setCustomerErrors] = useState({})
 
+  const [billerDropdownOpen, setBillerDropdownOpen] = useState(false)
+  const billerWrapperRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutsideBiller = (e) => {
+      if (billerWrapperRef.current && !billerWrapperRef.current.contains(e.target)) {
+        setBillerDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutsideBiller)
+    return () => document.removeEventListener('mousedown', handleClickOutsideBiller)
+  }, [])
+
   // Billing rows
   const [rows, setRows] = useState(() => [createEmptyBillingRow()])
   const [rowErrors, setRowErrors] = useState({})
@@ -1199,6 +1212,27 @@ export function Billing() {
     setShowAddBiller(false)
   }
 
+  const handleDeleteBiller = (billerToDelete, e) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    const updated = billerOptions.filter((name) => name !== billerToDelete)
+    if (updated.length === 0) {
+      showToast('error', 'At least one employee must remain in the list.')
+      return
+    }
+    setBillerOptions(updated)
+    localStorage.setItem('nh_shop_billers', JSON.stringify(updated))
+
+    if (billerName === billerToDelete) {
+      const nextBiller = updated[0]
+      setBillerName(nextBiller)
+      localStorage.setItem('nh_last_biller', nextBiller)
+    }
+    showToast('info', `Removed employee "${billerToDelete}".`)
+  }
+
   const handleInitiateGenerateBill = (e) => {
     e.preventDefault()
     if (validateBillingForm()) {
@@ -1474,27 +1508,122 @@ export function Billing() {
                 </button>
               </div>
             ) : (
-              <select
-                id="billing-employee-select"
-                value={billerName}
-                onChange={(e) => handleSelectBiller(e.target.value)}
-                style={{
-                  padding: '9px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  fontSize: '13.5px',
-                  fontWeight: '600',
-                  color: '#0f172a',
-                  width: '100%',
-                }}
-              >
-                {billerOptions.map((name) => (
-                  <option key={name} value={name}>
-                    👤 {name}
-                  </option>
-                ))}
-              </select>
+              <div ref={billerWrapperRef} className="billing-employee-custom-select" style={{ position: 'relative' }}>
+                <div
+                  className={`billing-combo-control ${billerDropdownOpen ? 'combo-open' : ''}`}
+                  onClick={() => setBillerDropdownOpen((prev) => !prev)}
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px' }}
+                >
+                  <span style={{ fontSize: '13.5px', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    👤 {billerName || 'Select employee'}
+                  </span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      transform: billerDropdownOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.15s ease',
+                      color: '#64748b',
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+
+                {billerDropdownOpen && (
+                  <ul
+                    className="billing-combo-menu"
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      zIndex: 50,
+                      margin: '4px 0 0',
+                      padding: '4px',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                      listStyle: 'none',
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                    }}
+                  >
+                    {billerOptions.map((name) => {
+                      const isSelected = name === billerName
+                      return (
+                        <li
+                          key={name}
+                          onClick={() => {
+                            handleSelectBiller(name)
+                            setBillerDropdownOpen(false)
+                          }}
+                          style={{
+                            padding: '8px 10px',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            fontSize: '13.5px',
+                            fontWeight: isSelected ? '700' : '500',
+                            color: isSelected ? '#1d4ed8' : '#0f172a',
+                            background: isSelected ? '#eff6ff' : 'transparent',
+                            cursor: 'pointer',
+                            transition: 'background 0.12s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = '#f8fafc'
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'transparent'
+                          }}
+                        >
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            👤 {name}
+                          </span>
+                          <button
+                            type="button"
+                            title={`Delete ${name}`}
+                            onClick={(e) => handleDeleteBiller(name, e)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#94a3b8',
+                              fontSize: '14px',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              lineHeight: 1,
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#ef4444'
+                              e.currentTarget.style.background = '#fee2e2'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = '#94a3b8'
+                              e.currentTarget.style.background = 'transparent'
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
             )}
           </div>
         </div>
