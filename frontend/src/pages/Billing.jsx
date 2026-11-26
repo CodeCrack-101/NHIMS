@@ -1069,6 +1069,34 @@ export function Billing() {
     setRows((prev) => [...prev, createEmptyBillingRow()])
   }
 
+  // Quick Add Another Pattern with same catalogue right below a specific row
+  const handleAddPatternBelowRow = (targetRow, rowIndex) => {
+    if (!targetRow || !targetRow.catalogueId) {
+      handleAddRow()
+      return
+    }
+
+    const catObj = catalogues.find((c) => c._id === targetRow.catalogueId)
+    const newRow = {
+      ...createEmptyBillingRow(),
+      catalogueId: targetRow.catalogueId,
+      catalogueName: targetRow.catalogueName || catObj?.name || '',
+      catalogueSlug: targetRow.catalogueSlug || catObj?.slug || '',
+      rate: targetRow.rate || catObj?.defaultRate || 1250,
+      isCustom: Boolean(targetRow.isCustom),
+    }
+
+    setRows((prev) => {
+      const next = [...prev]
+      next.splice(rowIndex + 1, 0, newRow)
+      return next
+    })
+
+    if (targetRow.catalogueId !== 'CUSTOM') {
+      fetchPatternsForCatalogue(targetRow.catalogueId)
+    }
+  }
+
   // Open Multi-Pattern Selection Modal
   const handleOpenMultiPatternModal = (preferredCatId = '') => {
     // If there is an active catalogue in the table or passed in, use that as initial
@@ -1896,6 +1924,56 @@ export function Billing() {
                           )}
                         </>
                       )}
+                      {/* Quick + Add Pattern under Pattern Number */}
+                      {row.catalogueId && (
+                        <div style={{ marginTop: '5px' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleAddPatternBelowRow(row, index)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#2563eb',
+                              fontSize: '11.5px',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              padding: '2px 4px',
+                              borderRadius: '4px',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#1d4ed8'
+                              e.currentTarget.style.textDecoration = 'underline'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = '#2563eb'
+                              e.currentTarget.style.textDecoration = 'none'
+                            }}
+                            title={`Add another pattern from ${row.catalogueName || 'this catalogue'}`}
+                          >
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '15px',
+                                height: '15px',
+                                borderRadius: '50%',
+                                background: '#dbeafe',
+                                color: '#1d4ed8',
+                                fontSize: '11px',
+                                lineHeight: 1,
+                              }}
+                            >
+                              +
+                            </span>
+                            <span>Add Pattern</span>
+                          </button>
+                        </div>
+                      )}
                     </td>
 
                     {/* 3. Quantity Input + Available Stock Pill */}
@@ -1989,7 +2067,7 @@ export function Billing() {
         </div>
 
         {/* BELOW TABLE: Add More Rows */}
-        <div className="billing-add-more-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="billing-add-more-row">
           <button
             type="button"
             className="billing-glass-btn add-more-btn"
@@ -1997,22 +2075,6 @@ export function Billing() {
             title="Add a single new item row"
           >
             + Add Item Row
-          </button>
-          <button
-            type="button"
-            className="billing-glass-btn add-multi-pattern-btn"
-            style={{
-              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-              borderColor: '#93c5fd',
-              color: '#1d4ed8',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-            onClick={() => handleOpenMultiPatternModal()}
-            title="Pick a catalogue once and select multiple pattern numbers at once"
-          >
-            <span style={{ fontSize: '15px' }}>⚡</span> + Select Multiple Patterns (Same Catalogue)
           </button>
         </div>
 
