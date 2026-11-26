@@ -1385,24 +1385,13 @@ export function Billing() {
             <span className="billing-meta-label">INVOICE NO:</span>
             <strong className="billing-meta-value">{nextInvoiceNumber}</strong>
           </div>
-          <div className="billing-meta-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+          <div className="billing-meta-pill">
             <span className="billing-meta-label">BILL DATE:</span>
             <input
               type="date"
               value={invoiceDate}
               onChange={(e) => setInvoiceDate(e.target.value)}
               className="billing-meta-date-input"
-              style={{
-                border: '1px solid #cbd5e1',
-                borderRadius: '6px',
-                padding: '2px 8px',
-                fontSize: '13px',
-                fontWeight: '700',
-                color: '#0f172a',
-                background: '#ffffff',
-                cursor: 'pointer',
-                outline: 'none',
-              }}
               title="Click to select custom bill date (default is today)"
             />
           </div>
