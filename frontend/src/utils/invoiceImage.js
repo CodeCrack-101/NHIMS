@@ -269,7 +269,8 @@ export const generateInvoiceImageBlob = async (invoice) => {
 
   // Payment Status Line inside summary box
   p.font('bold', 6.5)
-  const payModeLabel = invoice.paymentMode ? ` (${invoice.paymentMode})` : ''
+  const timeSuffix = invoice.paymentTime ? ` @ ${invoice.paymentTime}` : ''
+  const payModeLabel = invoice.paymentMode ? ` (${invoice.paymentMode}${timeSuffix})` : ''
   if (isUnpaid) {
     p.color([185, 28, 28])
     p.text('Payment Status:', summaryX + 2.5, finalY + 7.5)

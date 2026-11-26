@@ -419,7 +419,8 @@ const generateInvoicePdfDoc = async (invoice) => {
   boxLineY += summaryLineH * 0.95
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(6.8 * scale)
-  const payModeText = invoice.paymentMode ? ` (${invoice.paymentMode})` : ''
+  const timeSuffix = invoice.paymentTime ? ` @ ${invoice.paymentTime}` : ''
+  const payModeText = invoice.paymentMode ? ` (${invoice.paymentMode}${timeSuffix})` : ''
   if (isUnpaid) {
     doc.setTextColor(185, 28, 28)
     doc.text('Status:', summaryBoxX + 2.5, boxLineY)

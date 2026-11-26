@@ -172,6 +172,7 @@ export const createBillTransaction = async ({
   taxRate = 0,
   paymentStatus = 'PAID',
   paymentMode = 'Cash',
+  paymentTime = '',
   idempotencyKey = null,
   billerName = '',
   invoiceDate = null,
@@ -510,6 +511,7 @@ export const createBillTransaction = async ({
           ? String(paymentStatus).toUpperCase()
           : 'PAID',
         paymentMode: String(paymentMode || 'Cash').trim(),
+        paymentTime: String(paymentTime || '').trim(),
         billerName: String(billerName || '').trim(),
         createdBy: userId,
       }
@@ -931,6 +933,7 @@ export const updateInvoiceAndAdjustStock = async (
     billerName,
     paymentStatus,
     paymentMode,
+    paymentTime,
     discountType,
     discountValue,
     taxRate,
@@ -1141,6 +1144,7 @@ export const updateInvoiceAndAdjustStock = async (
         ? String(paymentStatus).toUpperCase()
         : existingInvoice.paymentStatus,
       paymentMode: String(paymentMode || existingInvoice.paymentMode || 'Cash').trim(),
+      paymentTime: paymentTime !== undefined ? String(paymentTime || '').trim() : (existingInvoice.paymentTime || ''),
       items: processedInvoiceItems,
       totalItems: processedInvoiceItems.length,
       totalQuantity: runningTotalQty,

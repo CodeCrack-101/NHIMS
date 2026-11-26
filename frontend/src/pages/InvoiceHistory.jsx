@@ -573,7 +573,10 @@ export function InvoiceHistory() {
               {selectedInvoice.paymentMode && (
                 <div>
                   <span>Payment Method:</span>{' '}
-                  <strong style={{ color: '#2563eb' }}>{selectedInvoice.paymentMode}</strong>
+                  <strong style={{ color: '#2563eb' }}>
+                    {selectedInvoice.paymentMode}
+                    {selectedInvoice.paymentTime ? ` (${selectedInvoice.paymentTime})` : ''}
+                  </strong>
                 </div>
               )}
             </div>

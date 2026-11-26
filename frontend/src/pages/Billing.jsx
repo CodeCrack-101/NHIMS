@@ -419,6 +419,10 @@ export function Billing() {
   const [taxRate, setTaxRate] = useState(0)
   const [paymentStatus, setPaymentStatus] = useState('PAID') // 'PAID' | 'UNPAID'
   const [paymentMode, setPaymentMode] = useState('Cash') // 'Cash' | 'COD' | 'GPay' | 'Card' | 'UPI' | 'Cheque' | 'Bank Transfer (NEFT/RTGS)'
+  const [paymentTime, setPaymentTime] = useState(() => {
+    const now = new Date()
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  })
   const [historyPaymentStatus, setHistoryPaymentStatus] = useState('ALL')
   const [showPendingSidebar, setShowPendingSidebar] = useState(false)
   const [pendingSummary, setPendingSummary] = useState({
@@ -548,6 +552,7 @@ export function Billing() {
       invoiceDate: formattedDate,
       paymentStatus: inv.paymentStatus || 'PAID',
       paymentMode: inv.paymentMode || 'Cash',
+      paymentTime: inv.paymentTime || '',
       discountType: inv.discountType || 'PERCENTAGE',
       discountValue: inv.discountValue ?? 0,
       taxRate: inv.taxRate ?? 0,
@@ -611,6 +616,7 @@ export function Billing() {
         invoiceDate: editFormData.invoiceDate,
         paymentStatus: editFormData.paymentStatus,
         paymentMode: editFormData.paymentMode,
+        paymentTime: editFormData.paymentTime || '',
         discountType: editFormData.discountType,
         discountValue: Number(editFormData.discountValue) || 0,
         taxRate: Number(editFormData.taxRate) || 0,
@@ -1076,6 +1082,8 @@ export function Billing() {
     setTaxRate(0)
     setPaymentStatus('PAID')
     setPaymentMode('Cash')
+    const now = new Date()
+    setPaymentTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`)
     idempotencyKeyRef.current = `idem_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
   }
 
@@ -1263,6 +1271,7 @@ export function Billing() {
         taxRate: Number(taxRate) || 0,
         paymentStatus,
         paymentMode,
+        paymentTime: ['GPay', 'UPI', 'Card', 'Bank Transfer (NEFT/RTGS)'].includes(paymentMode) ? paymentTime : '',
         idempotencyKey: idempotencyKeyRef.current,
       }
 
@@ -1959,6 +1968,24 @@ export function Billing() {
                 </select>
               </div>
 
+              {/* Online Payment Received Time (24hr format) */}
+              {['GPay', 'UPI', 'Card', 'Bank Transfer (NEFT/RTGS)'].includes(paymentMode) && (
+                <div className="discount-type-field" style={{ minWidth: 0 }}>
+                  <label style={{ whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>Payment Time (24h)</span>
+                  </label>
+                  <input
+                    type="time"
+                    step="60"
+                    value={paymentTime}
+                    onChange={(e) => setPaymentTime(e.target.value)}
+                    className="billing-text-input"
+                    style={{ fontWeight: '600', padding: '9px 10px', height: '39px' }}
+                    title="Time when payment was received (24hr format)"
+                  />
+                </div>
+              )}
+
               {/* Payment Status Dropdown Menu: Paid vs Unpaid */}
               <div className="discount-type-field" style={{ minWidth: 0 }}>
                 <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px', whiteSpace: 'nowrap' }}>
@@ -2467,7 +2494,7 @@ export function Billing() {
               <div className="confirm-row" style={{ paddingTop: '4px' }}>
                 <span>Payment Method &amp; Status:</span>
                 <strong style={{ color: paymentStatus === 'PAID' ? '#16a34a' : '#dc2626' }}>
-                  {paymentMode} • {paymentStatus}
+                  {paymentMode} {['GPay', 'UPI', 'Card', 'Bank Transfer (NEFT/RTGS)'].includes(paymentMode) && paymentTime ? `(${paymentTime})` : ''} • {paymentStatus}
                 </strong>
               </div>
             </div>
@@ -2576,7 +2603,10 @@ export function Billing() {
               {selectedInvoiceModal.paymentMode && (
                 <div>
                   <span>Payment Method:</span>{' '}
-                  <strong style={{ color: '#2563eb' }}>{selectedInvoiceModal.paymentMode}</strong>
+                  <strong style={{ color: '#2563eb' }}>
+                    {selectedInvoiceModal.paymentMode}
+                    {selectedInvoiceModal.paymentTime ? ` (${selectedInvoiceModal.paymentTime})` : ''}
+                  </strong>
                 </div>
               )}
             </div>
@@ -2826,6 +2856,19 @@ export function Billing() {
                       <option value="Bank Transfer (NEFT/RTGS)">Bank Transfer</option>
                     </select>
                   </div>
+
+                  {['GPay', 'UPI', 'Card', 'Bank Transfer (NEFT/RTGS)'].includes(editFormData.paymentMode) && (
+                    <div className="discount-type-field">
+                      <label>Payment Time (24h)</label>
+                      <input
+                        type="time"
+                        step="60"
+                        className="billing-text-input"
+                        value={editFormData.paymentTime || ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, paymentTime: e.target.value })}
+                      />
+                    </div>
+                  )}
                   <div className="discount-type-field">
                     <label>Payment Status</label>
                     <select

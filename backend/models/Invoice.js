@@ -149,6 +149,11 @@ const invoiceSchema = new mongoose.Schema(
       default: 'Cash',
       trim: true,
     },
+    paymentTime: {
+      type: String, // 24-hr format e.g. "14:30" or "09:15"
+      trim: true,
+      default: '',
+    },
     finalTotal: {
       type: Number,
       required: true,
