@@ -447,6 +447,12 @@ export function Billing() {
   const [selectedInvoiceModal, setSelectedInvoiceModal] = useState(null)
   const [downloadingPdfId, setDownloadingPdfId] = useState(null)
 
+  // Multi-Pattern Selection Modal from Single Catalogue
+  const [showMultiPatternModal, setShowMultiPatternModal] = useState(false)
+  const [multiSelectCatId, setMultiSelectCatId] = useState('')
+  const [multiSelectedPatterns, setMultiSelectedPatterns] = useState([])
+  const [multiPatternSearch, setMultiPatternSearch] = useState('')
+
   // Edit Invoice State
   const [editingInvoice, setEditingInvoice] = useState(null)
   const [editFormData, setEditFormData] = useState({
@@ -1042,7 +1048,140 @@ export function Billing() {
 
   // Add More Row
   const handleAddRow = () => {
+    // If the last row already has a catalogue selected, inherit that catalogue for convenience
+    const lastRow = rows[rows.length - 1]
+    if (lastRow && lastRow.catalogueId && lastRow.catalogueId !== 'CUSTOM') {
+      const catObj = catalogues.find((c) => c._id === lastRow.catalogueId)
+      setRows((prev) => [
+        ...prev,
+        {
+          ...createEmptyBillingRow(),
+          catalogueId: lastRow.catalogueId,
+          catalogueName: lastRow.catalogueName || catObj?.name || '',
+          catalogueSlug: lastRow.catalogueSlug || catObj?.slug || '',
+          rate: lastRow.rate || catObj?.defaultRate || 1250,
+        },
+      ])
+      // Ensure patterns are loaded for this catalogue
+      fetchPatternsForCatalogue(lastRow.catalogueId)
+      return
+    }
     setRows((prev) => [...prev, createEmptyBillingRow()])
+  }
+
+  // Open Multi-Pattern Selection Modal
+  const handleOpenMultiPatternModal = (preferredCatId = '') => {
+    // If there is an active catalogue in the table or passed in, use that as initial
+    const initialCatId =
+      preferredCatId ||
+      rows.find((r) => r.catalogueId && r.catalogueId !== 'CUSTOM')?.catalogueId ||
+      (catalogues.length > 0 ? catalogues[0]._id : '')
+
+    setMultiSelectCatId(initialCatId)
+    setMultiSelectedPatterns([])
+    setMultiPatternSearch('')
+    setShowMultiPatternModal(true)
+    if (initialCatId) {
+      fetchPatternsForCatalogue(initialCatId)
+    }
+  }
+
+  // Toggle Pattern Selection in Multi-Pattern Modal
+  const handleToggleMultiPattern = (pattern) => {
+    setMultiSelectedPatterns((prev) => {
+      const exists = prev.some((p) => p._id === pattern._id)
+      if (exists) {
+        return prev.filter((p) => p._id !== pattern._id)
+      } else {
+        return [...prev, pattern]
+      }
+    })
+  }
+
+  // Select / Deselect All Filtered Patterns
+  const handleToggleSelectAllPatterns = (filteredPatterns) => {
+    const availableFiltered = filteredPatterns.filter((p) => p.quantity > 0)
+    const allSelected = availableFiltered.length > 0 && availableFiltered.every((p) =>
+      multiSelectedPatterns.some((sp) => sp._id === p._id)
+    )
+
+    if (allSelected) {
+      // Unselect all these
+      setMultiSelectedPatterns((prev) =>
+        prev.filter((p) => !availableFiltered.some((fp) => fp._id === p._id))
+      )
+    } else {
+      // Select all available
+      setMultiSelectedPatterns((prev) => {
+        const map = new Map(prev.map((p) => [p._id, p]))
+        availableFiltered.forEach((p) => map.set(p._id, p))
+        return Array.from(map.values())
+      })
+    }
+  }
+
+  // Confirm Multi-Pattern Selection and Append to Rows
+  const handleConfirmMultiPatterns = () => {
+    if (!multiSelectCatId || multiSelectedPatterns.length === 0) {
+      setShowMultiPatternModal(false)
+      return
+    }
+
+    const catObj = catalogues.find((c) => c._id === multiSelectCatId)
+    const catRate = catObj?.defaultRate ?? 1250
+
+    // Filter out rows that are completely blank (empty catalogue and empty pattern)
+    const existingNonEmptyRows = rows.filter(
+      (r) => r.catalogueId || r.patternNumber || r.isCustom
+    )
+
+    // Create new rows for each selected pattern
+    const newPatternRows = multiSelectedPatterns.map((pat) => ({
+      rowId: `row_${Date.now()}_${rowIdSeq++}_${pat.patternNumber}`,
+      catalogueId: multiSelectCatId,
+      catalogueName: catObj?.name || '',
+      catalogueSlug: catObj?.slug || '',
+      patternId: pat._id,
+      patternNumber: String(pat.patternNumber),
+      availableStock: pat.quantity,
+      quantity: 1,
+      rate: catRate,
+      imagePath: pat.imagePath || '',
+      isCustom: false,
+    }))
+
+    // Combine and ensure duplicate consolidation if already present
+    const consolidated = [...existingNonEmptyRows]
+    newPatternRows.forEach((newRow) => {
+      const existingMatchIndex = consolidated.findIndex(
+        (r) =>
+          r.catalogueId === newRow.catalogueId &&
+          r.patternNumber === newRow.patternNumber
+      )
+      if (existingMatchIndex !== -1) {
+        // Increment quantity if stock permits
+        const curr = consolidated[existingMatchIndex]
+        const nextQty = Math.min(
+          newRow.availableStock,
+          (Number(curr.quantity) || 1) + 1
+        )
+        consolidated[existingMatchIndex] = {
+          ...curr,
+          quantity: nextQty,
+        }
+      } else {
+        consolidated.push(newRow)
+      }
+    })
+
+    setRows(consolidated.length > 0 ? consolidated : [createEmptyBillingRow()])
+    setShowMultiPatternModal(false)
+    showToast({
+      type: 'success',
+      title: 'Patterns Added',
+      message: `Added ${multiSelectedPatterns.length} pattern(s) from "${catObj?.name || 'Catalogue'}".`,
+      duration: 3500,
+    })
   }
 
   // Add Custom / UV Extra Row (No stock deduction)
@@ -1850,13 +1989,30 @@ export function Billing() {
         </div>
 
         {/* BELOW TABLE: Add More Rows */}
-        <div className="billing-add-more-row">
+        <div className="billing-add-more-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <button
             type="button"
             className="billing-glass-btn add-more-btn"
             onClick={handleAddRow}
+            title="Add a single new item row"
           >
             + Add Item Row
+          </button>
+          <button
+            type="button"
+            className="billing-glass-btn add-multi-pattern-btn"
+            style={{
+              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+              borderColor: '#93c5fd',
+              color: '#1d4ed8',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            onClick={() => handleOpenMultiPatternModal()}
+            title="Pick a catalogue once and select multiple pattern numbers at once"
+          >
+            <span style={{ fontSize: '15px' }}>⚡</span> + Select Multiple Patterns (Same Catalogue)
           </button>
         </div>
 
@@ -2432,6 +2588,264 @@ export function Billing() {
         </div>
       )}
 
+
+      {/* 4.5 Multi-Pattern Selector Modal (Pick Catalogue Once, Select Multiple Patterns) */}
+      {showMultiPatternModal && (
+        <div
+          className="billing-modal-backdrop"
+          onClick={() => setShowMultiPatternModal(false)}
+        >
+          <div
+            className="billing-modal-card multi-pattern-modal-card"
+            style={{ maxWidth: '680px', width: '92%', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div>
+                <h3 className="billing-modal-title" style={{ margin: 0, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>⚡</span> Multi-Pattern Quick Selector
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+                  Select catalogue once and pick all the patterns you want to bill.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="pending-drawer-close-btn"
+                style={{ position: 'static' }}
+                onClick={() => setShowMultiPatternModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Catalogue Selection Dropdown */}
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
+                Choose Catalogue
+              </label>
+              <SearchableSelect
+                value={multiSelectCatId}
+                onChange={(catId) => {
+                  setMultiSelectCatId(catId)
+                  setMultiSelectedPatterns([])
+                  if (catId) {
+                    fetchPatternsForCatalogue(catId)
+                  }
+                }}
+                placeholder="Choose catalogue..."
+                options={catalogues.map((cat) => ({
+                  value: cat._id,
+                  label: formatCatalogueLabel(cat.name),
+                  searchKeywords: `${cat.name} ${cat.slug}`,
+                  badgeText: `Stock: ${cat.totalStock ?? 0}`,
+                  badgeTone: (cat.totalStock ?? 0) > 0 ? 'success' : 'danger',
+                }))}
+              />
+            </div>
+
+            {/* Pattern Search & Select-All Bar */}
+            {multiSelectCatId && (
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '12px' }}>
+                <input
+                  type="text"
+                  placeholder="Filter pattern numbers (e.g. 101, 102)..."
+                  value={multiPatternSearch}
+                  onChange={(e) => setMultiPatternSearch(e.target.value)}
+                  className="billing-text-input"
+                  style={{ flex: 1, padding: '8px 12px', fontSize: '13.5px' }}
+                />
+                {(() => {
+                  const catPatterns = patternsByCatalogue[multiSelectCatId] || []
+                  const filtered = catPatterns.filter((p) =>
+                    String(p.patternNumber).toLowerCase().includes(multiPatternSearch.toLowerCase().trim())
+                  )
+                  const availableFiltered = filtered.filter((p) => p.quantity > 0)
+                  const isAllSelected =
+                    availableFiltered.length > 0 &&
+                    availableFiltered.every((p) =>
+                      multiSelectedPatterns.some((sp) => sp._id === p._id)
+                    )
+
+                  return (
+                    <button
+                      type="button"
+                      className="billing-glass-btn"
+                      style={{
+                        padding: '6px 14px',
+                        fontSize: '12.5px',
+                        whiteSpace: 'nowrap',
+                        background: isAllSelected ? '#eff6ff' : '#ffffff',
+                        borderColor: isAllSelected ? '#3b82f6' : '#cbd5e1',
+                      }}
+                      onClick={() => handleToggleSelectAllPatterns(filtered)}
+                      disabled={availableFiltered.length === 0}
+                    >
+                      {isAllSelected ? 'Deselect All' : 'Select All'}
+                    </button>
+                  )
+                })()}
+              </div>
+            )}
+
+            {/* Patterns Grid / Chips */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '12px',
+                background: '#f8fafc',
+                minHeight: '180px',
+                maxHeight: '340px',
+              }}
+            >
+              {!multiSelectCatId ? (
+                <div style={{ textAlign: 'center', padding: '36px 16px', color: '#94a3b8', fontSize: '13.5px' }}>
+                  Please select a catalogue above to view and pick patterns.
+                </div>
+              ) : loadingPatternsMap[multiSelectCatId] ? (
+                <div style={{ textAlign: 'center', padding: '36px 16px', color: '#64748b', fontSize: '13.5px' }}>
+                  Loading patterns from catalogue...
+                </div>
+              ) : (() => {
+                const catPatterns = patternsByCatalogue[multiSelectCatId] || []
+                const filtered = catPatterns.filter((p) =>
+                  String(p.patternNumber).toLowerCase().includes(multiPatternSearch.toLowerCase().trim())
+                )
+
+                if (filtered.length === 0) {
+                  return (
+                    <div style={{ textAlign: 'center', padding: '36px 16px', color: '#94a3b8', fontSize: '13.5px' }}>
+                      No patterns found matching "{multiPatternSearch}".
+                    </div>
+                  )
+                }
+
+                return (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                      gap: '8px',
+                    }}
+                  >
+                    {filtered.map((pat) => {
+                      const isSelected = multiSelectedPatterns.some((sp) => sp._id === pat._id)
+                      const isOutOfStock = pat.quantity <= 0
+
+                      return (
+                        <div
+                          key={pat._id}
+                          onClick={() => {
+                            if (!isOutOfStock) handleToggleMultiPattern(pat)
+                          }}
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            border: isSelected
+                              ? '2px solid #2563eb'
+                              : isOutOfStock
+                              ? '1px dashed #cbd5e1'
+                              : '1px solid #e2e8f0',
+                            background: isSelected
+                              ? '#eff6ff'
+                              : isOutOfStock
+                              ? '#f1f5f9'
+                              : '#ffffff',
+                            cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                            opacity: isOutOfStock ? 0.6 : 1,
+                            transition: 'all 0.15s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                            position: 'relative',
+                            userSelect: 'none',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span
+                              style={{
+                                fontSize: '14px',
+                                fontWeight: '700',
+                                color: isSelected ? '#1d4ed8' : '#0f172a',
+                              }}
+                            >
+                              {pat.patternNumber}
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              disabled={isOutOfStock}
+                              onChange={() => {}}
+                              style={{ cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: '600',
+                                color: isOutOfStock
+                                  ? '#ef4444'
+                                  : pat.quantity < 10
+                                  ? '#d97706'
+                                  : '#16a34a',
+                              }}
+                            >
+                              {isOutOfStock ? 'Out of stock' : `${pat.quantity} rolls`}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* Modal Bottom Action Bar */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '16px',
+                paddingTop: '12px',
+                borderTop: '1px solid #e2e8f0',
+              }}
+            >
+              <div style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>
+                Selected: <strong style={{ color: '#2563eb' }}>{multiSelectedPatterns.length} pattern(s)</strong>
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="billing-glass-btn"
+                  onClick={() => setShowMultiPatternModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="billing-glass-btn"
+                  style={{
+                    background: multiSelectedPatterns.length > 0 ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : '#e2e8f0',
+                    color: multiSelectedPatterns.length > 0 ? '#ffffff' : '#94a3b8',
+                    borderColor: multiSelectedPatterns.length > 0 ? '#1d4ed8' : '#cbd5e1',
+                    boxShadow: multiSelectedPatterns.length > 0 ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none',
+                  }}
+                  disabled={multiSelectedPatterns.length === 0}
+                  onClick={handleConfirmMultiPatterns}
+                >
+                  Add {multiSelectedPatterns.length} Pattern(s) to Bill
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 5. Confirmation Modal Before Generating Bill */}
       {showConfirmModal && (
