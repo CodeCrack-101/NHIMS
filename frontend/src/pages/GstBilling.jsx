@@ -1094,8 +1094,8 @@ export function GstBilling() {
               {submitting
                 ? 'Processing...'
                 : editingInvoiceId
-                ? '💾 Update & Print Invoice'
-                : '🖨️ Print GST Tax Invoice'}
+                ? 'Update & Print Invoice'
+                : 'Print GST Tax Invoice'}
             </button>
             <button
               type="button"
@@ -1106,8 +1106,8 @@ export function GstBilling() {
               {submitting
                 ? 'Processing...'
                 : editingInvoiceId
-                ? '💾 Update & Download PDF'
-                : '⬇️ Download PDF'}
+                ? 'Update & Download PDF'
+                : 'Download PDF'}
             </button>
             {editingInvoiceId && (
               <button
@@ -1196,7 +1196,7 @@ export function GstBilling() {
                       style={{ marginRight: '6px' }}
                       title="Edit this invoice"
                     >
-                      ✏️ Edit
+                      Edit
                     </button>
                     <button
                       type="button"
@@ -1220,7 +1220,7 @@ export function GstBilling() {
                       onClick={() => setInvoiceToDelete(inv)}
                       title="Delete invoice and restore inventory stock"
                     >
-                      🗑️ Delete
+                      Delete
                     </button>
                   </td>
                 </tr>
