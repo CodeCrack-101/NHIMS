@@ -373,6 +373,13 @@ export const createBillTransaction = async ({
           )
         }
 
+        const updateFields = {
+          $inc: { quantity: -reqItem.quantity },
+        }
+        if (reqItem.rate > 0) {
+          updateFields.$set = { rate: reqItem.rate }
+        }
+
         const updateOpts = session ? { new: true, session } : { new: true }
         const updatedInventory = await Inventory.findOneAndUpdate(
           {
@@ -380,10 +387,7 @@ export const createBillTransaction = async ({
             patternNumber: reqItem.patternNumber,
             quantity: { $gte: reqItem.quantity },
           },
-          {
-            $inc: { quantity: -reqItem.quantity },
-            $set: { rate: reqItem.rate },
-          },
+          updateFields,
           updateOpts
         ).lean()
 

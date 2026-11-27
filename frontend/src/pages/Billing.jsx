@@ -607,8 +607,8 @@ export function Billing() {
         showToast('error', `Quantity for Pattern ${it.patternNumber || 'item'} must be > 0.`)
         return
       }
-      if (!it.rate || Number(it.rate) <= 0) {
-        showToast('error', `Rate for Pattern ${it.patternNumber || 'item'} must be > ₹0.`)
+      if (it.rate === '' || it.rate === null || it.rate === undefined || Number(it.rate) < 0) {
+        showToast('error', `Rate for Pattern ${it.patternNumber || 'item'} must be >= ₹0.`)
         return
       }
     }
@@ -990,7 +990,7 @@ export function Billing() {
               patternNumber: String(patObj.patternNumber),
               availableStock: initialQty,
               quantity: Math.min(Number(r.quantity) || 1, Math.max(1, initialQty)),
-              rate: Number(r.rate) > 0 ? r.rate : initialRate,
+              rate: (r.rate !== '' && r.rate !== undefined && r.rate !== null && Number(r.rate) === 0) ? 0 : (Number(r.rate) > 0 ? r.rate : initialRate),
               imagePath: patObj.imagePath || '',
             }
           : r
@@ -1059,7 +1059,7 @@ export function Billing() {
           catalogueId: lastRow.catalogueId,
           catalogueName: lastRow.catalogueName || catObj?.name || '',
           catalogueSlug: lastRow.catalogueSlug || catObj?.slug || '',
-          rate: lastRow.rate || catObj?.defaultRate || 1250,
+          rate: (lastRow.rate !== undefined && lastRow.rate !== '' && Number(lastRow.rate) >= 0) ? lastRow.rate : (catObj?.defaultRate ?? 1250),
         },
       ])
       // Ensure patterns are loaded for this catalogue
@@ -1082,7 +1082,7 @@ export function Billing() {
       catalogueId: targetRow.catalogueId,
       catalogueName: targetRow.catalogueName || catObj?.name || '',
       catalogueSlug: targetRow.catalogueSlug || catObj?.slug || '',
-      rate: targetRow.rate || catObj?.defaultRate || 1250,
+      rate: (targetRow.rate !== undefined && targetRow.rate !== '' && Number(targetRow.rate) >= 0) ? targetRow.rate : (catObj?.defaultRate ?? 1250),
       isCustom: Boolean(targetRow.isCustom),
     }
 
@@ -1262,8 +1262,9 @@ export function Billing() {
 
     rows.forEach((r) => {
       const q = Number(r.quantity) || 0
-      const rate = Number(r.rate) || 0
-      if (r.catalogueId && r.patternNumber && q > 0 && rate > 0) {
+      const hasRate = r.rate !== '' && r.rate !== null && r.rate !== undefined && !Number.isNaN(Number(r.rate))
+      const rate = hasRate ? Number(r.rate) : 0
+      if (r.catalogueId && r.patternNumber && q > 0 && hasRate && rate >= 0) {
         totalItems += 1
         totalQuantity += q
         subtotal = round2(subtotal + round2(q * rate))
@@ -1337,8 +1338,9 @@ export function Billing() {
         err.quantity = `Max available is ${r.availableStock} rolls`
       }
 
+      const hasRate = r.rate !== '' && r.rate !== null && r.rate !== undefined && !Number.isNaN(Number(r.rate))
       const rate = Number(r.rate)
-      if (!Number.isFinite(rate) || rate < 0) {
+      if (!hasRate || !Number.isFinite(rate) || rate < 0) {
         err.rate = 'Rate must be >= ₹0'
       }
 
@@ -1818,7 +1820,7 @@ export function Billing() {
                 const rowQty = Number(row.quantity) || 0
                 const rowRate = Number(row.rate) || 0
                 const rowSubtotal =
-                  rowQty > 0 && rowRate > 0 ? round2(rowQty * rowRate) : 0
+                  rowQty > 0 && rowRate >= 0 ? round2(rowQty * rowRate) : 0
                 const exceedsStock =
                   !row.isCustom &&
                   row.catalogueId !== 'CUSTOM' &&
@@ -2025,7 +2027,7 @@ export function Billing() {
                         <span className="currency-prefix">₹</span>
                         <input
                           type="number"
-                          min={1}
+                          min={0}
                           step="0.01"
                           value={row.rate}
                           placeholder="1250"
@@ -3513,7 +3515,7 @@ export function Billing() {
                               <td>
                                 <input
                                   type="number"
-                                  min={1}
+                                  min={0}
                                   step="0.01"
                                   className="billing-num-input"
                                   style={{ width: '100%', padding: '6px' }}
