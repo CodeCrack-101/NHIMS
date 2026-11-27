@@ -143,6 +143,7 @@ export const paginateInvoiceItems = (items = []) => {
 
 /**
  * Standard A4 GST Tax Invoice Generator with Auto-Fitting Single / Multi-Page Engine
+ * Includes full Terms & Conditions, HSN Tax Breakdown, and Authorized Signatory.
  */
 export const generateGstTaxInvoicePdfDoc = async (inv) => {
   if (!inv) return null
@@ -186,7 +187,7 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
   let totalsRowHeight = 8.5
   let summaryBoxHeight = 16
   let taxBoxH = 26
-  let sigBoxH = 32
+  let sigBoxH = 30
   let sectionGap = 3.5
 
   if (totalPages === 1) {
@@ -200,7 +201,7 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
       totalsRowHeight = 8.5
       summaryBoxHeight = 16
       taxBoxH = 26
-      sigBoxH = 32
+      sigBoxH = 30
       sectionGap = 3.5
     } else if (n <= 11) {
       startY = 8
@@ -212,7 +213,7 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
       totalsRowHeight = 8.0
       summaryBoxHeight = 15
       taxBoxH = 25
-      sigBoxH = 29
+      sigBoxH = 28
       sectionGap = 3.0
     } else {
       // 12 to 16 items: Smart compact single-page layout
@@ -225,7 +226,7 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
       totalsRowHeight = 7.0
       summaryBoxHeight = 13.5
       taxBoxH = 22
-      sigBoxH = 25
+      sigBoxH = 26
       sectionGap = 2.0
     }
   } else {
@@ -239,7 +240,7 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
     totalsRowHeight = 8.0
     summaryBoxHeight = 15
     taxBoxH = 25
-    sigBoxH = 29
+    sigBoxH = 28
     sectionGap = 3.0
   }
 
@@ -575,7 +576,7 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
       })
     } else {
       // ==========================================
-      // Final Page: Totals Row, Summary Box, Tax Breakdown & Signature
+      // Final Page: Totals Row, Summary Box, Tax Breakdown, Terms & Conditions & Signature
       // ==========================================
       doc.setFillColor(248, 250, 252)
       doc.rect(marginX, currentY, usableWidth, totalsRowHeight, 'FD')
@@ -811,11 +812,42 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
 
       currentY += taxBoxH + sectionGap
 
-      // Signature Box ("For NH WALLPAPER:" + Signature + "Authorized Signatory")
-      const sigBoxW = 95
-      const sigBoxX = pageWidth - marginX - sigBoxW
+      // ==========================================
+      // 7. Terms & Conditions Box (Left) & Signature Box (Right) Side-by-Side
+      // ==========================================
+      const termsBoxW = 94
+      const termsBoxX = marginX
+      const sigBoxW = usableWidth - termsBoxW - 4 // 92 mm
+      const sigBoxX = marginX + termsBoxW + 4
+
+      // Left Box: Terms & Conditions
       doc.setDrawColor(51, 65, 85)
       doc.setLineWidth(0.35)
+      doc.rect(termsBoxX, currentY, termsBoxW, sigBoxH)
+
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(sigBoxH <= 26 ? 7.2 : 7.8)
+      doc.setTextColor(15, 23, 42)
+      doc.text('Terms & Conditions :', termsBoxX + 3, currentY + (sigBoxH <= 26 ? 4.5 : 5.5))
+
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(sigBoxH <= 26 ? 5.8 : 6.5)
+      doc.setTextColor(71, 85, 105)
+
+      const termLineGap = sigBoxH <= 26 ? 3.4 : 4.0
+      const termStartY = currentY + (sigBoxH <= 26 ? 8.2 : 10.0)
+
+      doc.text('•  Subject to Mumbai Jurisdiction.', termsBoxX + 3, termStartY)
+      doc.text('•  No complaint will be entertained after acceptance of delivery.', termsBoxX + 3, termStartY + termLineGap, { maxWidth: termsBoxW - 6 })
+      doc.text('•  Goods once sold will not be taken back or exchanged.', termsBoxX + 3, termStartY + termLineGap * 2)
+      doc.text('•  Our responsibility ceases after delivery of goods to carriers.', termsBoxX + 3, termStartY + termLineGap * 3)
+
+      doc.setFont('helvetica', 'bolditalic')
+      doc.setFontSize(sigBoxH <= 26 ? 5.5 : 6.2)
+      doc.setTextColor(100, 116, 139)
+      doc.text('Thank you for your business! — NH Wallpaper', termsBoxX + 3, currentY + sigBoxH - 2.5)
+
+      // Right Box: Signature Box ("For NH WALLPAPER:" + Signature + "Authorized Signatory")
       doc.rect(sigBoxX, currentY, sigBoxW, sigBoxH)
 
       doc.setFont('helvetica', 'bold')
@@ -825,9 +857,9 @@ export const generateGstTaxInvoicePdfDoc = async (inv) => {
 
       // Signature Image or fallback vector
       const sigImgH = Math.min(20, sigBoxH - 8)
-      const sigImgW = sigImgH * 2.8
+      const sigImgW = Math.min(sigBoxW - 20, sigImgH * 2.8)
       if (signatureDataUrl) {
-        doc.addImage(signatureDataUrl, 'PNG', sigBoxX + 15, currentY + 5.5, sigImgW, sigImgH)
+        doc.addImage(signatureDataUrl, 'PNG', sigBoxX + (sigBoxW - sigImgW) / 2, currentY + 5.5, sigImgW, sigImgH)
       } else {
         doc.setDrawColor(30, 41, 59)
         doc.setLineWidth(0.4)
