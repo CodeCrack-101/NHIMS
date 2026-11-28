@@ -615,7 +615,7 @@ export const searchAndListInvoices = async ({
   if (q) {
     const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const regex = new RegExp(escaped, 'i')
-    filter.$or = [
+    const orConditions = [
       { invoiceNumber: regex },
       { customerName: regex },
       { mobileNumber: regex },
@@ -623,6 +623,26 @@ export const searchAndListInvoices = async ({
       { 'items.patternNumber': regex },
       { 'items.catalogueName': regex },
     ]
+
+    // If q is pure digits or contains numbers (e.g. searching "5" for invoice "2611-0005" or "5")
+    const numericPart = q.replace(/\D/g, '')
+    if (numericPart) {
+      const numVal = parseInt(numericPart, 10)
+      if (!Number.isNaN(numVal)) {
+        // Also match suffix after hyphen, e.g. -0005, -005, -5
+        const padded4 = String(numVal).padStart(4, '0')
+        const padded3 = String(numVal).padStart(3, '0')
+        const padded2 = String(numVal).padStart(2, '0')
+        orConditions.push(
+          { invoiceNumber: new RegExp(`-${padded4}$`, 'i') },
+          { invoiceNumber: new RegExp(`-${padded3}$`, 'i') },
+          { invoiceNumber: new RegExp(`-${padded2}$`, 'i') },
+          { invoiceNumber: new RegExp(`-${numVal}$`, 'i') }
+        )
+      }
+    }
+
+    filter.$or = orConditions
   }
 
   if (paymentStatus && paymentStatus !== 'ALL') {

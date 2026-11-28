@@ -742,10 +742,10 @@ export function Billing() {
   // Debounced search/date filter for Invoice History
   useEffect(() => {
     const timer = setTimeout(() => {
-      loadInvoiceHistory(historySearch, historyDate, true)
+      loadInvoiceHistory(historySearch, historyDate, historyPaymentStatus, true)
     }, 220)
     return () => clearTimeout(timer)
-  }, [historySearch, historyDate, loadInvoiceHistory])
+  }, [historySearch, historyDate, historyPaymentStatus, loadInvoiceHistory])
 
   // Real-Time Server-Sent Events (SSE) subscription to keep stock quantities synchronized
   useEffect(() => {

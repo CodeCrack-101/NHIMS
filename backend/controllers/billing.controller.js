@@ -143,7 +143,7 @@ export const listInvoicesController = async (req, res, next) => {
 
 export const searchInvoicesController = async (req, res, next) => {
   try {
-    const { q, search, date, startDate, endDate, catalogue, minPrice, maxPrice, billerName, page, limit } = req.query
+    const { q, search, date, startDate, endDate, catalogue, minPrice, maxPrice, billerName, paymentStatus, page, limit } = req.query
     const [data, billers] = await Promise.all([
       searchAndListInvoices({
         search: q || search || '',
@@ -154,6 +154,7 @@ export const searchInvoicesController = async (req, res, next) => {
         minPrice,
         maxPrice,
         billerName,
+        paymentStatus,
         page,
         limit,
       }),
@@ -165,10 +166,6 @@ export const searchInvoicesController = async (req, res, next) => {
         ...data,
         billers,
       },
-    })
-    res.status(200).json({
-      success: true,
-      data,
     })
   } catch (err) {
     next(err)
