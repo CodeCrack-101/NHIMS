@@ -190,6 +190,7 @@ export const generateInvoiceImageBlob = async (invoice) => {
 
   // ---------- Items Table ----------
   y = tableStartY
+  const tableTopY = y
   p.rect(MARGIN_X, y, PAGE_W - MARGIN_X * 2, 6.5, [241, 245, 249], [203, 213, 225])
   p.color([15, 23, 42])
   p.font('bold', 6.5)
@@ -202,7 +203,7 @@ export const generateInvoiceImageBlob = async (invoice) => {
   y += 6.5
 
   items.forEach((item, idx) => {
-    p.line(MARGIN_X, y + rowHeight, right, y + rowHeight, [226, 232, 240])
+    p.line(MARGIN_X, y + rowHeight, right, y + rowHeight, [203, 213, 225])
 
     p.color([71, 85, 105])
     p.font('normal', 6.5)
@@ -222,6 +223,22 @@ export const generateInvoiceImageBlob = async (invoice) => {
     p.text(formatNumber(item.subtotal), right - 1.5, y + 4.8, 'right')
 
     y += rowHeight
+  })
+
+  const tableBottomY = y
+  // Outer border box around table
+  p.rect(MARGIN_X, tableTopY, PAGE_W - MARGIN_X * 2, tableBottomY - tableTopY, null, [203, 213, 225])
+
+  // Vertical lines for columns (making separate box cells)
+  const imageVerticals = [
+    MARGIN_X + 6,
+    MARGIN_X + 28,
+    MARGIN_X + 43,
+    MARGIN_X + 55,
+    right - 14,
+  ]
+  imageVerticals.forEach((vx) => {
+    p.line(vx, tableTopY, vx, tableBottomY, [203, 213, 225], 0.25)
   })
 
   // ---------- Totals Summary ----------

@@ -268,8 +268,9 @@ const generateInvoicePdfDoc = async (invoice) => {
   }
 
   const thH = Math.round(6.5 * (scale < 0.8 ? 0.85 : 1.0))
+  const tableStartY = currentY
   doc.setFillColor(241, 245, 249)
-  doc.roundedRect(marginX, currentY, usableWidth, thH, 1.5, 1.5, 'F')
+  doc.rect(marginX, currentY, usableWidth, thH, 'F')
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(tableFontSize)
@@ -283,8 +284,7 @@ const generateInvoicePdfDoc = async (invoice) => {
   doc.text('Rate', colX.rate, thTextY)
   doc.text('Amount', colX.amt, thTextY, { align: 'right' })
 
-  currentY += thH + 0.4
-  const tableStartY = currentY - thH - 0.4
+  currentY += thH
 
   items.forEach((item, index) => {
     const isEven = index % 2 === 0
@@ -320,7 +320,7 @@ const generateInvoicePdfDoc = async (invoice) => {
     doc.text(formatNumberPdf(item.subtotal), colX.amt, textY, { align: 'right' })
 
     // Row underline
-    doc.setDrawColor(241, 245, 249)
+    doc.setDrawColor(203, 213, 225)
     doc.setLineWidth(0.2)
     doc.line(marginX, currentY + rowHeight, pageWidth - marginX, currentY + rowHeight)
 
@@ -329,9 +329,14 @@ const generateInvoicePdfDoc = async (invoice) => {
 
   const tableBottomY = currentY
 
-  // Outer border & Vertical Dividers for Table
+  // Header separator line
   doc.setDrawColor(203, 213, 225)
   doc.setLineWidth(0.3)
+  doc.line(marginX, tableStartY + thH, marginX + usableWidth, tableStartY + thH)
+
+  // Outer border & Vertical Dividers for Table (Box Grid)
+  doc.setDrawColor(203, 213, 225)
+  doc.setLineWidth(0.35)
   doc.rect(marginX, tableStartY, usableWidth, tableBottomY - tableStartY)
 
   const verticalLines = [
@@ -339,7 +344,7 @@ const generateInvoicePdfDoc = async (invoice) => {
     colX.pat - 1.5,
     colX.qty - 1.5,
     colX.rate - 1.5,
-    colX.amt - 13.5,
+    colX.amt - 11.5,
   ]
   verticalLines.forEach((vx) => {
     doc.line(vx, tableStartY, vx, tableBottomY)
