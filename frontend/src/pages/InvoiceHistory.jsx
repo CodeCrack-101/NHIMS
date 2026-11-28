@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { billingService } from '../services/billingService.js'
 import { formatCatalogueLabel } from '../services/catalogueService.js'
+import { SearchableSelect } from '../components/SearchableSelect.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useDownloadProgress, ProgressButton } from '../context/DownloadProgressContext.jsx'
 import { downloadInvoicePdf, printInvoiceDocument } from '../utils/exportInvoicePdf.js'
@@ -42,6 +43,132 @@ export function InvoiceHistory() {
 
   // Modal preview state
   const [selectedInvoice, setSelectedInvoice] = useState(null)
+
+  // Edit Invoice Modal state
+  const [editingInvoice, setEditingInvoice] = useState(null)
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [patternsByCatalogue, setPatternsByCatalogue] = useState({})
+  const [editFormData, setEditFormData] = useState({
+    customerName: '',
+    mobileNumber: '',
+    billerName: '',
+    invoiceDate: '',
+    paymentStatus: 'PAID',
+    paymentMode: 'Cash',
+    paymentTime: '',
+    discountType: 'PERCENTAGE',
+    discountValue: 0,
+    taxRate: 0,
+    items: [],
+  })
+
+  const fetchPatternsForCatalogue = useCallback(
+    async (catId) => {
+      if (!catId || catId === 'CUSTOM') return []
+      if (patternsByCatalogue[catId]) return patternsByCatalogue[catId]
+      try {
+        const res = await billingService.getPatternsByCatalogue(catId)
+        const patterns = res.data?.data?.patterns || []
+        setPatternsByCatalogue((prev) => ({ ...prev, [catId]: patterns }))
+        return patterns
+      } catch {
+        return []
+      }
+    },
+    [patternsByCatalogue]
+  )
+
+  const handleOpenEditModal = (inv) => {
+    if (!inv) return
+    const rawD = inv.invoiceDate ? new Date(inv.invoiceDate) : new Date(inv.createdAt || Date.now())
+    const y = rawD.getFullYear()
+    const m = String(rawD.getMonth() + 1).padStart(2, '0')
+    const day = String(rawD.getDate()).padStart(2, '0')
+    const formattedDate = `${y}-${m}-${day}`
+
+    setEditingInvoice(inv)
+    setEditFormData({
+      customerName: inv.customerName || '',
+      mobileNumber: inv.mobileNumber || '',
+      billerName: inv.billerName || '',
+      invoiceDate: formattedDate,
+      paymentStatus: inv.paymentStatus || 'PAID',
+      paymentMode: inv.paymentMode || 'Cash',
+      paymentTime: inv.paymentTime || '',
+      discountType: inv.discountType || 'PERCENTAGE',
+      discountValue: inv.discountValue ?? 0,
+      taxRate: inv.taxRate ?? 0,
+      items: (inv.items || []).map((it) => {
+        const catId = it.isCustom || !it.catalogueId || it.catalogueId === 'CUSTOM' ? 'CUSTOM' : (it.catalogueId?._id || it.catalogueId)
+        if (catId && catId !== 'CUSTOM') {
+          fetchPatternsForCatalogue(catId)
+        }
+        return {
+          catalogueId: catId,
+          catalogueName: it.catalogueName || '',
+          catalogueSlug: it.catalogueSlug || '',
+          patternNumber: it.patternNumber || '',
+          imagePath: it.imagePath || '',
+          quantity: it.quantity,
+          rate: it.rate,
+          isCustom: Boolean(it.isCustom || !it.catalogueId || it.catalogueId === 'CUSTOM'),
+        }
+      }),
+    })
+  }
+
+  const handleSaveEditInvoice = async (e) => {
+    e.preventDefault()
+    if (!editingInvoice) return
+
+    if (!editFormData.customerName.trim() || editFormData.customerName.trim().length < 2) {
+      showToast('error', 'Customer name must be at least 2 characters.')
+      return
+    }
+    const cleanPhone = editFormData.mobileNumber.trim().replace(/[\s\-+()]/g, '')
+    if (!/^\d{10}$/.test(cleanPhone)) {
+      showToast('error', 'Please enter a valid 10-digit mobile number.')
+      return
+    }
+    if (!editFormData.items || editFormData.items.length === 0) {
+      showToast('error', 'Invoice must contain at least one item.')
+      return
+    }
+
+    setSavingEdit(true)
+    try {
+      const res = await billingService.updateInvoice(editingInvoice._id, {
+        customerName: editFormData.customerName.trim(),
+        mobileNumber: cleanPhone,
+        billerName: editFormData.billerName.trim(),
+        invoiceDate: editFormData.invoiceDate,
+        paymentStatus: editFormData.paymentStatus,
+        paymentMode: editFormData.paymentMode,
+        paymentTime: editFormData.paymentTime || '',
+        discountType: editFormData.discountType,
+        discountValue: Number(editFormData.discountValue) || 0,
+        taxRate: Number(editFormData.taxRate) || 0,
+        items: editFormData.items.map((it) => ({
+          catalogueId: it.isCustom || it.catalogueId === 'CUSTOM' ? 'CUSTOM' : it.catalogueId,
+          catalogueName: it.catalogueName,
+          catalogueSlug: it.catalogueSlug,
+          patternNumber: it.patternNumber,
+          imagePath: it.imagePath || '',
+          quantity: Number(it.quantity),
+          rate: Number(it.rate),
+          isCustom: Boolean(it.isCustom || it.catalogueId === 'CUSTOM'),
+        })),
+      })
+
+      showToast('success', res.data?.message || 'Invoice updated and stock adjusted successfully.')
+      setEditingInvoice(null)
+      fetchInvoices(true)
+    } catch (err) {
+      showToast('error', err.response?.data?.message || 'Failed to update invoice.')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
 
   // Load catalogues list for dropdown filter
   useEffect(() => {
@@ -463,6 +590,15 @@ export function InvoiceHistory() {
                         <button
                           type="button"
                           className="ih-action-btn"
+                          style={{ color: '#2563eb', borderColor: '#bfdbfe' }}
+                          onClick={() => handleOpenEditModal(inv)}
+                          title="Edit Bill Details & Adjust Stock"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="ih-action-btn"
                           onClick={() => printInvoiceDocument(inv)}
                         >
                           Print
@@ -670,6 +806,18 @@ export function InvoiceHistory() {
               <button
                 type="button"
                 className="billing-glass-btn"
+                style={{ color: '#2563eb', borderColor: '#bfdbfe' }}
+                onClick={() => {
+                  const inv = selectedInvoice
+                  setSelectedInvoice(null)
+                  handleOpenEditModal(inv)
+                }}
+              >
+                Edit Bill
+              </button>
+              <button
+                type="button"
+                className="billing-glass-btn"
                 onClick={() => printInvoiceDocument(selectedInvoice)}
               >
                 Print Invoice
@@ -709,6 +857,435 @@ export function InvoiceHistory() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* 8. Edit Invoice Modal */}
+      {editingInvoice && (
+        <div
+          className="billing-modal-backdrop"
+          onClick={() => !savingEdit && setEditingInvoice(null)}
+        >
+          <div
+            className="billing-modal-card edit-invoice-modal"
+            style={{ maxWidth: '680px', width: '95%', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', flexShrink: 0 }}>
+              <div>
+                <h3 className="billing-modal-title" style={{ margin: 0 }}>
+                  Edit Invoice: {editingInvoice.invoiceNumber}
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748b' }}>
+                  Updating items will automatically adjust and balance stock differences.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="pending-drawer-close-btn"
+                onClick={() => !savingEdit && setEditingInvoice(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={handleSaveEditInvoice}
+              style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}
+            >
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px', marginBottom: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '14px' }}>
+                  <div className="discount-type-field">
+                    <label>Customer Name</label>
+                    <input
+                      type="text"
+                      className="billing-text-input"
+                      value={editFormData.customerName}
+                      onChange={(e) => setEditFormData({ ...editFormData, customerName: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="discount-type-field">
+                    <label>Mobile Number</label>
+                    <input
+                      type="text"
+                      className="billing-text-input"
+                      value={editFormData.mobileNumber}
+                      onChange={(e) => setEditFormData({ ...editFormData, mobileNumber: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="discount-type-field">
+                    <label>Billed By</label>
+                    <input
+                      type="text"
+                      className="billing-text-input"
+                      value={editFormData.billerName}
+                      onChange={(e) => setEditFormData({ ...editFormData, billerName: e.target.value })}
+                    />
+                  </div>
+                  <div className="discount-type-field">
+                    <label>Invoice Date</label>
+                    <input
+                      type="date"
+                      className="billing-text-input"
+                      value={editFormData.invoiceDate}
+                      onChange={(e) => setEditFormData({ ...editFormData, invoiceDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+                  <div className="discount-type-field">
+                    <label>Payment Method</label>
+                    <select
+                      className="billing-select"
+                      value={editFormData.paymentMode}
+                      onChange={(e) => setEditFormData({ ...editFormData, paymentMode: e.target.value })}
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="COD">COD (Cash on Delivery)</option>
+                      <option value="GPay">GPay (Google Pay)</option>
+                      <option value="Card">Credit / Debit Card</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Cheque">Cheque</option>
+                      <option value="Bank Transfer (NEFT/RTGS)">Bank Transfer</option>
+                    </select>
+                  </div>
+
+                  {['GPay', 'UPI', 'Card', 'Bank Transfer (NEFT/RTGS)'].includes(editFormData.paymentMode) && (
+                    <div className="discount-type-field">
+                      <label>Payment Time (24h)</label>
+                      <input
+                        type="time"
+                        step="60"
+                        className="billing-text-input"
+                        value={editFormData.paymentTime || ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, paymentTime: e.target.value })}
+                      />
+                    </div>
+                  )}
+                  <div className="discount-type-field">
+                    <label>Payment Status</label>
+                    <select
+                      className="billing-select"
+                      value={editFormData.paymentStatus}
+                      onChange={(e) => setEditFormData({ ...editFormData, paymentStatus: e.target.value })}
+                    >
+                      <option value="PAID">Amount Paid (Full)</option>
+                      <option value="UNPAID">Amount Unpaid (Due)</option>
+                    </select>
+                  </div>
+                  <div className="discount-type-field">
+                    <label>GST Tax (%)</label>
+                    <select
+                      className="billing-select"
+                      value={editFormData.taxRate}
+                      onChange={(e) => setEditFormData({ ...editFormData, taxRate: Number(e.target.value) || 0 })}
+                    >
+                      <option value={0}>No GST (0%)</option>
+                      <option value={18}>GST 18%</option>
+                      <option value={5}>GST 5%</option>
+                      <option value={12}>GST 12%</option>
+                      <option value={28}>GST 28%</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Items Table for Editing */}
+                <div style={{ marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                      Bill Items:
+                    </label>
+                    <button
+                      type="button"
+                      className="billing-glass-btn"
+                      style={{ padding: '4px 12px', fontSize: '12px' }}
+                      onClick={() => {
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          items: [
+                            ...prev.items,
+                            {
+                              catalogueId: '',
+                              catalogueName: '',
+                              catalogueSlug: '',
+                              patternNumber: '',
+                              imagePath: '',
+                              quantity: 1,
+                              rate: 1250,
+                              isCustom: false,
+                            },
+                          ],
+                        }))
+                      }}
+                    >
+                      + Add Item
+                    </button>
+                  </div>
+                  <div style={{ maxHeight: '240px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                    <table className="invoice-history-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th style={{ minWidth: '150px' }}>Catalogue / Item</th>
+                          <th style={{ minWidth: '140px' }}>Pattern No</th>
+                          <th style={{ width: '85px' }}>Qty</th>
+                          <th style={{ width: '100px' }}>Rate (₹)</th>
+                          <th style={{ textAlign: 'right', width: '90px' }}>Subtotal</th>
+                          <th style={{ width: '40px', textAlign: 'center' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editFormData.items.map((it, idx) => {
+                          const itemSub = (Number(it.quantity) || 0) * (Number(it.rate) || 0)
+                          return (
+                            <tr key={idx}>
+                              <td>
+                                <SearchableSelect
+                                  value={it.catalogueId === 'CUSTOM' ? (it.catalogueName || '') : it.catalogueId}
+                                  onChange={(val) => {
+                                    const catObj = catalogues.find((c) => c._id === val)
+                                    const updatedItems = [...editFormData.items]
+                                    if (catObj) {
+                                      updatedItems[idx] = {
+                                        ...updatedItems[idx],
+                                        catalogueId: catObj._id,
+                                        catalogueName: catObj.name,
+                                        catalogueSlug: catObj.slug,
+                                        isCustom: false,
+                                      }
+                                      fetchPatternsForCatalogue(catObj._id)
+                                    } else {
+                                      updatedItems[idx] = {
+                                        ...updatedItems[idx],
+                                        catalogueId: 'CUSTOM',
+                                        catalogueName: val || 'Custom Item',
+                                        catalogueSlug: 'CUSTOM',
+                                        isCustom: true,
+                                      }
+                                    }
+                                    setEditFormData({ ...editFormData, items: updatedItems })
+                                  }}
+                                  allowCustomInput={true}
+                                  customInputPrefix=""
+                                  onCustomInput={(typedText) => {
+                                    const updatedItems = [...editFormData.items]
+                                    updatedItems[idx] = {
+                                      ...updatedItems[idx],
+                                      catalogueId: 'CUSTOM',
+                                      catalogueName: typedText,
+                                      catalogueSlug: 'CUSTOM',
+                                      isCustom: true,
+                                    }
+                                    setEditFormData({ ...editFormData, items: updatedItems })
+                                  }}
+                                  placeholder="Select or type..."
+                                  emptyText="Press Enter to use this name"
+                                  options={catalogues.map((cat) => ({
+                                    value: cat._id,
+                                    label: formatCatalogueLabel(cat.name),
+                                    searchKeywords: `${cat.name} ${cat.slug}`,
+                                    badgeText: `Stock: ${cat.totalStock ?? 0}`,
+                                    badgeTone: (cat.totalStock ?? 0) > 0 ? 'success' : 'danger',
+                                  }))}
+                                />
+                              </td>
+                              <td>
+                                {it.isCustom || it.catalogueId === 'CUSTOM' ? (
+                                  <input
+                                    type="text"
+                                    className="billing-text-input"
+                                    style={{ width: '100%', padding: '6px 8px', fontSize: '13px' }}
+                                    placeholder="Description / Code"
+                                    value={it.patternNumber}
+                                    onChange={(e) => {
+                                      const updatedItems = [...editFormData.items]
+                                      updatedItems[idx] = { ...updatedItems[idx], patternNumber: e.target.value }
+                                      setEditFormData({ ...editFormData, items: updatedItems })
+                                    }}
+                                    required
+                                  />
+                                ) : (
+                                  <SearchableSelect
+                                    value={it.patternNumber}
+                                    disabled={!it.catalogueId}
+                                    onChange={(val) => {
+                                      const updatedItems = [...editFormData.items]
+                                      updatedItems[idx] = { ...updatedItems[idx], patternNumber: val }
+                                      setEditFormData({ ...editFormData, items: updatedItems })
+                                    }}
+                                    placeholder={!it.catalogueId ? 'Select catalogue' : 'Select pattern...'}
+                                    emptyText="No pattern found"
+                                    options={(patternsByCatalogue[it.catalogueId] || []).map((pat) => ({
+                                      value: pat.patternNumber,
+                                      label: String(pat.patternNumber),
+                                      searchKeywords: String(pat.patternNumber),
+                                    }))}
+                                  />
+                                )}
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  className="billing-num-input"
+                                  style={{ width: '100%', padding: '6px' }}
+                                  value={it.quantity}
+                                  onChange={(e) => {
+                                    const val = e.target.value
+                                    const updatedItems = [...editFormData.items]
+                                    updatedItems[idx] = { ...updatedItems[idx], quantity: val }
+                                    setEditFormData({ ...editFormData, items: updatedItems })
+                                  }}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step="0.01"
+                                  className="billing-num-input"
+                                  style={{ width: '100%', padding: '6px' }}
+                                  value={it.rate}
+                                  onChange={(e) => {
+                                    const val = e.target.value
+                                    const updatedItems = [...editFormData.items]
+                                    updatedItems[idx] = { ...updatedItems[idx], rate: val }
+                                    setEditFormData({ ...editFormData, items: updatedItems })
+                                  }}
+                                  required
+                                />
+                              </td>
+                              <td style={{ textAlign: 'right', fontWeight: '700' }}>
+                                {formatINR(itemSub)}
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  className="remove-row-btn"
+                                  style={{ width: '22px', height: '22px', fontSize: '11px' }}
+                                  disabled={editFormData.items.length <= 1}
+                                  onClick={() => {
+                                    const updatedItems = editFormData.items.filter((_, i) => i !== idx)
+                                    setEditFormData({ ...editFormData, items: updatedItems })
+                                  }}
+                                  title="Remove item"
+                                >
+                                  ✕
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Discount Controls */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                  <div className="discount-type-field">
+                    <label>Discount Type</label>
+                    <select
+                      className="billing-select"
+                      value={editFormData.discountType}
+                      onChange={(e) => setEditFormData({ ...editFormData, discountType: e.target.value })}
+                    >
+                      <option value="PERCENTAGE">Percentage (%)</option>
+                      <option value="FIXED">Fixed Amount (₹)</option>
+                    </select>
+                  </div>
+                  <div className="discount-type-field">
+                    <label>Discount Value</label>
+                    <input
+                      type="number"
+                      min={0}
+                      className="billing-num-input"
+                      value={editFormData.discountValue}
+                      onChange={(e) => setEditFormData({ ...editFormData, discountValue: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Live Preview of Recalculated Total */}
+                {(() => {
+                  let sub = 0
+                  let totalQ = 0
+                  editFormData.items.forEach((it) => {
+                    const q = Number(it.quantity) || 0
+                    const r = Number(it.rate) || 0
+                    totalQ += q
+                    sub += q * r
+                  })
+                  const discVal = Number(editFormData.discountValue) || 0
+                  const discAmt = editFormData.discountType === 'PERCENTAGE' ? (sub * discVal) / 100 : discVal
+                  const taxable = Math.max(0, sub - discAmt)
+                  const tax = editFormData.taxRate > 0 ? (taxable * editFormData.taxRate) / 100 : 0
+                  const finalAmt = taxable + tax
+
+                  return (
+                    <div className="confirm-summary-box" style={{ marginBottom: '16px' }}>
+                      <div className="confirm-row">
+                        <span>Total Quantity:</span>
+                        <strong>{totalQ} Rolls</strong>
+                      </div>
+                      <div className="confirm-row">
+                        <span>Subtotal:</span>
+                        <strong>{formatINR(sub)}</strong>
+                      </div>
+                      {discAmt > 0 && (
+                        <div className="confirm-row" style={{ color: '#b91c1c' }}>
+                          <span>Discount:</span>
+                          <strong>- {formatINR(discAmt)}</strong>
+                        </div>
+                      )}
+                      {tax > 0 && (
+                        <div className="confirm-row">
+                          <span>GST ({editFormData.taxRate}%):</span>
+                          <strong>+ {formatINR(tax)}</strong>
+                        </div>
+                      )}
+                      <div className="confirm-row confirm-row-final">
+                        <span>Updated Final Payable:</span>
+                        <strong style={{ color: '#16a34a', fontSize: '15px' }}>{formatINR(finalAmt)}</strong>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+
+              <div
+                className="billing-modal-actions edit-invoice-actions"
+                style={{
+                  flexShrink: 0,
+                  paddingTop: '12px',
+                  borderTop: '1px solid #e2e8f0',
+                  marginTop: 'auto',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '10px'
+                }}
+              >
+                <button
+                  type="button"
+                  className="billing-glass-btn"
+                  disabled={savingEdit}
+                  onClick={() => setEditingInvoice(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="billing-glass-btn generate-bill-btn"
+                  disabled={savingEdit}
+                >
+                  {savingEdit ? 'Updating Bill & Stock...' : 'Save & Adjust Stock'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
